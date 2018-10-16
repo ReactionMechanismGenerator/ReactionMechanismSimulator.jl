@@ -24,3 +24,22 @@ Ss = [getEntropy(nasa,T) for T in Tlist]
 Hexplist = [-22.7613, -12.1027, -6.14236, -2.16615, 0.743456, 2.99256, 4.79397, 6.27334, 7.51156].*Tlist*R
 Hs = [getEnthalpy(nasa,T) for T in Tlist]
 @test Hs ≈ Hexplist rtol=1e-3
+
+#test Wilhoit
+w = Wilhoit(Cp0=4.0*R,Cpinf=21.5*R,coefs=[0.0977518,-16.3067,26.2524,-12.6785],B=1068.68,H0=-94088.0*R,S0=-118.46*R)
+Tlist = 200.0:200:2000.0
+
+#test Cp
+Cpexplist = [5.12003, 7.80327, 10.5528, 12.8323, 14.6013, 15.9511, 16.9842, 17.7837, 18.4114, 18.9117]*R
+Cps = [getHeatCapacity(w,T) for T in Tlist]
+@test Cps ≈ Cpexplist rtol=1e-3
+
+#test S
+Sexplist = [25.3095, 29.6445, 33.3398, 36.7006, 39.7629, 42.5499, 45.0898, 47.4122, 49.5445, 51.5112]*R
+Ss = [getEntropy(w,T) for T in Tlist]
+@test Ss ≈ Sexplist rtol=1e-3
+
+#test H
+Hexplist = [-51.9303, -22.7609, -12.1050, -6.14444, -2.16433, 0.747500, 2.99646, 4.79698, 6.27618, 7.51564].*Tlist*R
+Hs = [getEnthalpy(w,T) for T in Tlist]
+@test Hs ≈ Hexplist rtol=1e-3
