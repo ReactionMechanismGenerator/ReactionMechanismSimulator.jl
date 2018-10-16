@@ -115,3 +115,60 @@ function (tr::Troe)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q,R,S<:Number}
     end
     return kinf*(Pr/(1+Pr))*F
 end
+
+@with_kw struct Chebyshev{T,Q,S,V,B<:Number}
+    coefs::Array{T,2}
+    Tmin::Q
+    Tmax::S
+    Pmin::V
+    Pmax::B
+end
+
+function evalChebyshevPolynomial(ch::Chebyshev,n::N,x::T) where {N<:Integer,T<:Number}
+    """
+    evaluate the nth order Chebyshev Polynomial at x
+    """
+    if n==0
+        return 1
+    elseif n == 1
+        return x
+    else
+        T0 = 1
+        T1 = x
+        for i in 1:(n-1)
+            T = 2*x*T1-T0
+            T0 = T1
+            T1 = T
+        end
+        return T
+    end
+end
+
+function getRedTemp(ch::Chebyshev,T::N) where {N<:Number}
+    """
+    return a reduced temperature corresponding to the given tempeprature
+    for the Chebyshev polynomial, maps the inverse of temperautre onto [-1,1]
+    """
+    return (2.0/T-1.0/ch.Tmin-1.0/ch.Tmax)/(1.0/ch.Tmax-1.0/ch.Tmin)
+end
+
+function getRedPress(ch::Chebyshev,P::N) where {N<:Number}
+    """
+    return a reduced pressure corresponding to the given temperature
+    for the Chebyshev polynomial maps the logarithm of pressure onto [-1,1]
+    """
+    return (2.0*log10(P)-log10(ch.Pmin)-log10(ch.Pmax))/(log10(ch.Pmax)-log10(ch.Pmin))
+end
+
+function (ch::Chebyshev)(;T::N,P::Q=0.0) where {N,Q<:Number}
+    k = 0.0
+    Tred = getRedTemp(ch,T)
+    Pred = getRedPress(ch,P)
+    Tlen,Plen = size(ch.coefs)
+    for i = 1:Tlen
+        for j = 1:Plen
+            k += ch.coefs[i,j]*evalChebyshevPolynomial(ch,i-1,Tred)*evalChebyshevPolynomial(ch,j-1,Pred)
+        end
+    end
+    return 10^k
+end
