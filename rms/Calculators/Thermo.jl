@@ -71,3 +71,34 @@ getHeatCapacity(nasa::NASA,T::N) where {N<:Number} = getHeatCapacity(selectPoly(
 getEntropy(nasa::NASA,T::N) where {N<:Number} = getEntropy(selectPoly(nasa,T),T)
 getEnthalpy(nasa::NASA,T::N) where {N<:Number} = getEnthalpy(selectPoly(nasa,T),T)
 getGibbs(nasa::NASA,T::N) where {N<:Number} = getGibbs(selectPoly(nasa,T),T)
+
+@with_kw struct Wilhoit{N,Q,T,P,U,R<:Number,M<:AbstractThermoUncertainty} <: AbstractThermo
+    Cp0::N
+    Cpinf::T
+    coefs::Array{Q,1}
+    H0::P
+    S0::U
+    B::R
+    unc::M = EmptyThermoUncertainty()
+end
+
+function getHeatCapacity(w::Wilhoit,T::N) where {N<:Number}
+    y = T/(T+w.B)
+    return w.Cp0 + (w.Cpinf-w.Cp0)*y^2*(1+(y-1)*evalpoly(y,w.coefs))
+end
+
+function getEnthalpy(w::Wilhoit,T::N) where {N<:Number}
+    y = T/(T+w.B)
+    return w.H0 + w.Cp0 * T - (w.Cpinf - w.Cp0) * T * (
+            y * y * ((3 * w.coefs[1] + sum(w.coefs[2:end])) / 6. +
+                     (4 * w.coefs[2] + sum(w.coefs[3:end])) * y / 12. +
+                     (5 * w.coefs[3] + w.coefs[4]) * y^2 / 20. +
+                     w.coefs[4] * y^3 / 5.) +
+            (2 + sum(w.coefs)) * (y / 2. - 1 + (1.0 / y - 1.) * log(w.B + T))
+        )
+end
+
+function getEntropy(w::Wilhoit,T::N) where {N<:Number}
+    y = T/(T+w.B)
+    return w.S0 + w.Cpinf*log(T)-(w.Cpinf-w.Cp0)*(log(y)+y*(1+y*evalpoly(y,w.coefs./(2:5))))
+end
