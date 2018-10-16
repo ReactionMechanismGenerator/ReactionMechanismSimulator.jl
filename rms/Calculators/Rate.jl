@@ -62,3 +62,56 @@ function (parr::MultiPdepArrhenius)(;T::Q=nothing,P::R=0.0,C::S=0.0) where {Q,R,
     end
     return out
 end
+
+@with_kw struct ThirdBody{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractRate
+    arr::Arrhenius
+    efficiencies::Dict{N,K} = Dict()
+    unc::Q = EmptyRateUncertainty()
+end
+
+(tbarr::ThirdBody)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q,R,S<:Number} = C*tbarr.arr(T=T)
+
+@with_kw struct Lindemann{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractRate
+    arrhigh::Arrhenius
+    arrlow::Arrhenius
+    efficiencies::Dict{N,K} = Dict()
+    unc::Q = EmptyRateUncertainty()
+end
+
+function (lnd::Lindemann)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q,R,S<:Number}
+    k0 = lnd.arrlow(T=T)
+    kinf = lnd.arrhigh(T=T)
+    Pr = k0*C/kinf
+    return kinf*Pr/(1.0+Pr)
+end
+
+@with_kw struct Troe{P,Q,F,L<:Number,N<:Integer,K<:AbstractFloat,R<:AbstractRateUncertainty} <: AbstractRate
+    arrhigh::Arrhenius
+    arrlow::Arrhenius
+    a::P
+    T3::Q
+    T1::F
+    T2::L
+    efficiencies::Dict{N,K} = Dict()
+    unc::R = EmptyRateUncertainty()
+end
+
+function (tr::Troe)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q,R,S<:Number}
+    k0 = tr.arrlow(T=T)
+    kinf = tr.arrhigh(T=T)
+    Pr = k0*C/kinf
+
+    if tr.T1 == 0 && tr.T3 == 0
+        F = 1.0
+    else
+        Fcent = (1-tr.a)*exp(-T/tr.T3)+tr.a*exp(-T/tr.T1)
+        if tr.T2 != 0
+            Fcent += exp(-tr.T2/T)
+        end
+        d = 0.14
+        n = 0.75-1.27*log10(Fcent)
+        c = -0.4-0.67*log10(Fcent)
+        F = 10^(log10(Fcent)/(1+((log10(Pr)+c)/(n-d*(log10(Pr))))^2))
+    end
+    return kinf*(Pr/(1+Pr))*F
+end
