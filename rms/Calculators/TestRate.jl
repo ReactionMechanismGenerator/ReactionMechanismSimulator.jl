@@ -67,3 +67,42 @@ for i = 1:length(Tlist)
         @test kact ≈ kexp rtol=1e-3
     end
 end
+
+#ThirdBody testing
+tb = ThirdBody(arr=arr1,efficiencies=Dict(5=>2.3))
+@test tb(T=900.0,C=5.0) ≈ tb.arr(T=900.0)*5.0 rtol=1e-6
+
+#Lindemann testing
+arrhigh = Arrhenius(A=upreferred(1.39e16u"cm^3/(mol*s)").val,n=-0.534,Ea=upreferred(2.243u"kJ/mol").val)
+arrlow = Arrhenius(A=upreferred(2.62e33u"cm^6/(mol^2*s)").val,n=-4.76,Ea=upreferred(10.21u"kJ/mol").val)
+efficiencies = Dict(2=>2.3)
+lnd = Lindemann(arrhigh=arrhigh,arrlow=arrlow,efficiencies=efficiencies)
+Tlist = [300,500,1000,1500]
+Plist = [1e4,1e5,1e6]
+Kexp = [
+            [1.38023e+08 2.45661e+08 2.66439e+08];
+            [6.09146e+07 2.12349e+08 2.82604e+08];
+            [4.75671e+06 4.09594e+07 1.71441e+08];
+            [7.03616e+05 6.85062e+06 5.42111e+07];
+        ]
+for i in 1:length(Tlist)
+    for j in 1:length(Plist)
+        Kact = lnd(T=Tlist[i],C=Plist[j]/(R*Tlist[i]))
+        @test Kact ≈ Kexp[i,j] rtol=1e-3
+    end
+end
+
+#Troe testing
+troe = Troe(arrhigh=arrhigh,arrlow=arrlow,a=0.783,T3=74.0,T1=2941.0,T2=6964.0,efficiencies=efficiencies)
+Kexp = [
+            [1.00866e+08 2.03759e+08 2.55190e+08];
+            [4.74623e+07 1.41629e+08 2.47597e+08];
+            [3.97397e+06 2.89521e+07 9.57569e+07];
+            [5.91277e+05 5.14013e+06 3.12239e+07];
+        ]
+for i in 1:length(Tlist)
+    for j in 1:length(Plist)
+        Kact = troe(T=Tlist[i],C=Plist[j]/(R*Tlist[i]))
+        @test Kact ≈ Kexp[i,j] rtol=1e-3
+    end
+end
