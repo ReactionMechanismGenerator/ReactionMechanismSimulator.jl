@@ -1,7 +1,7 @@
 function includeall(dir)
     for (root,dirs,files) in walkdir(dir)
         for file in files
-            if file[end-2:end] == ".jl"
+            if file[end-2:end] == ".jl" && file[1:4]!="Test"
                 include(joinpath(root,file))
             end
         end
