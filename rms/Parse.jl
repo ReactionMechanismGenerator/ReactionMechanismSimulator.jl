@@ -97,3 +97,75 @@ function fcndict2obj(d::T,ymlunitsdict::Q) where {T,Q<:Any}
     ex = Expr(:call,fcn,Expr(:parameters,kwexprs...))
     return eval(ex)
 end
+
+function readinput(fname::String)
+    """
+    parses a YAML input file into a dictionary containing
+    partitions of Species and Reaction objects
+    """
+    D = YAML.load(open(fname))
+    outdict = Dict()
+
+    #Units
+    ymlunitsdict=D["Units"] #for now don't use
+
+    #Solvents
+    if "Solvents" in keys(D)
+        s = D["Solvents"]
+        for sol in s
+            sol["type"] = "Solvent"
+        end
+        solvents = map(fcndict2obj,s)
+        outDict["Solvents"] = solvents
+    end
+
+    #phases
+    spcindex = 1
+    spcdict = Dict()
+    for p in D["Phases"]
+        name = p["name"]
+        spclist = Array{Species,1}()
+        for d in p["Species"]
+            d["index"] = spcindex
+            spcindex += 1
+            spc = fcndict2obj(d,ymlunitsdict)
+            push!(spclist,spc)
+            spcdict[spc.name] = (spc,p["name"])
+        end
+        outdict[name] = Dict()
+        outdict[name]["Species"] = spclist
+        outdict[name]["Reactions"] = Array{Reaction,1}()
+    end
+
+    #reactions
+    for rxn in D["Reactions"]
+        phs = Array{String,1}()
+        rxn["reactants"] = convert(Array{Any},rxn["reactants"])
+        for (i,item) in enumerate(rxn["reactants"])
+            spc,ph = spcdict[item]
+            push!(phs,ph)
+            rxn["reactants"][i] = spc
+        end
+        rxn["products"] = convert(Array{Any},rxn["products"])
+        for (i,item) in enumerate(rxn["products"])
+            spc,ph = spcdict[item]
+            push!(phs,ph)
+            rxn["products"][i] = spc
+        end
+        rxn["reactants"] = [r for r in rxn["reactants"]]
+        rxn["products"] = [r for r in rxn["products"]]
+        r = fcndict2obj(rxn,ymlunitsdict)
+        unique!(phs)
+        if length(phs) == 1
+            push!(outdict[phs[1]]["Reactions"],r)
+        else
+            if Set(phs) in keys(outDict)
+                push!(outdict[Set(phs)],r)
+            else
+                outdict[Set(phs)]=[r]
+            end
+        end
+    end
+
+    return outdict
+end
