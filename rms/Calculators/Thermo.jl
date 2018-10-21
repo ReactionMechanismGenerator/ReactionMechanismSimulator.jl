@@ -38,15 +38,13 @@ end
 
 function getEnthalpy(poly::NASApolynomial,T::N) where {N<:Number}
     if length(poly.coefs) == 9
-        return ((-poly.coefs[1]/T+poly.coefs[2]*log(T))/T+evalpoly(T,poly.coefs[3:end-2]./(1:length(poly.coefs)-2)))*R*T+poly.coefs[end-1]*R
+        return ((-poly.coefs[1]/T+poly.coefs[2]*log(T))/T+evalpoly(T,poly.coefs[3:end-2]./(1:5)))*R*T+poly.coefs[end-1]*R
     elseif length(poly.coefs) == 7
-        return evalpoly(T,poly.coefs[1:end-2]./(1:length(poly.coefs)-2))*R*T+poly.coefs[end-1]*R
+        return evalpoly(T,poly.coefs[1:end-2]./(1:5))*R*T+poly.coefs[end-1]*R
     else
         throw(error("NASA polynomial has a number of coefficients not equal to 9 or 7"))
     end
 end
-
-
 
 @with_kw struct NASA{T<:AbstractThermoUncertainty} <: AbstractThermo
     polys::Array{NASApolynomial,1}
