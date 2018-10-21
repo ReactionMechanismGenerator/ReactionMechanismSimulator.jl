@@ -59,3 +59,41 @@ function parsestring(s)
         return s
     end
 end
+
+function fcndict2obj(d::T,ymlunitsdict::Q) where {T,Q<:Any}
+    """
+    constructs an object from a dictionary by recursively constructing
+    the objects in its fields
+    the dictionary entry for "type" denotes the object being constructed
+    which must be in the allowedfcnlist
+    """
+    strfcn = d["type"]
+    fcn = Symbol(strfcn)
+    @assert fcn in allowedfcnlist
+    kwexprs = Array{Expr,1}()
+    for (key,val) in d
+        if key == "type"
+            continue
+        end
+        if isa(val,AbstractDict) && "type" in keys(val)
+            val = fcndict2obj(val,ymlunitsdict)
+        elseif isa(val,AbstractArray) && typeof(val).parameters[1] <: AbstractDict
+            val = [fcndict2obj(x,ymlunitsdict) for x in val]
+        else
+            if (strfcn,key) in keys(unitsdict)
+                if unitsdict[(strfcn,key)] in keys(ymlunitsdict)
+                    val = parseentry(val,ymlunitsdict[unitsdict[(strfcn,key)]])
+                else
+                    val = parseentry(val)
+                end
+            else
+                @warn("assuming values for $strfcn,$key are in SI units")
+                val = parseentry(val)
+            end
+        end
+        kwexpr = Expr(:kw,Symbol(key),val)
+        push!(kwexprs,kwexpr)
+    end
+    ex = Expr(:call,fcn,Expr(:parameters,kwexprs...))
+    return eval(ex)
+end
