@@ -15,6 +15,7 @@ abstract type AbstractRate end
 end
 (arr::Arrhenius)(;T::Q,P::N=0.0,C::S=0.0) where {Q,N,S<:Number} = arr.A*T^arr.n*exp(-arr.Ea/(R*T))
 (arr::Arrhenius)(T::Q;P::N=0.0,C::S=0.0) where {Q,N,S<:Number} = arr.A*T^arr.n*exp(-arr.Ea/(R*T))
+export Arrhenius
 
 @with_kw struct PdepArrhenius{T<:Number,Q<:AbstractRateUncertainty} <: AbstractRate
     Ps::Array{T,1}
@@ -36,6 +37,7 @@ function (parr::PdepArrhenius)(;T::Q=nothing,P::R=nothing,C::S=0.0) where {Q,R,S
         return lowk*10^(log10(P/Plow)/log10(Phigh/Plow)*log10(highk/lowk))
     end
 end
+export PdepArrhenius
 
 @with_kw struct MultiArrhenius{Q<:AbstractRateUncertainty} <: AbstractRate
     arrs::Array{Arrhenius,1}
@@ -62,6 +64,7 @@ function (parr::MultiPdepArrhenius)(;T::Q=nothing,P::R=0.0,C::S=0.0) where {Q,R,
     end
     return out
 end
+export MultiPdepArrhenius
 
 @with_kw struct ThirdBody{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractRate
     arr::Arrhenius
@@ -70,6 +73,7 @@ end
 end
 
 (tbarr::ThirdBody)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q,R,S<:Number} = C*tbarr.arr(T=T)
+export ThirdBody
 
 @with_kw struct Lindemann{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractRate
     arrhigh::Arrhenius
@@ -84,6 +88,7 @@ function (lnd::Lindemann)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q,R,S<:Num
     Pr = k0*C/kinf
     return kinf*Pr/(1.0+Pr)
 end
+export Lindemann
 
 @with_kw struct Troe{P,Q,F,L<:Number,N<:Integer,K<:AbstractFloat,R<:AbstractRateUncertainty} <: AbstractRate
     arrhigh::Arrhenius
@@ -115,6 +120,7 @@ function (tr::Troe)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q,R,S<:Number}
     end
     return kinf*(Pr/(1+Pr))*F
 end
+export Troe
 
 @with_kw struct Chebyshev{T,Q,S,V,B<:Number}
     coefs::Array{T,2}
@@ -172,3 +178,5 @@ function (ch::Chebyshev)(;T::N,P::Q=0.0) where {N,Q<:Number}
     end
     return 10^k
 end
+
+export Chebyshev

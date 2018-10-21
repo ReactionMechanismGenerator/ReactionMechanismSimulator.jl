@@ -5,6 +5,7 @@ include("../Tools.jl") #evalpoly comes from here
 include("ThermoUncertainty.jl")
 
 abstract type AbstractThermo end
+export AbstractThermo
 
 function getGibbs(th::P,T::N) where {N<:Number,P<:AbstractThermo}
     return getEnthalpy(th,T)-T*getEntropy(th,T)
@@ -15,6 +16,7 @@ end
     Tmin::Q
     Tmax::P
 end
+export NASApolynomial
 
 function getHeatCapacity(poly::NASApolynomial,T::N) where {N<:Number}
     if length(poly.coefs) == 9
@@ -50,6 +52,7 @@ end
     polys::Array{NASApolynomial,1}
     unc::T = EmptyThermoUncertainty()
 end
+export NASA
 
 function selectPoly(nasa::NASA,T::N) where {N<:Number}
     """
@@ -79,6 +82,7 @@ getGibbs(nasa::NASA,T::N) where {N<:Number} = getGibbs(selectPoly(nasa,T),T)
     B::R
     unc::M = EmptyThermoUncertainty()
 end
+export Wilhoit
 
 function getHeatCapacity(w::Wilhoit,T::N) where {N<:Number}
     y = T/(T+w.B)
@@ -100,3 +104,5 @@ function getEntropy(w::Wilhoit,T::N) where {N<:Number}
     y = T/(T+w.B)
     return w.S0 + w.Cpinf*log(T)-(w.Cpinf-w.Cp0)*(log(y)+y*(1+y*evalpoly(y,w.coefs./(2:5))))
 end
+
+export getGibbs, getEntropy, getEnthalpy, getHeatCapacity
