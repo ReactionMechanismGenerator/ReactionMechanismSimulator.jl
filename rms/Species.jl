@@ -1,9 +1,10 @@
 using Parameters
-include("./Calculators.jl")
+include("Calculators.jl")
 
-abstract type AbstractSpecies
+abstract type AbstractSpecies end
+export AbstractSpecies
 
-@with_kw struct Species{T<:AbstractThermo,N<:AbstractDiffusion} <: AbstractSpecies
+@with_kw struct Species{T<:AbstractThermo,N<:AbstractDiffusivity} <: AbstractSpecies
     name::String
     index::Integer
     inchi::String = ""
@@ -11,3 +12,4 @@ abstract type AbstractSpecies
     thermo::T
     diffusion::N = EmptyDiffusivity()
 end
+export Species
