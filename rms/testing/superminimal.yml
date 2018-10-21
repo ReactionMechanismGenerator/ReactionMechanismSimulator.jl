@@ -1,0 +1,260 @@
+Phases:
+    - name: gas
+      Species:
+      - name: Ar
+        type: Species
+        smiles: '[Ar]'
+        thermo:
+          polys:
+          - Tmax: 1000.0
+            Tmin: 200.0
+            coefs: [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 4.37967]
+            type: NASApolynomial
+          - Tmax: 6000.0
+            Tmin: 1000.0
+            coefs: [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 4.37967]
+            type: NASApolynomial
+          type: NASA
+      - name: He
+        type: Species
+        smiles: '[He]'
+        thermo:
+          polys:
+          - Tmax: 1000.0
+            Tmin: 200.0
+            coefs: [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 0.928724]
+            type: NASApolynomial
+          - Tmax: 6000.0
+            Tmin: 1000.0
+            coefs: [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 0.928724]
+            type: NASApolynomial
+          type: NASA
+      - name: Ne
+        type: Species
+        smiles: '[Ne]'
+        thermo:
+          polys:
+          - Tmax: 1000.0
+            Tmin: 200.0
+            coefs: [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 3.35532]
+            type: NASApolynomial
+          - Tmax: 6000.0
+            Tmin: 1000.0
+            coefs: [0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, -745.375, 3.35532]
+            type: NASApolynomial
+          type: NASA
+      - name: N2
+        type: Species
+        smiles: N#N
+        thermo:
+          polys:
+          - Tmax: 1000.0
+            Tmin: 200.0
+            coefs: [0.0, 0.0, 3.53101, -0.000123661, -5.02999e-07, 2.43531e-09, -1.40881e-12,
+              -1046.98, 2.96747]
+            type: NASApolynomial
+          - Tmax: 6000.0
+            Tmin: 1000.0
+            coefs: [0.0, 0.0, 2.95258, 0.0013969, -4.92632e-07, 7.8601e-11, -4.60755e-15,
+              -923.949, 5.87189]
+            type: NASApolynomial
+          type: NASA
+      - name: H2
+        type: Species
+        smiles: '[H][H]'
+        thermo:
+          polys:
+          - Tmax: 1959.07
+            Tmin: 100.0
+            coefs: [0.0, 0.0, 3.43536401, 0.000212711277, -2.78627139e-07, 3.40268811e-10,
+              -7.76036069e-14, -1031.35983, -3.90841691]
+            type: NASApolynomial
+          - Tmax: 5000.0
+            Tmin: 1959.07
+            coefs: [0.0, 0.0, 2.78817696, 0.000587626487, 1.59017184e-07, -5.52752608e-11,
+              4.34320884e-15, -596.150834, 0.112666705]
+            type: NASApolynomial
+          type: NASA
+      - name: O2
+        type: Species
+        smiles: '[O][O]'
+        thermo:
+          polys:
+          - Tmax: 1074.56
+            Tmin: 100.0
+            coefs: [0.0, 0.0, 3.53732181, -0.00121570933, 5.31617835e-06, -4.89443434e-09,
+              1.45845047e-12, -1038.58846, 4.68368405]
+            type: NASApolynomial
+          - Tmax: 5000.0
+            Tmin: 1074.56
+            coefs: [0.0, 0.0, 3.15382424, 0.00167803804, -7.69971033e-07, 1.51274717e-10,
+              -1.08781803e-14, -1040.81878, 6.16753891]
+            type: NASApolynomial
+          type: NASA
+      - name: H
+        type: Species
+        smiles: '[H]'
+        thermo:
+          polys:
+          - Tmax: 4484.82
+            Tmin: 100.0
+            coefs: [0.0, 0.0, 2.5, -1.08860897e-13, 1.40734568e-16, -5.92258814e-20, 7.66587112e-24,
+              25474.2178, -0.444972896]
+            type: NASApolynomial
+          - Tmax: 5000.0
+            Tmin: 4484.82
+            coefs: [0.0, 0.0, 2.50003916, -3.40586045e-08, 1.10996924e-11, -1.60664106e-15,
+              8.71471667e-20, 25474.1818, -0.445221594]
+            type: NASApolynomial
+          type: NASA
+      - name: '[O]O'
+        type: Species
+        smiles: '[O]O'
+        thermo:
+          polys:
+          - Tmax: 932.15
+            Tmin: 100.0
+            coefs: [0.0, 0.0, 4.04594466, -0.00173464517, 1.03766421e-05, -1.02202388e-08,
+              3.34907969e-12, -986.754236, 4.63581369]
+            type: NASApolynomial
+          - Tmax: 5000.0
+            Tmin: 932.15
+            coefs: [0.0, 0.0, 3.21023922, 0.00367941878, -1.27701506e-06, 2.18045101e-10,
+              -1.46337803e-14, -910.368761, 8.18291517]
+            type: NASApolynomial
+          type: NASA
+      - name: OH(D)
+        type: Species
+        smiles: '[OH]'
+        thermo:
+          polys:
+          - Tmax: 1145.74
+            Tmin: 100.0
+            coefs: [0.0, 0.0, 3.51456708, 2.9288145e-05, -5.32198348e-07, 1.01953157e-09,
+              -3.85960991e-13, 3414.25424, 2.10435232]
+            type: NASApolynomial
+          - Tmax: 5000.0
+            Tmin: 1145.74
+            coefs: [0.0, 0.0, 3.07194683, 0.000604004352, -1.39719923e-08, -2.13460568e-11,
+              2.48077407e-15, 3579.38361, 4.57796014]
+            type: NASApolynomial
+          type: NASA
+      - name: O(T)
+        type: Species
+        smiles: '[O]'
+        thermo:
+          polys:
+          - Tmax: 4484.82
+            Tmin: 100.0
+            coefs: [0.0, 0.0, 2.5, -1.08860897e-13, 1.40734568e-16, -5.92258814e-20, 7.66587112e-24,
+              29230.2441, 4.09104286]
+            type: NASApolynomial
+          - Tmax: 5000.0
+            Tmin: 4484.82
+            coefs: [0.0, 0.0, 2.50003916, -3.40586045e-08, 1.10996924e-11, -1.60664106e-15,
+              8.71471667e-20, 29230.2081, 4.09079416]
+            type: NASApolynomial
+          type: NASA
+      - name: OO
+        type: Species
+        smiles: OO
+        thermo:
+          polys:
+          - Tmax: 908.88
+            Tmin: 100.0
+            coefs: [0.0, 0.0, 3.73134853, 0.0033508285, 9.3498791e-06, -1.52093238e-08,
+              6.41555638e-12, -17721.1704, 5.45914195]
+            type: NASApolynomial
+          - Tmax: 5000.0
+            Tmin: 908.88
+            coefs: [0.0, 0.0, 5.41581398, 0.00261003418, -4.39864183e-07, 4.91020782e-11,
+              -3.35132535e-15, -18302.9631, -4.02263225]
+            type: NASApolynomial
+          type: NASA
+      - name: H2O
+        type: Species
+        smiles: O
+        thermo:
+          polys:
+          - Tmax: 1130.24
+            Tmin: 100.0
+            coefs: [0.0, 0.0, 4.05763582, -0.000787935728, 2.90877451e-06, -1.47518811e-09,
+              2.12842752e-13, -30281.5866, -0.311364019]
+            type: NASApolynomial
+          - Tmax: 5000.0
+            Tmin: 1130.24
+            coefs: [0.0, 0.0, 2.84325058, 0.00275108526, -7.81031384e-07, 1.07243617e-10,
+              -5.79392056e-15, -29958.6128, 5.91041922]
+            type: NASApolynomial
+          type: NASA
+
+Reactions:
+- products: [H2]
+  reactants: [H, H]
+  kinetics: {A: 54500.00000000001, Ea: 6276.0, n: 0.0, type: Arrhenius}
+  type: Reaction
+- products: ['[O]O', H]
+  reactants: [O2, H2]
+  kinetics: {A: 290000000.00000006, Ea: 236981.76, n: 0.0, type: Arrhenius}
+  type: Reaction
+- products: ['[O]O']
+  reactants: [O2, H]
+  kinetics: {A: 87900.00000000001, Ea: 1882.8, n: 1.0, type: Arrhenius}
+  type: Reaction
+- products: [H2, '[O]O']
+  reactants: [H, OO]
+  kinetics: {A: 1.2350200000000002, Ea: 25463.824, n: 1.634, type: Arrhenius}
+  type: Reaction
+- products: [OO]
+  reactants: ['[O]O', H]
+  kinetics: {A: 5005182.000000001, Ea: 7096.063999999999, n: 0.282, type: Arrhenius}
+  type: Reaction
+- products: [O2, OO]
+  reactants: ['[O]O', '[O]O']
+  kinetics: {A: 17500.000000000004, Ea: -13702.6, n: 0.0, type: Arrhenius}
+  type: Reaction
+- products: [OO]
+  reactants: [OH(D), OH(D)]
+  kinetics: {A: 7850000.000000001, Ea: 0.0, n: 0.0, type: Arrhenius}
+  type: Reaction
+- products: [H, H2O]
+  reactants: [H2, OH(D)]
+  kinetics: {A: 1820.0000000000002, Ea: 83972.88, n: 1.21, type: Arrhenius}
+  type: Reaction
+- products: [H2O]
+  reactants: [H, OH(D)]
+  kinetics: {A: 162000000.00000003, Ea: 627.6, n: 0.0, type: Arrhenius}
+  type: Reaction
+- products: ['[O]O', OH(D)]
+  reactants: [O2, H2O]
+  kinetics: {A: 9300000.000000002, Ea: 310118.08, n: 0.0, type: Arrhenius}
+  type: Reaction
+- products: ['[O]O', H2O]
+  reactants: [OH(D), OO]
+  kinetics: {A: 0.4994995000000001, Ea: 26463.8, n: 1.927, type: Arrhenius}
+  type: Reaction
+- products: ['[O]O']
+  reactants: [OH(D), O(T)]
+  kinetics: {A: 43.58386000000001, Ea: 5167.240000000001, n: 1.88, type: Arrhenius}
+  type: Reaction
+- products: [OH(D)]
+  reactants: [H, O(T)]
+  kinetics: {A: 10000000.000000002, Ea: 0.0, n: 0.0, type: Arrhenius}
+  type: Reaction
+- products: [O2, OH(D)]
+  reactants: ['[O]O', O(T)]
+  kinetics: {A: 3680.3920000000007, Ea: 24681.416, n: 0.678, type: Arrhenius}
+  type: Reaction
+- products: [H, OH(D)]
+  reactants: [H2, O(T)]
+  kinetics: {A: 340.00000000000006, Ea: 96022.8, n: 1.5, type: Arrhenius}
+  type: Reaction
+- products: ['[O]O', OH(D)]
+  reactants: [O(T), OO]
+  kinetics: {A: 17400000.000000004, Ea: 19874.0, n: 0.0, type: Arrhenius}
+  type: Reaction
+- products: [OH(D), OH(D)]
+  reactants: [O(T), H2O]
+  kinetics: {A: 5260.000000000001, Ea: 74600.71999999999, n: 1.2, type: Arrhenius}
+  type: Reaction
+Units: {}
