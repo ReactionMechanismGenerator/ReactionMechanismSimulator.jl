@@ -192,69 +192,69 @@ Reactions:
 - products: [H2]
   reactants: [H, H]
   kinetics: {A: 54500.00000000001, Ea: 6276.0, n: 0.0, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: ['[O]O', H]
   reactants: [O2, H2]
   kinetics: {A: 290000000.00000006, Ea: 236981.76, n: 0.0, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: ['[O]O']
   reactants: [O2, H]
   kinetics: {A: 87900.00000000001, Ea: 1882.8, n: 1.0, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: [H2, '[O]O']
   reactants: [H, OO]
   kinetics: {A: 1.2350200000000002, Ea: 25463.824, n: 1.634, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: [OO]
   reactants: ['[O]O', H]
   kinetics: {A: 5005182.000000001, Ea: 7096.063999999999, n: 0.282, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: [O2, OO]
   reactants: ['[O]O', '[O]O']
   kinetics: {A: 17500.000000000004, Ea: -13702.6, n: 0.0, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: [OO]
   reactants: [OH(D), OH(D)]
   kinetics: {A: 7850000.000000001, Ea: 0.0, n: 0.0, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: [H, H2O]
   reactants: [H2, OH(D)]
   kinetics: {A: 1820.0000000000002, Ea: 83972.88, n: 1.21, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: [H2O]
   reactants: [H, OH(D)]
   kinetics: {A: 162000000.00000003, Ea: 627.6, n: 0.0, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: ['[O]O', OH(D)]
   reactants: [O2, H2O]
   kinetics: {A: 9300000.000000002, Ea: 310118.08, n: 0.0, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: ['[O]O', H2O]
   reactants: [OH(D), OO]
   kinetics: {A: 0.4994995000000001, Ea: 26463.8, n: 1.927, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: ['[O]O']
   reactants: [OH(D), O(T)]
   kinetics: {A: 43.58386000000001, Ea: 5167.240000000001, n: 1.88, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: [OH(D)]
   reactants: [H, O(T)]
   kinetics: {A: 10000000.000000002, Ea: 0.0, n: 0.0, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: [O2, OH(D)]
   reactants: ['[O]O', O(T)]
   kinetics: {A: 3680.3920000000007, Ea: 24681.416, n: 0.678, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: [H, OH(D)]
   reactants: [H2, O(T)]
   kinetics: {A: 340.00000000000006, Ea: 96022.8, n: 1.5, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: ['[O]O', OH(D)]
   reactants: [O(T), OO]
   kinetics: {A: 17400000.000000004, Ea: 19874.0, n: 0.0, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 - products: [OH(D), OH(D)]
   reactants: [O(T), H2O]
   kinetics: {A: 5260.000000000001, Ea: 74600.71999999999, n: 1.2, type: Arrhenius}
-  type: Reaction
+  type: ElementaryReaction
 Units: {}

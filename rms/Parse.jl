@@ -46,7 +46,7 @@ function parsestring(s)
     """
     Detects if a given string is actually a quantity input using metaprogramming
     the string is parsed by julia's parser and then analyzed to check if it is in
-    the format of a quantity input 
+    the format of a quantity input
     """
     ex = Meta.parse(s)
     if !isa(ex,Symbol) && !isa(ex,String) && length(ex.args) == 3 && ex.args[1] == :* &&
@@ -134,13 +134,16 @@ function readinput(fname::String)
         end
         outdict[name] = Dict()
         outdict[name]["Species"] = spclist
-        outdict[name]["Reactions"] = Array{Reaction,1}()
+        outdict[name]["Reactions"] = Array{ElementaryReaction,1}()
     end
 
     #reactions
+    rxnindex = 1
     for rxn in D["Reactions"]
         phs = Array{String,1}()
         rxn["reactants"] = convert(Array{Any},rxn["reactants"])
+        rxn["index"] = rxnindex
+        rxnindex += 1
         for (i,item) in enumerate(rxn["reactants"])
             spc,ph = spcdict[item]
             push!(phs,ph)
@@ -154,6 +157,8 @@ function readinput(fname::String)
         end
         rxn["reactants"] = [r for r in rxn["reactants"]]
         rxn["products"] = [r for r in rxn["products"]]
+        rxn["reactantInds"] = [r.index for r in rxn["reactants"]]
+        rxn["productInds"] = [r.index for r in rxn["products"]]
         r = fcndict2obj(rxn,ymlunitsdict)
         unique!(phs)
         if length(phs) == 1
