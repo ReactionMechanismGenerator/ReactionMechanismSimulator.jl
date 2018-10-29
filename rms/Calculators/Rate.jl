@@ -6,6 +6,7 @@ include("./RateUncertainty.jl")
 include("../Constants.jl")
 
 abstract type AbstractRate end
+export AbstractRate
 
 @with_kw struct Arrhenius{N,K,Q<:Number,P<:AbstractRateUncertainty} <: AbstractRate
         A::N
@@ -130,7 +131,7 @@ export Troe
     Pmax::B
 end
 
-function evalChebyshevPolynomial(ch::Chebyshev,n::N,x::T) where {N<:Integer,T<:Number}
+function evalChebyshevPolynomial(ch::Chebyshev,n::N,x::Q) where {N<:Integer,Q<:Number}
     """
     evaluate the nth order Chebyshev Polynomial at x
     """
