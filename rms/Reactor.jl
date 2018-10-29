@@ -52,3 +52,25 @@ function addreactionratecontribution!(dydt::Array{Q,1},rxn::ElementaryReaction,s
     end
 end
 export addreactionratecontribution!
+
+function dydtBatchReactor!(y::Array{T,1},t::T,domain::Q,kfs::Array{T,1},krevs::Array{T,1},N::J) where {T<:AbstractFloat,J<:Integer,Q<:AbstractConstantKDomain}
+    dydt = zeros(N)
+    calcthermo!(domain,y,t)
+    for rxn in domain.phase.reactions
+        addreactionratecontribution!(dydt,rxn,domain.state,kfs,krevs)
+    end
+    calcdomainderivatives!(domain,dydt)
+    return dydt
+end
+
+function dydtBatchReactor!(y::Array{T,1},t::T,domain::Q,N::J) where {J<:Integer,T<:Any,Q<:AbstractVariableKDomain}
+    dydt = zeros(N)
+
+    calcthermo!(domain)
+    for rxn in domain.phase.reactions
+        addreactionratecontribution!(dydt,rxn,domain.phase,domain.state)
+    end
+    calcdomainderivatives!(domain,dydt)
+    return dydt
+end
+export dydtBatchReactor!
