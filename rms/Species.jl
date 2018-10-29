@@ -1,4 +1,5 @@
 using Parameters
+import Base: length
 include("Calculators.jl")
 
 abstract type AbstractSpecies end
@@ -13,3 +14,6 @@ export AbstractSpecies
     diffusion::N = EmptyDiffusivity()
 end
 export Species
+
+length(r::T) where {T<:AbstractSpecies}= 1
+export length
