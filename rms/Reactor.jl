@@ -36,3 +36,19 @@ function BatchSingleDomainReactor(domain::T,tspan::Tuple) where {T<:AbstractVari
     return BatchSingleDomainReactor(domain,ode)
 end
 export BatchSingleDomainReactor
+
+function getrate(rxn::T,state::MolarState,kfs::Array{Q,1},krevs::Array{Q,1}) where {T<:AbstractReaction,Q<:AbstractFloat}
+    return kfs[rxn.index]*prod(state.cs[rxn.reactantinds])-krevs[rxn.index]*prod(state.cs[rxn.productinds])
+end
+export getrate
+
+function addreactionratecontribution!(dydt::Array{Q,1},rxn::ElementaryReaction,st::MolarState,kfs::Array{Q,1},krevs::Array{Q,1}) where {Q<:Number,T<:Integer}
+    R = getrate(rxn,st,kfs,krevs)
+    for ind in rxn.reactantinds
+        dydt[ind] -= R*st.V
+    end
+    for ind in rxn.productinds
+        dydt[ind] += R*st.V
+    end
+end
+export addreactionratecontribution!
