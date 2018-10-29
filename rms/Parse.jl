@@ -157,8 +157,8 @@ function readinput(fname::String)
         end
         rxn["reactants"] = [r for r in rxn["reactants"]]
         rxn["products"] = [r for r in rxn["products"]]
-        rxn["reactantInds"] = [r.index for r in rxn["reactants"]]
-        rxn["productInds"] = [r.index for r in rxn["products"]]
+        rxn["reactantinds"] = [r.index for r in rxn["reactants"]]
+        rxn["productinds"] = [r.index for r in rxn["products"]]
         r = fcndict2obj(rxn,ymlunitsdict)
         unique!(phs)
         if length(phs) == 1
