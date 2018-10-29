@@ -1,5 +1,5 @@
 include("Phase.jl")
-include("Reactions.jl")
+include("Reaction.jl")
 
 abstract type AbstractInterface end
 export AbstractInterface
@@ -13,9 +13,9 @@ export AbstractInternalInterface
 struct EmptyInterface <: AbstractInterface end
 export EmptyInterface
 
-@with_kw struct IdealGasCatalystInterface{T<:AbstractPhase,N<:AbstractPhase} <: AbstractInternalInterface
+@with_kw struct IdealGasCatalystInterface{T<:AbstractPhase,N<:AbstractPhase,Q<:AbstractReaction} <: AbstractInternalInterface
     gas::T
     catalyst::N
-    reactions::Array{Reactions,1}
+    reactions::Array{Q,1}
 end
 export IdealGasCatalystInterface
