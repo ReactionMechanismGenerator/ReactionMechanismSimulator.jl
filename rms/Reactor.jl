@@ -16,15 +16,11 @@ end
 
 function BatchSingleDomainReactor(domain::T,tspan::Tuple) where {T<:AbstractConstantKDomain}
     kfs = map(x->getkf(x,domain.phase,domain.state),domain.phase.reactions)
-    println(kfs)
     recalcgibbs!(domain.phase,domain.state)
     keqs = map(x->getKc(x,domain.phase,domain.state),domain.phase.reactions)
-    println(keqs)
     krevs = kfs./keqs
-    println(krevs)
     N = length(domain.phase.species)
     dydt(y::Array{T,1},p::Nothing,t::T) where {T<:AbstractFloat} = dydtBatchReactor!(y,t,domain,kfs,krevs,N)
-    println(dydt(domain.state.ns,nothing,0.0))
     ode = ODEProblem(dydt,domain.state.ns,tspan)
     return BatchSingleDomainReactor(domain,ode)
 end
@@ -65,7 +61,6 @@ end
 
 function dydtBatchReactor!(y::Array{T,1},t::T,domain::Q,N::J) where {J<:Integer,T<:Any,Q<:AbstractVariableKDomain}
     dydt = zeros(N)
-
     calcthermo!(domain)
     for rxn in domain.phase.reactions
         addreactionratecontribution!(dydt,rxn,domain.phase,domain.state)
