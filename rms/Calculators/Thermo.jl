@@ -59,8 +59,8 @@ function selectPoly(nasa::NASA,T::N) where {N<:Number}
     retrieve the nasa polynomial corresponding to the T range
     """
     for p in nasa.polys
-        if T<p.Tmax
-            if T>p.Tmin
+        if T<=p.Tmax
+            if T>=p.Tmin
                 return p
             end
         end
