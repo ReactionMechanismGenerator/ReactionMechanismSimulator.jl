@@ -30,16 +30,18 @@ export IdealGas
     species::Array{Species,1}
     reactions::Array{Q,1}
     solvent::Solvent
+    spcdict::Dict{String,Int64}
     diffusionlimited::Bool = true
 end
-IdealDiluteSolution(species,reactions; name="",diffusionlimited=true) = IdealDiluteSolution(species=species,reactions=reactions,name=name,
-diffusionlimited=diffusionlimited,spcdict=Dict([sp.name=>sp.index for sp in species]))
+IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited=true) = IdealDiluteSolution(species=species,reactions=reactions,
+solvent=solvent,name=name,diffusionlimited=diffusionlimited,spcdict=Dict([sp.name=>sp.index for sp in species]))
 export IdealDiluteSolution
 
 @with_kw struct HomogeneousCatalyst{Q<:AbstractReaction} <: AbstractPhase
     name::String = ""
     species::Array{Species,1}
     reactions::Array{Q,1}
+    spcdict::Dict{String,Int64}
 end
 export HomogeneousCatalyst
 
