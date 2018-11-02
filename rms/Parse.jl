@@ -40,6 +40,8 @@ function parseentry(q,units=nothing)
         else
             return upreferred(Quantity(q,units)).val
         end
+    elseif isa(q,Dict)
+        return q
     else
         tq = typeof(q)
         throw(error("unable to parse $q of type $tq"))
