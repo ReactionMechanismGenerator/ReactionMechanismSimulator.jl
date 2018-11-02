@@ -5,7 +5,6 @@ include("State.jl")
 include("PhaseState.jl")
 include("Domain.jl")
 
-
 abstract type AbstractReactor end
 export AbstractReactor
 
@@ -15,10 +14,10 @@ struct BatchSingleDomainReactor{D<:AbstractDomain}
 end
 
 function BatchSingleDomainReactor(domain::T,tspan::Tuple) where {T<:AbstractConstantKDomain}
-    kfs = map(x->getkf(x,domain.phase,domain.state),domain.phase.reactions)
     recalcgibbs!(domain.phase,domain.state)
-    keqs = map(x->getKc(x,domain.phase,domain.state),domain.phase.reactions)
-    krevs = kfs./keqs
+    kout = map(x->getkfkrev(x,domain.phase,domain.state),domain.phase.reactions)
+    kfs = [kout[i][1] for i in 1:length(kout)]
+    krevs = [kout[i][2] for i in 1:length(kout)]
     N = length(domain.phase.species)
     dydt(y::Array{T,1},p::Nothing,t::T) where {T<:AbstractFloat} = dydtBatchReactor!(y,t,domain,kfs,krevs,N)
     ode = ODEProblem(dydt,domain.state.ns,tspan)
