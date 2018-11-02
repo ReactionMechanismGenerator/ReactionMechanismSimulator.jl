@@ -100,6 +100,23 @@ end
 getatomdictsmiles(smiles) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
 getatomdictinchi(inchi) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromInchi(inchi)))
 
+function getspeciesradius(atomdict::Dict{String,Int64},nbonds::Int64)
+    """
+    estimates the McGowan radius by calculating the McGowan Volume
+    from the number of each type of atom and the number of bonds
+    as described in Zhao et al. 2003
+    """
+    Vtot = 0.0
+    for (atm,n) in atomdict
+        Vtot += n*mcgowanvolumes[atm]
+    end
+    Vtot -= nbonds*upreferred(6.56u"mL/mol").val
+    V = Vtot/Na
+    r = (0.75/Base.pi*V)^(1.0/3.0)
+    return r
+end
+
+
 function fcndict2obj(d::T,ymlunitsdict::Q) where {T,Q<:Any}
     """
     constructs an object from a dictionary by recursively constructing
