@@ -71,12 +71,11 @@ function calcthermo!(d::ConstantTVDomain{Z,W,Y},y::T,t::Q) where {Z<:MolarState,
 end
 export calcthermo!
 
-
 function calcdomainderivatives!(d::T,dydt::Array{N,1}) where {T<:AbstractConstantKDomain,N<:AbstractFloat} end
 
 function calcdomainderivatives!(d::ConstantVDomain{Z,W,Y},dydt::Array{N,1}) where {Z<:MolarState,W<:IdealGas,N<:AbstractFloat,Y<:Integer}
     Cpave = mapreduce(x->getHeatCapacity(x.thermo,d.state.T)*d.state.ns[x.index],+,d.phase.species)/d.state.N
     Cvave = Cpave-R
-    dydt[d.indexes[3]] = -d.state.Us'*dydt[d.indexes[1]:d.indexes[2]]/(d.state.C*Cvave)
+    dydt[d.indexes[3]] = -d.state.Us'*(dydt[d.indexes[1]:d.indexes[2]]/st.V)/(d.state.C*Cvave) #divide by V to cancel ωV to ω
 end
 export calcdomainderivatives!
