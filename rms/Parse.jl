@@ -1,9 +1,14 @@
 using Unitful
 using YAML
+using PyCall
+
+@pyimport rdkit.Chem as Chem
+
 include("Tools.jl")
 include("Calculators.jl")
 include("Species.jl")
 include("Reaction.jl")
+
 module Calc
     include("Calculators.jl")
 end
