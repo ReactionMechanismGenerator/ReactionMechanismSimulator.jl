@@ -25,6 +25,16 @@ const elementdict = Dict([1=>"H",6=>"C",8=>"O",7=>"N",17=>"Cl",16=>"S",18=>"Ar",
 
 const allowedfcnlist = vcat(names(Calc),names(Spc),names(Rxn))
 
+"""
+Zhao et al 2003
+"""
+const mcgowanvolumes = Dict(["H"=> upreferred(8.71u"mL/mol").val, "He"=> upreferred(6.75u"mL/mol").val,
+        "C"=> upreferred(16.35u"mL/mol").val, "N"=> upreferred(14.39u"mL/mol").val,
+         "O"=> upreferred(12.43u"mL/mol").val, "F"=> upreferred(10.47u"mL/mol").val,
+         "Ne"=> upreferred(8.51u"mL/mol").val,"Si"=> upreferred(26.83u"mL/mol").val, "P"=> upreferred(24.87u"mL/mol").val,
+        "S"=> upreferred(22.91u"mL/mol").val, "Cl"=> upreferred(20.95u"mL/mol").val,
+         "Ar"=> upreferred(18.99u"mL/mol").val,"Br"=> upreferred(26.21u"mL/mol").val,])
+
 function parseentry(q,units=nothing)
     """
     parses single YAML lines into strings, numbers and arrays of Numbers in SI units
