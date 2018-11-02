@@ -67,9 +67,9 @@ function calcthermo!(d::ConstantTVDomain{Z,W,Y},y::T,t::Q) where {Z<:MolarState,
     d.state.N = sum(d.state.ns)
     d.state.cs = d.state.ns./d.state.V
     d.state.C = d.state.N/d.state.V
+    d.state.mu = d.phase.solvent.mu(d.state.T)
 end
 export calcthermo!
-
 
 
 function calcdomainderivatives!(d::T,dydt::Array{N,1}) where {T<:AbstractConstantKDomain,N<:AbstractFloat} end
