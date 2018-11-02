@@ -140,6 +140,7 @@ function evalChebyshevPolynomial(ch::Chebyshev,n::N,x::Q) where {N<:Integer,Q<:N
     elseif n == 1
         return x
     else
+        T = 0.0
         T0 = 1
         T1 = x
         for i in 1:(n-1)
