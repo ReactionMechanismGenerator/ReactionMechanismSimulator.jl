@@ -20,6 +20,9 @@ module Rxn
 end
 
 const unitsdict = Dict()
+const elementdict = Dict([1=>"H",6=>"C",8=>"O",7=>"N",17=>"Cl",16=>"S",18=>"Ar",10=>"Ne",2=>"He",
+        15=>"P",9=>"F",35=>"Br",53=>"I",289=>"Fl"])
+
 const allowedfcnlist = vcat(names(Calc),names(Spc),names(Rxn))
 
 function parseentry(q,units=nothing)
