@@ -91,10 +91,48 @@ function getKc(rxn::ElementaryReaction,ph::T,st::MolarState) where {T<:AbstractP
 end
 export getKc
 
-function getrate(rxn::ElementaryReaction,ph::IdealGas,st::MolarState)
+"""
+Calculates the forward and reverse rate coefficients for a given reaction, phase and state
+Maintains diffusion limitations if the phase has diffusionlimited=true
+"""
+function getkfkrev(rxn::ElementaryReaction,ph::T,st::MolarState) where {T<:AbstractPhase}
     kf = getkf(rxn,ph,st)
     Kc = getKc(rxn,ph,st)
     krev = kf/Kc
+    if ph.diffusionlimited
+        if length(rxn.reactants) == 1
+            if length(rxn.products) > 1
+                krevdiff = getDiffusiveRate(rxn.products,st)
+                krev = krev*krevdiff/(krev+krevdiff)
+                kf = Kc*krev
+            end
+        elseif length(rxn.products) == 1
+            kfdiff = getDiffusiveRate(rxn.reactants,st)
+            kf = kf*kfdiff/(kf+kfdiff)
+            krev = kf/Kc
+        elseif length(rxn.products) == length(rxn.reactants)
+            kfdiff = getDiffusiveRate(rxn.reactants,st)
+            krevdiff = getDiffusiveRate(rxn.products,st)
+            kff = kf*kfdiff/(kf+kfdiff)
+            krevr = krev*krevdiff/(krev+krevdiff)
+            kfr = Kc*krevr
+            if kff > kfr
+                kf = kfr
+                krev = krevr
+            else
+                kf = kff
+                krev = kf/Kc
+            end
+        end
+    end
+    return kf,krev
+end
+
+"""
+Calculate the net reaction rate for the given reaction
+"""
+function getrate(rxn::ElementaryReaction,ph::IdealGas,st::MolarState)
+    kf,krev = getkfkrev(rxn,ph,st)
     return kf*prod(st.cs[rxn.reactantinds]) - krev*prod(st.cs[rxn.productinds])
 end
 export getrate
