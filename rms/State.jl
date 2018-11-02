@@ -15,12 +15,16 @@ export EmptyState
     C::W = 0.0
     t::W = 0.0
     N::W = 0.0
+    mu::W = 0.0
     Gs::Array{W,1} = Array{Float64,1}()
     Hs::Array{W,1} = Array{Float64,1}()
     Us::Array{W,1} = Array{Float64,1}()
     Ss::Array{W,1} = Array{Float64,1}()
     Cps::Array{W,1} = Array{Float64,1}()
+    diffusivity::Array{W,1} = Array{Float64,1}()
 end
+#Note that the main MolarState constructor is in PhaseState.jl
+#to avoid importing AbstractPhase here
 export MolarState
 
 length(m::MolarState) = 1
