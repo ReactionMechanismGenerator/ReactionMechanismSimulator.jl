@@ -185,6 +185,23 @@ function readinput(fname::String)
         for d in p["Species"]
             d["index"] = spcindex
             spcindex += 1
+            spcname = d["name"]
+            #attempt to generate molecular information from rdkit if possible
+            if !("atomnums" in keys(d)) || !("bondnum" in keys(d))
+                if "smiles" in keys(d)
+                    try
+                        d["atomnums"],d["bondnum"] = getatomdictsmiles(d["smiles"])
+                    catch
+                        @warn("failed to generate molecular information from smiles for species $spcname")
+                    end
+                elseif "inchi" in keys(d)
+                    try
+                        d["atomnums"],d["bondnum"] = getatomdictinchi(d["inchi"])
+                    catch
+                        @warn("failed to generate molecular information from inchi for species $spcname")
+                    end
+                end
+            end
             spc = fcndict2obj(d,ymlunitsdict)
             push!(spclist,spc)
             spcdict[spc.name] = (spc,p["name"])
