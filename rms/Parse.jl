@@ -202,6 +202,21 @@ function readinput(fname::String)
                     end
                 end
             end
+            #if diffusion model is not present and we can calculate molecular radius and stokesdiffusivity
+            if !("diffusion" in keys(d)) && "atomnums" in keys(d) && "bondnum" in keys(d)
+                try
+                    diffD = Dict()
+                    diffD["type"] = "StokesDiffusivity"
+                    diffD["r"] = getspeciesradius(d["atomnums"],d["bondnum"])
+                    d["diffusion"] = diffD
+                    if !("radius" in keys(d))
+                        d["radius"] = diffD["r"]
+                    end
+                catch
+                    @warn("failed to generate StokesDiffusivity model for species $spcname")
+                end
+            end
+
             spc = fcndict2obj(d,ymlunitsdict)
             push!(spclist,spc)
             spcdict[spc.name] = (spc,p["name"])
