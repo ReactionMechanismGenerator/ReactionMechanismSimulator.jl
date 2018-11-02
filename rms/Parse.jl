@@ -80,6 +80,26 @@ function parsestring(s)
     end
 end
 
+function getatomdictfromrdkit(mol)
+    """
+    retrives the number of each type of atom and the number of bonds of an rdkit molecule
+    """
+    atmD = Dict{String,Int64}()
+    for atm in mol[:GetAtoms]()
+        v = elementdict[atm[:GetAtomicNum]()]
+        if v in keys(atmD)
+            atmD[v] += 1
+        else
+            atmD[v] = 1
+        end
+    end
+    nbonds = length(mol[:GetBonds]())
+    return atmD,nbonds
+end
+
+getatomdictsmiles(smiles) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
+getatomdictinchi(inchi) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromInchi(inchi)))
+
 function fcndict2obj(d::T,ymlunitsdict::Q) where {T,Q<:Any}
     """
     constructs an object from a dictionary by recursively constructing
