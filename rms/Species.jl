@@ -11,7 +11,10 @@ export AbstractSpecies
     inchi::String = ""
     smiles::String = ""
     thermo::T
+    atomnums::Dict{String,Int64} = Dict()
+    bondnum::Int64=-1
     diffusion::N = EmptyDiffusivity()
+    radius::Float64 = 0.0
 end
 export Species
 
