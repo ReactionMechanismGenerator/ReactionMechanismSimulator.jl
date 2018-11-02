@@ -25,6 +25,14 @@ function MolarState(inputdict::Dict{Z,W},ph::Q) where {Z<:String,W<:AbstractFloa
     if isa(ph,IdealDiluteSolution) #volume must be defined for constant V reactors
         @assert ms.V != 0.0 "Volume must be defined for IdealDiluteSolution Phase"
     end
+    if :solvent in fieldnames(typeof(ph))
+        ms.mu = ph.solvent.mu(ms.T)
+    end
+    if ph.diffusionlimited == true
+        ms.diffusivity = map(x->x.diffusion(T=ms.T,mu=ms.mu),ph.species)
+    else
+        ms.diffusivity = zeros(n)
+    end
     return ms
 end
 export MolarState
