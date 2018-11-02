@@ -53,6 +53,16 @@ function getkf(rxn::ElementaryReaction,ph::T,st::MolarState) where {T<:AbstractP
 end
 export getkf
 
+function getDiffusiveRate(spcs,st::MolarState) where {T<:AbstractPhase}
+    if length(spcs) == 1
+        return Inf
+    elseif length(spcs) == 2
+        kf = 4.0*Base.pi*(st.diffusivity[1]+st.diffusivity[2])*(spcs[1].radius+spcs[2].radius)*Na
+    else
+        throw(error())
+    end
+end
+
 function getKc(rxn::ElementaryReaction,ph::T,st::MolarState) where {T<:AbstractPhase}
     return exp(-(sum(st.Gs[rxn.productinds])-sum(st.Gs[rxn.reactantinds]))/(R*st.T))*(1.0e5/(R*st.T))^(length(rxn.productinds)-length(rxn.reactantinds))
 end
