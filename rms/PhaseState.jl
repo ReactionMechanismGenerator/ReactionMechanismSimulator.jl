@@ -1,4 +1,5 @@
 using Parameters
+using SpecialFunctions
 include("Constants.jl")
 include("Species.jl")
 include("Reaction.jl")
@@ -61,14 +62,28 @@ function getkf(rxn::ElementaryReaction,ph::T,st::MolarState) where {T<:AbstractP
 end
 export getkf
 
-function getDiffusiveRate(spcs,st::MolarState) where {T<:AbstractPhase}
+"""
+Calculates the diffusion limited rate coefficient
+for 1 spc returns Inf
+for 2 spc calculates using the Smolchowski equation
+for >2 spc calculates using the Generalized Smolchowski equation
+Equations from Flegg 2016
+"""
+function getDiffusiveRate(spcs::Q,st::MolarState) where {Q<:AbstractArray}
     if length(spcs) == 1
         return Inf
     elseif length(spcs) == 2
         kf = 4.0*Base.pi*(st.diffusivity[1]+st.diffusivity[2])*(spcs[1].radius+spcs[2].radius)*Na
     else
-        throw(error())
+        N = length(spcs)
+        a = (3.0*length(spcs)-5.0)/2.0
+        Dinv = 1.0./st.diffusivity
+        Dbar = 1.0./reverse(cumsum(Dinv))
+        Dhat = st.diffusivity .+ Dbar
+        deltaN = sum(Dinv)/sum(sum([[1.0/(st.diffusivity[i]*st.diffusivity[m]) for m in 1:N-1 if i>m] for i in 2:N]))
+        kf = prod(Dhat[2:end].^1.5)*4*Base.pi^(a+1)/gamma(a)*(sum(getfield.(spcs,:radius))/sqrt(deltaN))^(2*a)*Na^(N-1)
     end
+    return kf
 end
 
 function getKc(rxn::ElementaryReaction,ph::T,st::MolarState) where {T<:AbstractPhase}
