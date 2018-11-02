@@ -137,6 +137,9 @@ function getrate(rxn::ElementaryReaction,ph::IdealGas,st::MolarState)
 end
 export getrate
 
+"""
+Adds all of the the Species rate contributions from the reaction to the moles vector y
+"""
 function addreactionratecontribution!(y::Array{Q,1},rxn::ElementaryReaction,ph::IdealGas,st::MolarState) where {Q<:Number,T<:Integer}
     R = getrate(rxn,ph,st)
     for ind in rxn.reactantinds
