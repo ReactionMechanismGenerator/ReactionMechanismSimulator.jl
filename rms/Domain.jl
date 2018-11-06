@@ -18,8 +18,17 @@ export AbstractVariableKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Array{S,1}
+    constantspeciesinds::Array{S,1}
 end
-ConstantTPDomain(;state::T,phase::N,interfaces::Array{Q,1}=Array{EmptyInterface,1}()) where {T<:AbstractState,N<:AbstractPhase,Q<:AbstractInterface} = ConstantTPDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index])
+function ConstantTPDomain(;state::T,phase::N,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),constantspecies::Array{String,1}=Array{String,1}()) where {T<:AbstractState,N<:AbstractPhase,Q<:AbstractInterface}
+    if length(constantspecies) > 0
+        spcnames = getfield.(phase.species,:name)
+        constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    return ConstantTPDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index],constspcinds)
+end
 export ConstantTPDomain
 
 @with_kw struct ConstantVDomain{T<:AbstractState,N<:AbstractPhase,S<:Integer} <: AbstractVariableKDomain
@@ -27,8 +36,17 @@ export ConstantTPDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Array{S,1}
+    constantspeciesinds::Array{S,1}
 end
-ConstantVDomain(;state::T,phase::N,interfaces::Array{Q,1}=Array{AbstractInterface,1}()) where {T<:AbstractState,N<:AbstractPhase,Q<:AbstractInterface} = ConstantVDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index,0])
+function ConstantVDomain(;state::T,phase::N,interfaces::Array{Q,1}=Array{AbstractInterface,1}(),constantspecies::Array{String,1}=Array{String,1}()) where {T<:AbstractState,N<:AbstractPhase,Q<:AbstractInterface}
+    if length(constantspecies) > 0
+        spcnames = getfield.(phase.species,:name)
+        constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    return ConstantVDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index,0],constspcinds)
+end
 export ConstantVDomain
 
 @with_kw struct ConstantTVDomain{T<:AbstractState,N<:AbstractPhase,S<:Integer} <: AbstractConstantKDomain
@@ -36,8 +54,17 @@ export ConstantVDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Array{S,1}
+    constantspeciesinds::Array{S,1}
 end
-ConstantTVDomain(;state::T,phase::N,interfaces::Array{Q,1}=Array{EmptyInterface,1}()) where {T<:AbstractState,N<:AbstractPhase,Q<:AbstractInterface} = ConstantTVDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index])
+function ConstantTVDomain(;state::T,phase::N,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),constantspecies::Array{String,1}=Array{String,1}()) where {T<:AbstractState,N<:AbstractPhase,Q<:AbstractInterface}
+    if length(constantspecies) > 0
+        spcnames = getfield.(phase.species,:name)
+        constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    return ConstantTVDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index],constspcinds)
+end
 export ConstantTVDomain
 
 
