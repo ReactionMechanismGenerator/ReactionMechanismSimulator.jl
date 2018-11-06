@@ -126,7 +126,7 @@ function fcndict2obj(d::T,ymlunitsdict::Q) where {T,Q<:Any}
     """
     strfcn = d["type"]
     fcn = Symbol(strfcn)
-    @assert fcn in allowedfcnlist
+    @assert fcn in allowedfcnlist fcn
     kwexprs = Array{Expr,1}()
     for (key,val) in d
         if key == "type"
