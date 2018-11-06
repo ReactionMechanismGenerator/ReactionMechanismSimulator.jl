@@ -4,7 +4,7 @@ include("Calculators.jl")
 abstract type AbstractSolvent end
 export AbstractSolvent
 
-struct Solvent
+struct Solvent <: AbstractSolvent
     name::String
     mu::AbstractViscosity
 end
