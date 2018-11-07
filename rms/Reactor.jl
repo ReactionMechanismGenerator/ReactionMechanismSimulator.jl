@@ -25,9 +25,13 @@ function BatchSingleDomainReactor(domain::T,tspan::Tuple) where {T<:AbstractCons
 end
 
 function BatchSingleDomainReactor(domain::T,tspan::Tuple) where {T<:AbstractVariableKDomain}
-    N = length(domain.phase.species)
+    N = length(domain.phase.species)+length(domain.indexes)-2 #Note that for multi domain reactors in the future indexing will have to be managed more carefully
+    y0 = deepcopy(domain.state.ns)
+    if length(y0) != N
+        push!(y0,domain.state.T)
+    end
     dydt(y::Array{T,1},p::Nothing,t::T) where {T<:AbstractFloat} = dydtBatchReactor!(y,t,domain,N)
-    ode = ODEProblem(dydt,domain.state.ns,tspan)
+    ode = ODEProblem(dydt,y0,tspan)
     return BatchSingleDomainReactor(domain,ode)
 end
 export BatchSingleDomainReactor
