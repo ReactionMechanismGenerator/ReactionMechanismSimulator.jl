@@ -98,7 +98,7 @@ function calcthermo!(d::ConstantTVDomain{Z,W,Y},y::T,t::Q) where {Z<:MolarState,
 end
 export calcthermo!
 
-function calcdomainderivatives!(d::T,dydt::Array{N,1}) where {T<:AbstractConstantKDomain,N<:AbstractFloat}
+function calcdomainderivatives!(d::T,dydt::Array{N,1}) where {T<:AbstractDomain,N<:AbstractFloat}
     for ind in d.constantspeciesinds #make dydt zero for constant species
         dydt[ind] = 0.0
     end
