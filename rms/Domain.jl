@@ -45,7 +45,7 @@ function ConstantVDomain(;state::T,phase::N,interfaces::Array{Q,1}=Array{Abstrac
     else
         constspcinds = Array{Int64,1}()
     end
-    return ConstantVDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index,0],constspcinds)
+    return ConstantVDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1],constspcinds)
 end
 export ConstantVDomain
 
