@@ -19,12 +19,23 @@ function MolarState(inputdict::Dict{Z,W},ph::Q) where {Z<:String,W<:AbstractFloa
     end
     D[:ns] = ns
     ms = MolarState(;D...)
+    ms.N = sum(ms.ns)
     ms.cs = zeros(n)
     ms.Gs = zeros(n)
     ms.Hs = zeros(n)
     ms.Us = zeros(n)
+
     if isa(ph,IdealDiluteSolution) #volume must be defined for constant V reactors
         @assert ms.V != 0.0 "Volume must be defined for IdealDiluteSolution Phase"
+    end
+    if isa(ph,IdealGas)
+        if ms.V == 0.0 && ms.T != 0.0 && ms.P != 0.0
+            ms.V = ms.N*R*ms.T/ms.P
+        elseif ms.T == 0.0 && ms.P != 0.0 && ms.V != 0.0
+            ms.T = ms.P*ms.V/(R*ms.N)
+        elseif ms.P == 0.0 && ms.T != 0.0 && ms.V != 0.0
+            ms.P = ms.N*R*ms.T/ms.V
+        end
     end
     if :solvent in fieldnames(typeof(ph))
         ms.mu = ph.solvent.mu(ms.T)
