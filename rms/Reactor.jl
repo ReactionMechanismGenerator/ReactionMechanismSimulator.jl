@@ -64,7 +64,7 @@ end
 
 function dydtBatchReactor!(y::Array{T,1},t::T,domain::Q,N::J) where {J<:Integer,T<:Any,Q<:AbstractVariableKDomain}
     dydt = zeros(N)
-    calcthermo!(domain)
+    calcthermo!(domain,y,t)
     for rxn in domain.phase.reactions
         addreactionratecontribution!(dydt,rxn,domain.phase,domain.state)
     end
