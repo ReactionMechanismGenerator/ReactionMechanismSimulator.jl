@@ -154,10 +154,10 @@ Adds all of the the Species rate contributions from the reaction to the moles ve
 function addreactionratecontribution!(y::Array{Q,1},rxn::ElementaryReaction,ph::IdealGas,st::MolarState) where {Q<:Number,T<:Integer}
     R = getrate(rxn,ph,st)
     for ind in rxn.reactantinds
-        y[ind] -= R
+        y[ind] -= R*st.V
     end
     for ind in rxn.productinds
-        y[ind] += R
+        y[ind] += R*st.V
     end
 end
 export addreactionratecontribution!
