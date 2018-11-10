@@ -55,16 +55,16 @@ end
 export recalcgibbs!
 
 function recalcgibbsandinternal!(ph::T,st::MolarState) where {T<:IdealPhase}
-    map!(x->getEnthalpy(x,st.T),st.Hs,ph.species)
+    st.Hs = getEnthalpy.(getfield.(ph.species,:thermo),st.T)
     st.Us = st.Hs .- st.P*st.V
     st.Gs = st.Hs .- st.T.*map(x->getEntropy(x,st.T),ph.species)
 end
 export recalcgibbsandinternal!
 
 function recalcgibbsandinternal!(ph::IdealGas,st::MolarState)
-    map!(x->getEnthalpy(x.thermo,st.T),st.Hs,ph.species)
+    st.Hs = getEnthalpy.(getfield.(ph.species,:thermo),st.T)
     st.Us = st.Hs .- R*st.T
-    st.Gs = st.Hs .- st.T.*map(x->getEntropy(x.thermo,st.T),ph.species)
+    st.Gs = st.Hs .- st.T.*getEntropy.(getfield.(ph.species,:thermo),st.T)
 end
 export recalcgibbsandinternal!
 
