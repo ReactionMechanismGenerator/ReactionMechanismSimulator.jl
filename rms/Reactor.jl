@@ -15,9 +15,7 @@ end
 
 function BatchSingleDomainReactor(domain::T,tspan::Tuple) where {T<:AbstractConstantKDomain}
     recalcgibbs!(domain.phase,domain.state)
-    kout = getkfkrev.(domain.phase.reactions,domain.phase,domain.state)
-    kfs = [kout[i][1] for i in 1:length(kout)]
-    krevs = [kout[i][2] for i in 1:length(kout)]
+    kfs,krevs = getkfkrevs(domain.phase,domain.state)
     N = length(domain.phase.species)
     dydt(y::Array{T,1},p::Nothing,t::T) where {T<:AbstractFloat} = dydtBatchReactor!(y,t,domain,kfs,krevs,N)
     ode = ODEProblem(dydt,domain.state.ns,tspan)
