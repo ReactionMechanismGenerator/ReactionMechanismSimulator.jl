@@ -21,5 +21,5 @@ export ConstantViscosity
     E::N
 end
 
-(rv::RiedelViscosity)(T::Q) where {Q<:Number} = exp(rv.A+rv.B/T+rv.C*log(T)+rv.D*T^rv.E)
+(rv::RiedelViscosity)(T::Q) where {Q<:Number} = @fastmath exp(rv.A+rv.B/T+rv.C*log(T)+rv.D*T^rv.E)
 export RiedelViscosity

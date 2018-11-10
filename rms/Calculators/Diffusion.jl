@@ -17,5 +17,5 @@ export ConstantDiffusivity
 @with_kw struct StokesDiffusivity{N<:Number} <: AbstractDiffusivity
     r::N
 end
-(sd::StokesDiffusivity)(;T::N,mu::Q,P::R=0.0) where {N,R,Q<:Number} = kB*T/(6*Base.pi*mu*sd.r)
+(sd::StokesDiffusivity)(;T::N,mu::Q,P::R=0.0) where {N,R,Q<:Number} = @fastmath kB*T/(6*Base.pi*mu*sd.r)
 export StokesDiffusivity
