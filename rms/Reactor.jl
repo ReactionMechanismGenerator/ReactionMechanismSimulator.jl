@@ -36,8 +36,27 @@ function BatchSingleDomainReactor(domain::T,tspan::Tuple) where {T<:AbstractVari
 end
 export BatchSingleDomainReactor
 
-function getrate(rxn::T,state::MolarState,kfs::Array{Q,1},krevs::Array{Q,1}) where {T<:AbstractReaction,Q<:AbstractFloat}
-    return kfs[rxn.index]*prod(state.cs[rxn.reactantinds])-krevs[rxn.index]*prod(state.cs[rxn.productinds])
+@inline function getrate(rxn::T,state::MolarState,kfs::Array{Q,1},krevs::Array{Q,1}) where {T<:AbstractReaction,Q<:AbstractFloat}
+    Nreact = length(rxn.reactantinds)
+    Nprod = length(rxn.productinds)
+    R = 0.0
+    if Nreact == 1
+        @fastmath @inbounds R += kfs[rxn.index]*state.cs[rxn.reactantinds[1]]
+    elseif Nreact == 2
+        @fastmath @inbounds R += kfs[rxn.index]*state.cs[rxn.reactantinds[1]]*state.cs[rxn.reactantinds[2]]
+    elseif Nreact == 3
+        @fastmath @inbounds R += kfs[rxn.index]*state.cs[rxn.reactantinds[1]]*state.cs[rxn.reactantinds[2]]*state.cs[rxn.reactantinds[3]]
+    end
+
+    if Nprod == 1
+        @fastmath @inbounds R -= krevs[rxn.index]*state.cs[rxn.productinds[1]]
+    elseif Nprod == 2
+        @fastmath @inbounds R -= krevs[rxn.index]*state.cs[rxn.productinds[1]]*state.cs[rxn.productinds[2]]
+    elseif Nprod == 3
+        @fastmath @inbounds R -= krevs[rxn.index]*state.cs[rxn.productinds[1]]*state.cs[rxn.productinds[2]]*state.cs[rxn.productinds[3]]
+    end
+
+    return R
 end
 export getrate
 
