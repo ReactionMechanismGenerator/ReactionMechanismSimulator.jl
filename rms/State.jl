@@ -29,3 +29,9 @@ export MolarState
 
 length(m::MolarState) = 1
 export length
+
+iterate(m::MolarState) = m
+export iterate
+
+Broadcast.broadcastable(st::MolarState) = Ref(st)
+export broadcastable

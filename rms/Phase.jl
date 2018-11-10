@@ -47,3 +47,9 @@ export HomogeneousCatalyst
 
 length(p::T) where {T<:AbstractPhase} = 1
 export length
+
+iterate(p::T) where {T<:AbstractPhase} = p
+export iterate
+
+Broadcast.broadcastable(p::T) where {T<:AbstractPhase} = Ref(p)
+export broadcastable

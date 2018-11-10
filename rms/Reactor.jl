@@ -15,7 +15,7 @@ end
 
 function BatchSingleDomainReactor(domain::T,tspan::Tuple) where {T<:AbstractConstantKDomain}
     recalcgibbs!(domain.phase,domain.state)
-    kout = map(x->getkfkrev(x,domain.phase,domain.state),domain.phase.reactions)
+    kout = getkfkrev.(domain.phase.reactions,domain.phase,domain.state)
     kfs = [kout[i][1] for i in 1:length(kout)]
     krevs = [kout[i][2] for i in 1:length(kout)]
     N = length(domain.phase.species)
