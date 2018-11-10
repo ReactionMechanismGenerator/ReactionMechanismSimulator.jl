@@ -156,5 +156,13 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
     return kf,krev
 end
 
+@inline function getkfkrevs(ph::T,st::MolarState) where {T<:AbstractPhase}
+    N = length(ph.reactions)
+    kf = zeros(N)
+    krev = zeros(N)
+    @simd for i = 1:N
+       @fastmath @inbounds kf[i],krev[i] = getkfkrev(ph.reactions[i],ph,st)
     end
+    return kf,krev
 end
+export getkfkrevs
