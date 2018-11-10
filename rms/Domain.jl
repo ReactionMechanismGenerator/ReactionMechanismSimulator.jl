@@ -1,4 +1,5 @@
 using Parameters
+using LinearAlgebra
 include("Constants.jl")
 include("Phase.jl")
 include("State.jl")
@@ -72,44 +73,44 @@ function calcthermo!(d::ConstantTPDomain{Z,W,Y},y::T,t::Q) where {Z<:MolarState,
     d.state.ns = y[d.indexes[1]:d.indexes[2]]
     d.state.t = t
     d.state.N = sum(d.state.ns)
-    d.state.V = d.state.N*d.state.T*R/d.state.P
-    d.state.cs = d.state.ns./d.state.V
-    d.state.C = d.state.N/d.state.V
+    @fastmath d.state.V = d.state.N*d.state.T*R/d.state.P
+    @fastmath d.state.cs = d.state.ns./d.state.V
+    @fastmath d.state.C = d.state.N/d.state.V
 end
 
 function calcthermo!(d::ConstantVDomain{Z,W,Y},y::T,t::Q) where {Z<:MolarState,W<:IdealGas,Y<:Integer,T<:AbstractArray,Q<:AbstractFloat}
-    d.state.ns = y[d.indexes[1]:d.indexes[2]]
-    d.state.T = y[d.indexes[3]]
+    @inbounds d.state.ns = y[d.indexes[1]:d.indexes[2]]
+    @inbounds d.state.T = y[d.indexes[3]]
     d.state.t = t
     d.state.N = sum(d.state.ns)
-    d.state.cs = d.state.ns./d.state.V
-    d.state.C = d.state.N/d.state.V
-    d.state.P = d.state.C*R*d.state.T
+    @fastmath d.state.cs = d.state.ns./d.state.V
+    @fastmath d.state.C = d.state.N/d.state.V
+    @fastmath d.state.P = d.state.C*R*d.state.T
     recalcgibbsandinternal!(d.phase,d.state)
 end
 
 function calcthermo!(d::ConstantTVDomain{Z,W,Y},y::T,t::Q) where {Z<:MolarState,W<:IdealDiluteSolution,Y<:Integer,T<:AbstractArray,Q<:AbstractFloat}
-    d.state.ns = y[d.indexes[1]:d.indexes[2]]
+    @inbounds d.state.ns = y[d.indexes[1]:d.indexes[2]]
     d.state.t = t
     d.state.N = sum(d.state.ns)
-    d.state.cs = d.state.ns./d.state.V
-    d.state.C = d.state.N/d.state.V
+    @fastmath d.state.cs = d.state.ns./d.state.V
+    @fastmath d.state.C = d.state.N/d.state.V
     d.state.mu = d.phase.solvent.mu(d.state.T)
 end
 export calcthermo!
 
 function calcdomainderivatives!(d::T,dydt::Array{N,1}) where {T<:AbstractDomain,N<:AbstractFloat}
     for ind in d.constantspeciesinds #make dydt zero for constant species
-        dydt[ind] = 0.0
+        @inbounds dydt[ind] = 0.0
     end
 end
 
 function calcdomainderivatives!(d::ConstantVDomain{Z,W,Y},dydt::Array{N,1}) where {Z<:MolarState,W<:IdealGas,N<:AbstractFloat,Y<:Integer}
-    Cpave = mapreduce(x->getHeatCapacity(x.thermo,d.state.T)*d.state.ns[x.index],+,d.phase.species)/d.state.N
-    Cvave = Cpave-R
-    dydt[d.indexes[3]] = -d.state.Us'*(dydt[d.indexes[1]:d.indexes[2]]/d.state.V)/(d.state.C*Cvave) #divide by V to cancel ωV to ω
+    @fastmath @inbounds Cpave = mapreduce(x->getHeatCapacity(x.thermo,d.state.T)*d.state.ns[x.index],+,d.phase.species)/d.state.N
+    @fastmath Cvave = Cpave-R
+    @inbounds @fastmath dydt[d.indexes[3]] = -d.state.Us'*(dydt[d.indexes[1]:d.indexes[2]]/d.state.V)/(d.state.C*Cvave) #divide by V to cancel ωV to ω
     for ind in d.constantspeciesinds #make dydt zero for constant species
-        dydt[ind] = 0.0
+        @inbounds dydt[ind] = 0.0
     end
 end
 export calcdomainderivatives!
