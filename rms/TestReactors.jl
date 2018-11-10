@@ -53,6 +53,6 @@ react = BatchSingleDomainReactor(domain,(0.0,0.101)) #Create the reactor object
 sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
 
 ts = exp.(range(log(1e-15),length=10000,stop=log(0.1)))
-IDT = ts[argmax(diff([sol(t)[end] for t in ts]))] #Ignition Delay Time
+IDT = ts[argmax(diff([sol(t)[end] for t in ts]))] #Ignition Delay Time based on argmax(dTdt(t))
 
 @test IDT ≈ 0.038384723436228063 rtol=1e-5 #from Cantera simulation
