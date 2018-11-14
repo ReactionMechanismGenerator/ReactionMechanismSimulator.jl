@@ -9,10 +9,9 @@ rxns = phaseDict["phase"]["Reactions"];
 solv = Solvent("octane",RiedelViscosity(-98.805,3905.5,14.103,-2.5112e-5,2.0))
 liq = IdealDiluteSolution(spcs,rxns,solv;name="phase",diffusionlimited=true) #Define the phase (how species thermodynamic and kinetic properties calculated)
 initialconds = Dict(["T"=>450.0,"P"=>1e5,"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6]) #Set simulation Initial Temp and Pressure
-state = MolarState(initialconds,liq) #Define the initial state of the system
-domain = ConstantTVDomain(state=state,phase=liq,constantspecies=["oxygen"]) #Define the domain (encodes how system thermodynamic properties calculated)
+domain,y0 = ConstantTVDomain(phase=liq,initialconds=initialconds,constantspecies=["oxygen"]) #Define the domain (encodes how system thermodynamic properties calculated)
 
-react = BatchSingleDomainReactor(domain,(0.0,140000.01)) #Create the reactor object
+react = BatchReactor(domain,y0,(0.0,140000.01)) #Create the reactor object
 sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-8); #solve the ode associated with the reactor
 
 spcnames = getfield.(liq.species,:name)
@@ -27,10 +26,9 @@ rxns = phaseDict["gas"]["Reactions"];
 
 ig = IdealGas(spcs,rxns,name="gas") #Define the phase (how species thermodynamic and kinetic properties calculated)
 initialconds = Dict(["T"=>1000.0,"P"=>1e5,"H2"=>0.67,"O2"=>0.33]) #Set simulation Initial Temp and Pressure
-state = MolarState(initialconds,ig) #Define the initial state of the system
-domain = ConstantTPDomain(state=state,phase=ig) #Define the domain (encodes how system thermodynamic properties calculated)
+domain,y0 = ConstantTPDomain(phase=ig,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
 
-react = BatchSingleDomainReactor(domain,(0.0,150.11094)) #Create the reactor object
+react = BatchReactor(domain,y0,(0.0,150.11094)) #Create the reactor object
 sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
 
 spcnames = getfield.(ig.species,:name)
@@ -46,10 +44,9 @@ N = sum(y)
 #Constant V adiabatic Ideal Gas
 #uses superminimal.yml mechanism
 initialconds = Dict(["T"=>1000.0,"P"=>10.0e5,"H2"=>0.67,"O2"=>0.33]) #Set simulation Initial Temp and Pressure
-state = MolarState(initialconds,ig) #Define the initial state of the system
-domain = ConstantVDomain(state=state,phase=ig) #Define the domain (encodes how system thermodynamic properties calculated)
+domain,y0 = ConstantVDomain(phase=ig,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
 
-react = BatchSingleDomainReactor(domain,(0.0,0.101)) #Create the reactor object
+react = BatchReactor(domain,y0,(0.0,0.101)) #Create the reactor object
 sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
 
 ts = exp.(range(log(1e-15),length=10000,stop=log(0.1)))
