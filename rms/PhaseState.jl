@@ -6,27 +6,24 @@ include("Species.jl")
 include("Reaction.jl")
 include("Solvent.jl")
 
+@inline function calcgibbs(ph::U,T::W) where {U<:IdealPhase,W<:Real}
+    return getGibbs.(getfield.(ph.species,:thermo),T)
 end
-export MolarState
 
-function recalcgibbs!(ph::T,st::MolarState) where {T<:AbstractPhase}
-    map!(x->getGibbs(x.thermo,st.T),st.Gs,ph.species)
+@inline function calcenthalpyinternalgibbs(ph::U,T::W,P::Z,V::Q) where {U<:IdealPhase,W,Z,Q<:Real}
+    Hs = getEnthalpy.(getfield.(ph.species,:thermo),T)
+    Us = Hs .- P*V
+    Gs = Hs .- T.*getEntropy.(getfield.(ph.species,:thermo),T)
+    return Hs,Us,Gs
 end
-export recalcgibbs!
 
-function recalcgibbsandinternal!(ph::T,st::MolarState) where {T<:IdealPhase}
-    st.Hs = getEnthalpy.(getfield.(ph.species,:thermo),st.T)
-    st.Us = st.Hs .- st.P*st.V
-    st.Gs = st.Hs .- st.T.*map(x->getEntropy(x,st.T),ph.species)
+@inline function calcenthalpyinternalgibbs(ph::IdealGas,T::W,P::Z,V::Q) where {W,Z,Q<:Real}
+    Hs = getEnthalpy.(getfield.(ph.species,:thermo),T)
+    Us = Hs .- R*T
+    Gs = Hs .- T.*getEntropy.(getfield.(ph.species,:thermo),T)
+    return Hs,Us,Gs
 end
-export recalcgibbsandinternal!
 
-function recalcgibbsandinternal!(ph::IdealGas,st::MolarState)
-    st.Hs = getEnthalpy.(getfield.(ph.species,:thermo),st.T)
-    st.Us = st.Hs .- R*st.T
-    st.Gs = st.Hs .- st.T.*getEntropy.(getfield.(ph.species,:thermo),st.T)
-end
-export recalcgibbsandinternal!
 
 @inline function getkf(rxn::ElementaryReaction,ph::T,st::MolarState) where {T<:AbstractPhase}
     return rxn.kinetics(T=st.T,P=st.P,C=st.C)
