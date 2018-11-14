@@ -1,7 +1,6 @@
 using Parameters
 using DifferentialEquations
 include("Phase.jl")
-include("State.jl")
 include("PhaseState.jl")
 include("Domain.jl")
 
