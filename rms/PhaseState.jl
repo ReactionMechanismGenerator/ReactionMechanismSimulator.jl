@@ -1,10 +1,10 @@
 using Parameters
 using SpecialFunctions
+using LinearAlgebra
 include("Constants.jl")
 include("Species.jl")
 include("Reaction.jl")
 include("Solvent.jl")
-include("State.jl")
 
 function MolarState(inputdict::Dict{Z,W},ph::Q) where {Z<:String,W<:AbstractFloat,Q<:AbstractPhase}
     n = length(ph.species)
