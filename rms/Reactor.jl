@@ -12,26 +12,13 @@ struct BatchSingleDomainReactor{D<:AbstractDomain}
     ode::ODEProblem
 end
 
-function BatchSingleDomainReactor(domain::T,tspan::Tuple) where {T<:AbstractConstantKDomain}
-    recalcgibbs!(domain.phase,domain.state)
-    kfs,krevs = getkfkrevs(domain.phase,domain.state)
-    N = length(domain.phase.species)
-    dydt(y::Array{T,1},p::Nothing,t::T) where {T<:AbstractFloat} = dydtBatchReactor!(y,t,domain,kfs,krevs,N)
-    ode = ODEProblem(dydt,domain.state.ns,tspan)
-    return BatchSingleDomainReactor(domain,ode)
-end
 
-function BatchSingleDomainReactor(domain::T,tspan::Tuple) where {T<:AbstractVariableKDomain}
-    N = length(domain.phase.species)+length(domain.indexes)-2 #Note that for multi domain reactors in the future indexing will have to be managed more carefully
-    y0 = deepcopy(domain.state.ns)
-    if length(y0) != N
-        push!(y0,domain.state.T)
-    end
-    dydt(y::Array{T,1},p::Nothing,t::T) where {T<:AbstractFloat} = dydtBatchReactor!(y,t,domain,N)
+function BatchReactor(domain::T,y0::Array{W,1},tspan::Tuple) where {T<:AbstractDomain,W<:Real}
+    dydt(y::Array{T,1},p::Nothing,t::T) where {T<:Real} = dydtBatchReactor!(y,t,domain)
     ode = ODEProblem(dydt,y0,tspan)
     return BatchSingleDomainReactor(domain,ode)
 end
-export BatchSingleDomainReactor
+export BatchReactor
 
 @inline function getrate(rxn::T,state::MolarState,kfs::Array{Q,1},krevs::Array{Q,1}) where {T<:AbstractReaction,Q<:AbstractFloat}
     Nreact = length(rxn.reactantinds)
