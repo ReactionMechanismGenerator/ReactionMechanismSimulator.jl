@@ -20,32 +20,32 @@ function BatchReactor(domain::T,y0::Array{W,1},tspan::Tuple) where {T<:AbstractD
 end
 export BatchReactor
 
-@inline function getrate(rxn::T,state::MolarState,kfs::Array{Q,1},krevs::Array{Q,1}) where {T<:AbstractReaction,Q<:AbstractFloat}
+@inline function getrate(rxn::T,cs::Array{W,1},kfs::Array{Q,1},krevs::Array{Q,1}) where {T<:AbstractReaction,Q,W<:Real}
     Nreact = length(rxn.reactantinds)
     Nprod = length(rxn.productinds)
     R = 0.0
     if Nreact == 1
-        @fastmath @inbounds R += kfs[rxn.index]*state.cs[rxn.reactantinds[1]]
+        @fastmath @inbounds R += kfs[rxn.index]*cs[rxn.reactantinds[1]]
     elseif Nreact == 2
-        @fastmath @inbounds R += kfs[rxn.index]*state.cs[rxn.reactantinds[1]]*state.cs[rxn.reactantinds[2]]
+        @fastmath @inbounds R += kfs[rxn.index]*cs[rxn.reactantinds[1]]*cs[rxn.reactantinds[2]]
     elseif Nreact == 3
-        @fastmath @inbounds R += kfs[rxn.index]*state.cs[rxn.reactantinds[1]]*state.cs[rxn.reactantinds[2]]*state.cs[rxn.reactantinds[3]]
+        @fastmath @inbounds R += kfs[rxn.index]*cs[rxn.reactantinds[1]]*cs[rxn.reactantinds[2]]*cs[rxn.reactantinds[3]]
     end
 
     if Nprod == 1
-        @fastmath @inbounds R -= krevs[rxn.index]*state.cs[rxn.productinds[1]]
+        @fastmath @inbounds R -= krevs[rxn.index]*cs[rxn.productinds[1]]
     elseif Nprod == 2
-        @fastmath @inbounds R -= krevs[rxn.index]*state.cs[rxn.productinds[1]]*state.cs[rxn.productinds[2]]
+        @fastmath @inbounds R -= krevs[rxn.index]*cs[rxn.productinds[1]]*cs[rxn.productinds[2]]
     elseif Nprod == 3
-        @fastmath @inbounds R -= krevs[rxn.index]*state.cs[rxn.productinds[1]]*state.cs[rxn.productinds[2]]*state.cs[rxn.productinds[3]]
+        @fastmath @inbounds R -= krevs[rxn.index]*cs[rxn.productinds[1]]*cs[rxn.productinds[2]]*cs[rxn.productinds[3]]
     end
 
     return R
 end
 export getrate
 
-@inline function addreactionratecontribution!(dydt::Array{Q,1},rxn::ElementaryReaction,st::MolarState,kfs::Array{Q,1},krevs::Array{Q,1}) where {Q<:Number,T<:Integer}
-    R = getrate(rxn,st,kfs,krevs)
+@inline function addreactionratecontribution!(dydt::Array{Q,1},rxn::ElementaryReaction,cs::Array{W,1},kfs::Array{Z,1},krevs::Array{Z,1}) where {Q<:Real,Z<:Real,T<:Integer,W<:Real}
+    R = getrate(rxn,cs,kfs,krevs)
     for ind in rxn.reactantinds
         @fastmath @inbounds dydt[ind] -= R
     end
