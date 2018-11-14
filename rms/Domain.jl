@@ -248,16 +248,16 @@ end
 end
 export calcthermo
 
-function calcdomainderivatives!(d::T,dydt::Array{N,1}) where {T<:AbstractDomain,N<:AbstractFloat}
+@inline function calcdomainderivatives!(d::Q,dydt::Array{Z7,1};T::Z4,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6) where {Q<:AbstractDomain,W<:IdealGas,Y<:Integer,Z7,Z6,Z,Z2,Z3,Z4,Z5<:Real}
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
 end
 
-function calcdomainderivatives!(d::ConstantVDomain{Z,W,Y},dydt::Array{N,1}) where {Z<:MolarState,W<:IdealGas,N<:AbstractFloat,Y<:Integer}
-    @fastmath @inbounds Cpave = mapreduce(x->getHeatCapacity(x.thermo,d.state.T)*d.state.ns[x.index],+,d.phase.species)/d.state.N
+@inline function calcdomainderivatives!(d::ConstantVDomain{W,Y},dydt::Array{K,1};T::Z4,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6) where {W<:IdealGas,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+    @fastmath @inbounds Cpave = mapreduce(x->getHeatCapacity(x.thermo,T)*ns[x.index],+,d.phase.species)/N
     @fastmath Cvave = Cpave-R
-    @inbounds @fastmath dydt[d.indexes[3]] = -d.state.Us'*(dydt[d.indexes[1]:d.indexes[2]]/d.state.V)/(d.state.C*Cvave) #divide by V to cancel ωV to ω
+    @views @fastmath @inbounds dydt[d.indexes[3]] = -Us'*(dydt[d.indexes[1]:d.indexes[2]]/V)/(C*Cvave) #divide by V to cancel ωV to ω
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
