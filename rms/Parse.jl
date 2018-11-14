@@ -248,6 +248,9 @@ function readinput(fname::String)
         rxn["products"] = [r for r in rxn["products"]]
         rxn["reactantinds"] = [r.index for r in rxn["reactants"]]
         rxn["productinds"] = [r.index for r in rxn["products"]]
+        if "efficiencies" in keys(rxn["kinetics"])
+            rxn["kinetics"]["efficiencies"] = Dict([spcdict[name].index=>val-1.0 for (name,val) in rxn["kinetics"]["efficiencies"]]) #in RMS we correct [M] rather than calculate it so we subtract 1
+        end
         r = fcndict2obj(rxn,ymlunitsdict)
         unique!(phs)
         if length(phs) == 1
