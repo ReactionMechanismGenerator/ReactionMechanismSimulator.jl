@@ -24,9 +24,11 @@ end
     return Hs,Us,Gs
 end
 
-
-@inline function getkf(rxn::ElementaryReaction,ph::T,st::MolarState) where {T<:AbstractPhase}
-    return rxn.kinetics(T=st.T,P=st.P,C=st.C)
+@inline function getkf(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,ns::Q,N::W4) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
+    if isdefined(rxn.kinetics,:efficiencies) && length(rxn.kinetics.efficiencies) > 0
+        @views @inbounds @fastmath C += dot(ns[keys(rxn.kinetics.efficiencies)],values(rxn.kinetics.efficiencies))/N
+    end
+    return rxn.kinetics(T=T,P=P,C=C)
 end
 export getkf
 
