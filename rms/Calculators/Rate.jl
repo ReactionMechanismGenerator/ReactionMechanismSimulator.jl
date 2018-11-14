@@ -8,6 +8,9 @@ include("../Constants.jl")
 abstract type AbstractRate end
 export AbstractRate
 
+abstract type AbstractFalloffRate end
+export AbstractFalloffRate
+
 @with_kw struct Arrhenius{N,K,Q<:Number,P<:AbstractRateUncertainty} <: AbstractRate
         A::N
         n::K
@@ -67,7 +70,7 @@ end
 end
 export MultiPdepArrhenius
 
-@with_kw struct ThirdBody{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractRate
+@with_kw struct ThirdBody{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractFalloffRate
     arr::Arrhenius
     efficiencies::Dict{N,K} = Dict()
     unc::Q = EmptyRateUncertainty()
@@ -76,7 +79,7 @@ end
 (tbarr::ThirdBody)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q,R,S<:Number} = C*tbarr.arr(T=T)
 export ThirdBody
 
-@with_kw struct Lindemann{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractRate
+@with_kw struct Lindemann{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractFalloffRate
     arrhigh::Arrhenius
     arrlow::Arrhenius
     efficiencies::Dict{N,K} = Dict()
@@ -91,7 +94,7 @@ end
 end
 export Lindemann
 
-@with_kw struct Troe{P,Q,F,L<:Number,N<:Integer,K<:AbstractFloat,R<:AbstractRateUncertainty} <: AbstractRate
+@with_kw struct Troe{P,Q,F,L<:Number,N<:Integer,K<:AbstractFloat,R<:AbstractRateUncertainty} <: AbstractFalloffRate
     arrhigh::Arrhenius
     arrlow::Arrhenius
     a::P
