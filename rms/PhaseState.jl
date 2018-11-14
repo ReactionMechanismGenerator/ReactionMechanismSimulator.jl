@@ -57,25 +57,25 @@ Equations from Flegg 2016
     return kf
 end
 
-@inline function getKc(rxn::ElementaryReaction,ph::T,st::MolarState) where {T<:AbstractPhase}
+@inline function getKc(rxn::ElementaryReaction,ph::U,T::Z,Gs::Array{Q,1}) where {U<:AbstractPhase,Q,Z<:Real}
     Nreact = length(rxn.reactantinds)
     Nprod = length(rxn.productinds)
     dGrxn = 0.0
     if Nreact == 1
-        @fastmath @inbounds dGrxn -= st.Gs[rxn.reactantinds[1]]
+        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]
     elseif Nreact == 2
-        @fastmath @inbounds dGrxn -= st.Gs[rxn.reactantinds[1]]+st.Gs[rxn.reactantinds[2]]
+        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]+Gs[rxn.reactantinds[2]]
     elseif Nreact == 3
-        @fastmath @inbounds dGrxn -= st.Gs[rxn.reactantinds[1]]+st.Gs[rxn.reactantinds[2]]+st.Gs[rxn.reactantinds[3]]
+        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]+Gs[rxn.reactantinds[2]]+Gs[rxn.reactantinds[3]]
     end
     if Nprod == 1
-        @fastmath @inbounds dGrxn += st.Gs[rxn.productinds[1]]
+        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]
     elseif Nprod == 2
-        @fastmath @inbounds dGrxn += st.Gs[rxn.productinds[1]]+st.Gs[rxn.productinds[2]]
+        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]+Gs[rxn.productinds[2]]
     elseif Nprod == 3
-        @fastmath @inbounds dGrxn += st.Gs[rxn.productinds[1]]+st.Gs[rxn.productinds[2]]+st.Gs[rxn.productinds[3]]
+        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]+Gs[rxn.productinds[2]]+Gs[rxn.productinds[3]]
     end
-    return @inbounds @fastmath exp(-dGrxn/(R*st.T))*(1.0e5/(R*st.T))^(Nprod-Nreact)
+    return @inbounds @fastmath exp(-dGrxn/(R*T))*(1.0e5/(R*T))^(Nprod-Nreact)
 end
 export getKc
 
@@ -83,24 +83,24 @@ export getKc
 Calculates the forward and reverse rate coefficients for a given reaction, phase and state
 Maintains diffusion limitations if the phase has diffusionlimited=true
 """
-@inline function getkfkrev(rxn::ElementaryReaction,ph::T,st::MolarState) where {T<:AbstractPhase}
-    kf = getkf(rxn,ph,st)
-    Kc = getKc(rxn,ph,st)
+@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3) where {U<:AbstractPhase,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
+    kf = getkf(rxn,ph,T,P,C,ns,N)
+    Kc = getKc(rxn,ph,T,Gs)
     @fastmath krev = kf/Kc
     if ph.diffusionlimited
         if length(rxn.reactants) == 1
             if length(rxn.products) > 1
-                krevdiff = getDiffusiveRate(rxn.products,st)
+                krevdiff = getDiffusiveRate(rxn.products,diffs)
                 @fastmath krev = krev*krevdiff/(krev+krevdiff)
                 @fastmath kf = Kc*krev
             end
         elseif length(rxn.products) == 1
-            kfdiff = getDiffusiveRate(rxn.reactants,st)
+            kfdiff = getDiffusiveRate(rxn.reactants,diffs)
             @fastmath kf = kf*kfdiff/(kf+kfdiff)
             @fastmath krev = kf/Kc
         elseif length(rxn.products) == length(rxn.reactants)
-            kfdiff = getDiffusiveRate(rxn.reactants,st)
-            krevdiff = getDiffusiveRate(rxn.products,st)
+            kfdiff = getDiffusiveRate(rxn.reactants,diffs)
+            krevdiff = getDiffusiveRate(rxn.products,diffs)
             @fastmath kff = kf*kfdiff/(kf+kfdiff)
             @fastmath krevr = krev*krevdiff/(krev+krevdiff)
             @fastmath kfr = Kc*krevr
@@ -116,12 +116,12 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
     return kf,krev
 end
 
-@inline function getkfkrevs(ph::T,st::MolarState) where {T<:AbstractPhase}
-    N = length(ph.reactions)
+@inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3) where {U<:AbstractPhase,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
+    N = length(phase.reactions)
     kf = zeros(N)
     krev = zeros(N)
     @simd for i = 1:N
-       @fastmath @inbounds kf[i],krev[i] = getkfkrev(ph.reactions[i],ph,st)
+       @fastmath @inbounds kf[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs)
     end
     return kf,krev
 end
