@@ -14,57 +14,197 @@ export AbstractConstantKDomain
 abstract type AbstractVariableKDomain <: AbstractDomain end
 export AbstractVariableKDomain
 
-@with_kw struct ConstantTPDomain{T<:AbstractState,N<:AbstractPhase,S<:Integer} <: AbstractConstantKDomain
-    state::T
+@with_kw struct ConstantTPDomain{N<:AbstractPhase,S<:Integer,W<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
-    indexes::Array{S,1}
+    indexes::Q
     constantspeciesinds::Array{S,1}
+    T::W
+    P::W
+    kfs::Array{W,1}
+    krevs::Array{W,1}
+    efficiencyinds::Array{I,1}
+    Gs::Array{W,1}
+    mu::W = 0.0
+    diffusivity::Array{W,1} = Array{Float64,1}()
+    jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
 end
-function ConstantTPDomain(;state::T,phase::N,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),constantspecies::Array{String,1}=Array{String,1}()) where {T<:AbstractState,N<:AbstractPhase,Q<:AbstractInterface}
+function ConstantTPDomain(;phase::V,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
+    sparse=false) where {E<:Real,V<:AbstractPhase,Q<:AbstractInterface,W<:Real}
+
+    #set conditions and initialconditions
+    T = 0.0
+    P = 0.0
+    y0 = zeros(length(phase.species))
+    spnames = [x.name for x in phase.species]
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "P"
+            P = val
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"
+            y0[ind] = val
+        end
+    end
+    ns = y0
+    N = sum(ns)
+
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
         constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
     else
         constspcinds = Array{Int64,1}()
     end
-    return ConstantTPDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index],constspcinds)
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
+    Gs = calcgibbs(phase,T)
+    if :solvent in fieldnames(typeof(phase)) && typeof(phase.solvent) != EmptySolvent
+        mu = phase.solvent.mu(T)
+    else
+        mu = 0.0
+    end
+    if phase.diffusionlimited
+        diffs = getfield.(phase.species,:diffusion)(T=T,mu=mu,P=P)
+    else
+        diffs = Array{typeof(T),1}()
+    end
+    C = P/(R*T)
+    kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs)
+    if sparse
+        jacobian=spzeros(typeof(T),length(phase.species),length(phase.species))
+    else
+        jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
+    end
+    return ConstantTPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+        T,P,kfs,krevs,efficiencyinds,Gs,mu,diffs,jacobian), y0
 end
 export ConstantTPDomain
 
-@with_kw struct ConstantVDomain{T<:AbstractState,N<:AbstractPhase,S<:Integer} <: AbstractVariableKDomain
-    state::T
+@with_kw struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
-    indexes::Array{S,1}
+    indexes::Q
     constantspeciesinds::Array{S,1}
+    V::W
+    jacobian::Array{W,2}
 end
-function ConstantVDomain(;state::T,phase::N,interfaces::Array{Q,1}=Array{AbstractInterface,1}(),constantspecies::Array{String,1}=Array{String,1}()) where {T<:AbstractState,N<:AbstractPhase,Q<:AbstractInterface}
+function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
+    sparse=false) where {E<:Real,Z<:IdealGas,Q<:AbstractInterface}
+
+    #set conditions and initialconditions
+    T = 0.0
+    P = 0.0
+    V = 0.0
+    ns = zeros(length(phase.species))
+    spnames = [x.name for x in phase.species]
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "P"
+            P = val
+        elseif key == "V"
+            V = val
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"
+            ns[ind] = val
+        end
+    end
+    N = sum(ns)
+    if V == 0.0
+        V = N*R*T/P
+    elseif T == 0.0
+        T = P*V/(R*N)
+    elseif P == 0.0
+        P = N*R*T/V
+    else
+        throw(error("ConstantVDomain overspecified with T,P and V"))
+    end
+    y0 = vcat(ns,T)
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
         constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
     else
         constspcinds = Array{Int64,1}()
     end
-    return ConstantVDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1],constspcinds)
+    if sparse
+        jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
+    else
+        jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
+    end
+    return ConstantVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    V,jacobian), y0
 end
 export ConstantVDomain
 
-@with_kw struct ConstantTVDomain{T<:AbstractState,N<:AbstractPhase,S<:Integer} <: AbstractConstantKDomain
-    state::T
+@with_kw struct ConstantTVDomain{N<:AbstractPhase,S<:Integer,W<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
-    indexes::Array{S,1}
+    indexes::Q
     constantspeciesinds::Array{S,1}
+    T::W
+    V::W
+    kfs::Array{W,1}
+    krevs::Array{W,1}
+    efficiencyinds::Array{I,1}
+    Gs::Array{W,1}
+    mu::W = 0.0
+    diffusivity::Array{W,1} = Array{Float64,1}()
+    jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
 end
-function ConstantTVDomain(;state::T,phase::N,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),constantspecies::Array{String,1}=Array{String,1}()) where {T<:AbstractState,N<:AbstractPhase,Q<:AbstractInterface}
+function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
+    sparse=false) where {E<:Real, Z<:AbstractPhase,Q<:AbstractInterface,W<:Real}
+    #set conditions and initialconditions
+    T = 0.0
+    V = 0.0
+    P = 1.0e9
+    y0 = zeros(length(phase.species))
+    spnames = [x.name for x in phase.species]
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "P"
+            P = val
+        elseif key == "V"
+            V = val
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"
+            y0[ind] = val
+        end
+    end
+    ns = y0
+    N = sum(ns)
+
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
         constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
     else
         constspcinds = Array{Int64,1}()
     end
-    return ConstantTVDomain(state,phase,interfaces,[phase.species[1].index,phase.species[end].index],constspcinds)
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
+    Gs = calcgibbs(phase,T)
+    if :solvent in fieldnames(typeof(phase)) && typeof(phase.solvent) != EmptySolvent
+        mu = phase.solvent.mu(T)
+    else
+        mu = 0.0
+    end
+    if phase.diffusionlimited
+        diffs = [x(T=T,mu=mu,P=P) for x in getfield.(phase.species,:diffusion)]
+    else
+        diffs = []
+    end
+    P = 1.0e9  #essentiallly assuming this is a liquid
+    C = N/V
+    kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs)
+    if sparse
+        jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
+    else
+        jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
+    end
+    return ConstantTVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+        T,V,kfs,krevs,efficiencyinds,Gs,mu,diffs,jacobian), y0
 end
 export ConstantTVDomain
 
