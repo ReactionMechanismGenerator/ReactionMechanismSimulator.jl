@@ -209,35 +209,44 @@ end
 export ConstantTVDomain
 
 
-function calcthermo!(d::ConstantTPDomain{Z,W,Y},y::T,t::Q) where {Z<:MolarState,W<:IdealGas,Y<:Integer,T<:AbstractArray,Q<:AbstractFloat}
-    d.state.ns = y[d.indexes[1]:d.indexes[2]]
-    d.state.t = t
-    d.state.N = sum(d.state.ns)
-    @fastmath d.state.V = d.state.N*d.state.T*R/d.state.P
-    @fastmath d.state.cs = d.state.ns./d.state.V
-    @fastmath d.state.C = d.state.N/d.state.V
+@inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    V = N*d.T*R/d.P
+    cs = ns./V
+    C = N/V
+    for ind in d.efficiencyinds #efficiency related rates may have changed
+        d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,cs,d.Gs,d.diffusivity)
+    end
+    return ns,cs,d.T,d.P,V,C,N,d.mu,d.kfs,d.krevs,[],[],[],[]
 end
 
-function calcthermo!(d::ConstantVDomain{Z,W,Y},y::T,t::Q) where {Z<:MolarState,W<:IdealGas,Y<:Integer,T<:AbstractArray,Q<:AbstractFloat}
-    @inbounds d.state.ns = y[d.indexes[1]:d.indexes[2]]
-    @inbounds d.state.T = y[d.indexes[3]]
-    d.state.t = t
-    d.state.N = sum(d.state.ns)
-    @fastmath d.state.cs = d.state.ns./d.state.V
-    @fastmath d.state.C = d.state.N/d.state.V
-    @fastmath d.state.P = d.state.C*R*d.state.T
-    recalcgibbsandinternal!(d.phase,d.state)
+@inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    cs = ns./d.V
+    C = N/d.V
+    P = C*R/T
+    @views Us,Gs = calcenthalpyinternalgibbs(d.phase,T,P,d.V)[2:3]
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)
+    else
+        diffs = []
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs)
+    return ns,cs,T,P,d.V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs
 end
 
-function calcthermo!(d::ConstantTVDomain{Z,W,Y},y::T,t::Q) where {Z<:MolarState,W<:IdealDiluteSolution,Y<:Integer,T<:AbstractArray,Q<:AbstractFloat}
-    @inbounds d.state.ns = y[d.indexes[1]:d.indexes[2]]
-    d.state.t = t
-    d.state.N = sum(d.state.ns)
-    @fastmath d.state.cs = d.state.ns./d.state.V
-    @fastmath d.state.C = d.state.N/d.state.V
-    d.state.mu = d.phase.solvent.mu(d.state.T)
+@inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q) where {W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./d.V
+    C = N/d.V
+    P = 1.0e9
+    return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,[],[],[],[]
 end
-export calcthermo!
+export calcthermo
 
 function calcdomainderivatives!(d::T,dydt::Array{N,1}) where {T<:AbstractDomain,N<:AbstractFloat}
     for ind in d.constantspeciesinds #make dydt zero for constant species
