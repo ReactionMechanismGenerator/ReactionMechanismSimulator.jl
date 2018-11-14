@@ -20,9 +20,9 @@ export NASApolynomial
 
 @inline function getHeatCapacity(poly::NASApolynomial,T::N) where {N<:Number}
     if length(poly.coefs) == 9
-        return @inbounds @fastmath evalpoly(T,poly.coefs[1:7])/T^2*R
+        return @views @inbounds @fastmath evalpoly(T,poly.coefs[1:7])/T^2*R
     elseif length(poly.coefs) == 7
-        return @inbounds @fastmath evalpoly(T,poly.coefs[1:5])*R
+        return @views @inbounds @fastmath evalpoly(T,poly.coefs[1:5])*R
     else
         throw(error("NASA polynomial has a number of coefficients not equal to 9 or 7"))
     end
@@ -30,9 +30,9 @@ end
 
 @inline function getEntropy(poly::NASApolynomial,T::N) where {N<:Number}
     if length(poly.coefs) == 9
-        return @inbounds @fastmath ((-poly.coefs[1]/(2*T)-poly.coefs[2])/T+poly.coefs[3]*log(T)+T*evalpoly(T,poly.coefs[4:end-2]./(1:4))+poly.coefs[end])*R
+        return @views @inbounds @fastmath ((-poly.coefs[1]/(2*T)-poly.coefs[2])/T+poly.coefs[3]*log(T)+T*evalpoly(T,poly.coefs[4:end-2]./(1:4))+poly.coefs[end])*R
     elseif length(poly.coefs) == 7
-        return @inbounds @fastmath (poly.coefs[1]*log(T)+T*evalpoly(T,poly.coefs[2:end-2]./(1:4))+poly.coefs[end])*R
+        return @views @inbounds @fastmath (poly.coefs[1]*log(T)+T*evalpoly(T,poly.coefs[2:end-2]./(1:4))+poly.coefs[end])*R
     else
         throw(error("NASA polynomial has a number of coefficients not equal to 9 or 7"))
     end
@@ -40,9 +40,9 @@ end
 
 @inline function getEnthalpy(poly::NASApolynomial,T::N) where {N<:Number}
     if length(poly.coefs) == 9
-        return @inbounds @fastmath ((-poly.coefs[1]/T+poly.coefs[2]*log(T))/T+evalpoly(T,poly.coefs[3:end-2]./(1:5)))*R*T+poly.coefs[end-1]*R
+        return @views @inbounds @fastmath ((-poly.coefs[1]/T+poly.coefs[2]*log(T))/T+evalpoly(T,poly.coefs[3:end-2]./(1:5)))*R*T+poly.coefs[end-1]*R
     elseif length(poly.coefs) == 7
-        return @inbounds @fastmath evalpoly(T,poly.coefs[1:end-2]./(1:5))*R*T+poly.coefs[end-1]*R
+        return @views @inbounds @fastmath evalpoly(T,poly.coefs[1:end-2]./(1:5))*R*T+poly.coefs[end-1]*R
     else
         throw(error("NASA polynomial has a number of coefficients not equal to 9 or 7"))
     end
@@ -91,7 +91,7 @@ end
 
 @inline function getEnthalpy(w::Wilhoit,T::N) where {N<:Number}
     @fastmath y = T/(T+w.B)
-    return @fastmath @inbounds w.H0 + w.Cp0 * T - (w.Cpinf - w.Cp0) * T * (
+    return @views @fastmath @inbounds w.H0 + w.Cp0 * T - (w.Cpinf - w.Cp0) * T * (
             y * y * ((3 * w.coefs[1] + sum(w.coefs[2:end])) / 6. +
                      (4 * w.coefs[2] + sum(w.coefs[3:end])) * y / 12. +
                      (5 * w.coefs[3] + w.coefs[4]) * y^2 / 20. +
