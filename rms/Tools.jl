@@ -8,29 +8,29 @@ function includeall(dir)
     end
 end
 
-function evalpoly(x::N,coefs::Array{T,1}) where {T,N<:Number}
+@inline function evalpoly(x::N,coefs::T) where {T<:AbstractArray,N<:Number}
     out = 0.0
     for i in length(coefs):-1:1
-        out += coefs[i]
+        @inbounds out += coefs[i]
         if i != 1
-            out *= x
+            @fastmath out *= x
         end
     end
     return out
 end
 
-function getBoundingIndsSorted(el::Q,x::T) where {T<:AbstractArray,Q<:Any}
+@inline function getBoundingIndsSorted(el::Q,x::T) where {T<:AbstractArray,Q<:Any}
     if el <= x[1]
-        return [1,]
+        return (1,)
     end
     for i in 1:length(x)
-        if x[i] >= el
-            if x[i] == el
-                return [i,]
+        if @inbounds x[i] >= el
+            if @inbounds x[i] == el
+                return (i,)
             else
-                return [i-1,i]
+                return (i-1,i)
             end
         end
     end
-    return [length(x),]
+    return (length(x),)
 end
