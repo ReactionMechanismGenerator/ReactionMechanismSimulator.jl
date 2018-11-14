@@ -39,19 +39,20 @@ for 2 spc calculates using the Smolchowski equation
 for >2 spc calculates using the Generalized Smolchowski equation
 Equations from Flegg 2016
 """
-@inline function getDiffusiveRate(spcs::Q,st::MolarState) where {Q<:AbstractArray}
+@inline function getDiffusiveRate(spcs::Q,diffs::Array{W,1}) where {Q<:AbstractArray,W<:Real}
     if length(spcs) == 1
         return Inf
     elseif length(spcs) == 2
-        @fastmath @inbounds kf = 4.0*Base.pi*(st.diffusivity[1]+st.diffusivity[2])*(spcs[1].radius+spcs[2].radius)*Na
+        @fastmath @inbounds kf = 4.0*Base.pi*(diffs[spcs[1].index]+diffs[spcs[2].index])*(spcs[1].radius+spcs[2].radius)*Na
     else
+        @views @inbounds diffusivity = diffs[getfield.(spcs,:index)]
         N = length(spcs)
-        a = (3.0*length(spcs)-5.0)/2.0
-        Dinv = 1.0./st.diffusivity
-        Dbar = 1.0./reverse(cumsum(Dinv))
-        Dhat = st.diffusivity .+ Dbar
+        @fastmath a = (3.0*length(spcs)-5.0)/2.0
+        @fastmath Dinv = 1.0./st.diffusivity
+        @fastmath Dbar = 1.0./reverse(cumsum(Dinv))
+        @fastmath Dhat = st.diffusivity .+ Dbar
         @fastmath @inbounds deltaN = sum(Dinv)/sum(sum([[1.0/(st.diffusivity[i]*st.diffusivity[m]) for m in 1:N-1 if i>m] for i in 2:N]))
-        @fastmath @inbounds kf = prod(Dhat[2:end].^1.5)*4*Base.pi^(a+1)/gamma(a)*(sum(getfield.(spcs,:radius))/sqrt(deltaN))^(2*a)*Na^(N-1)
+        @views @fastmath @inbounds kf = prod(Dhat[2:end].^1.5)*4*Base.pi^(a+1)/gamma(a)*(sum(getfield.(spcs,:radius))/sqrt(deltaN))^(2*a)*Na^(N-1)
     end
     return kf
 end
