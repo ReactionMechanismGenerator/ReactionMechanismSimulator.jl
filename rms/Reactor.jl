@@ -55,26 +55,14 @@ export getrate
 end
 export addreactionratecontribution!
 
-function dydtBatchReactor!(y::Array{T,1},t::T,domain::Q,kfs::Array{T,1},krevs::Array{T,1},N::J) where {T<:AbstractFloat,J<:Integer,Q<:AbstractConstantKDomain}
-    dydt = zeros(N)
-    calcthermo!(domain,y,t)
+function dydtBatchReactor!(y::Array{U,1},t::Z,domain::Q) where {Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
+    dydt = zeros(U,length(y))
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs = calcthermo(domain,y,t)
     @simd for rxn in domain.phase.reactions
-        addreactionratecontribution!(dydt,rxn,domain.state,kfs,krevs)
+        addreactionratecontribution!(dydt,rxn,cs,kfs,krevs)
     end
-    dydt *= domain.state.V
-    calcdomainderivatives!(domain,dydt)
-    return dydt
-end
-
-function dydtBatchReactor!(y::Array{T,1},t::T,domain::Q,N::J) where {J<:Integer,T<:Any,Q<:AbstractVariableKDomain}
-    dydt = zeros(N)
-    calcthermo!(domain,y,t)
-    kfs,krevs = getkfkrevs(domain.phase,domain.state)
-    @simd for rxn in domain.phase.reactions
-        addreactionratecontribution!(dydt,rxn,domain.state,kfs,krevs)
-    end
-    dydt *= domain.state.V
-    calcdomainderivatives!(domain,dydt)
+    dydt *= V
+    calcdomainderivatives!(domain,dydt;T=T,Us=Us,V=V,C=C,ns=ns,N=N)
     return dydt
 end
 export dydtBatchReactor!
