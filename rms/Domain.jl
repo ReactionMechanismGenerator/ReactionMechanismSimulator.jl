@@ -231,6 +231,10 @@ export ConstantTVDomain
 
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     V = N*d.T*R/d.P
@@ -243,6 +247,10 @@ export ConstantTVDomain
 end
 
 @inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     N = sum(ns)
@@ -260,6 +268,10 @@ end
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q) where {W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns./d.V
