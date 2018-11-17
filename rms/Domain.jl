@@ -14,7 +14,7 @@ export AbstractConstantKDomain
 abstract type AbstractVariableKDomain <: AbstractDomain end
 export AbstractVariableKDomain
 
-@with_kw struct ConstantTPDomain{N<:AbstractPhase,S<:Integer,W<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
+@with_kw struct ConstantTPDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q
@@ -28,14 +28,21 @@ export AbstractVariableKDomain
     mu::W = 0.0
     diffusivity::Array{W,1} = Array{Float64,1}()
     jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
+    sensitivity::Bool = false
+    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
+    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
 function ConstantTPDomain(;phase::V,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
-    sparse=false) where {E<:Real,V<:AbstractPhase,Q<:AbstractInterface,W<:Real}
+    sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,V<:AbstractPhase,Q<:AbstractInterface,W<:Real}
 
     #set conditions and initialconditions
     T = 0.0
     P = 0.0
-    y0 = zeros(length(phase.species))
+    if sensitivity
+        y0 = zeros(length(phase.species)*(1+length(phase.species)+length(phase.reactions)))
+    else
+        y0 = zeros(length(phase.species))
+    end
     spnames = [x.name for x in phase.species]
     for (key,val) in initialconds
         if key == "T"
@@ -77,17 +84,20 @@ function ConstantTPDomain(;phase::V,interfaces::Array{Q,1}=Array{EmptyInterface,
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     return ConstantTPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-        T,P,kfs,krevs,efficiencyinds,Gs,mu,diffs,jacobian), y0
+        T,P,kfs,krevs,efficiencyinds,Gs,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantTPDomain
 
-@with_kw struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+@with_kw struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q
     constantspeciesinds::Array{S,1}
     V::W
     jacobian::Array{W,2}
+    sensitivity::Bool = false
+    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
+    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
 function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
     sparse=false) where {E<:Real,Z<:IdealGas,Q<:AbstractInterface}
@@ -121,7 +131,11 @@ function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1
     else
         throw(error("ConstantVDomain overspecified with T,P and V"))
     end
-    y0 = vcat(ns,T)
+    if sensitivity
+        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
+    else
+        y0 = vcat(ns,T)
+    end
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
         constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
@@ -134,11 +148,11 @@ function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     return ConstantVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    V,jacobian), y0
+    V,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantVDomain
 
-@with_kw struct ConstantTVDomain{N<:AbstractPhase,S<:Integer,W<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
+@with_kw struct ConstantTVDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q
@@ -152,14 +166,21 @@ export ConstantVDomain
     mu::W = 0.0
     diffusivity::Array{W,1} = Array{Float64,1}()
     jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
+    sensitivity::Bool = false
+    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
+    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
 function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
-    sparse=false) where {E<:Real, Z<:AbstractPhase,Q<:AbstractInterface,W<:Real}
+    sparse=false,sensitivity=false) where {E<:Real, Z<:AbstractPhase,Q<:AbstractInterface,W<:Real}
     #set conditions and initialconditions
     T = 0.0
     V = 0.0
     P = 1.0e9
-    y0 = zeros(length(phase.species))
+    if sensitivity
+        y0 = zeros(length(phase.species)*(length(phase.species)+1+length(phase.reactions)))
+    else
+        y0 = zeros(length(phase.species))
+    end
     spnames = [x.name for x in phase.species]
     for (key,val) in initialconds
         if key == "T"
@@ -204,7 +225,7 @@ function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     return ConstantTVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-        T,V,kfs,krevs,efficiencyinds,Gs,mu,diffs,jacobian), y0
+        T,V,kfs,krevs,efficiencyinds,Gs,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantTVDomain
 
