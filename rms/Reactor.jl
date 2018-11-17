@@ -8,16 +8,22 @@ include("Domain.jl")
 abstract type AbstractReactor end
 export AbstractReactor
 
-struct BatchSingleDomainReactor{D<:AbstractDomain}
+struct BatchReactor{D<:AbstractDomain}
     domain::D
     ode::ODEProblem
 end
 
 
 function BatchReactor(domain::T,y0::Array{W,1},tspan::Tuple) where {T<:AbstractDomain,W<:Real}
-    dydt(y::Array{T,1},p::Nothing,t::T) where {T<:Real} = dydtBatchReactor!(y,t,domain)
-    ode = ODEProblem(dydt,y0,tspan)
-    return BatchSingleDomainReactor(domain,ode)
+    dydt(y::Array{T,1},p::Nothing,t::Q) where {T<:Real,Q<:Real} = dydtBatchReactor!(y,t,domain)
+    if !domain.sensitivity
+        jac(J::Q,y::U,p::W,t::Z) where {Q<:AbstractArray,U<:AbstractArray,W,Z<:Real} = jacobianbatch!(J,y,p,t,domain)
+        odef = ODEFunction(dydt;jac=jac)
+        ode = ODEProblem(odef,y0,tspan)
+    else
+        ode = ODEProblem(dydt,y0,tspan)
+    end
+    return BatchReactor(domain,ode)
 end
 export BatchReactor
 
