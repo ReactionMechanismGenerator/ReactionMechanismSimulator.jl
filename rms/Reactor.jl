@@ -1,5 +1,6 @@
 using Parameters
 using DifferentialEquations
+using ForwardDiff
 include("Phase.jl")
 include("PhaseState.jl")
 include("Domain.jl")
@@ -66,6 +67,18 @@ function dydtBatchReactor!(y::Array{U,1},t::Z,domain::Q) where {Z<:Real,U<:Real,
     return dydt
 end
 export dydtBatchReactor!
+
+function jacobianbatch!(J::Q,y::U,p::W,t::Z,domain::V) where {Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+    if domain.t[1] == t && domain.jacuptodate == true
+        return domain.jacobian
+    else
+        f(y::Array{T,1}) where {T<:Real} = dydtBatchReactor!(y,domain.t[1],domain;sensitivity=false)
+        ForwardDiff.jacobian!(domain.jacobian,f,y[1:length(domain.phase.species)])
+        domain.jacuptodate[1] = true
+        return domain.jacobian
+    end
+end
+
 function ratederivative(;d::W,cs::Q,V::Y,T::Y2,kfs::Z,krevs::X,sparse::Bool=false) where {W<:Union{ConstantTPDomain,ConstantTVDomain},Q<:AbstractArray,Y2<:Real,Y<:Real,Z<:AbstractArray,X<:AbstractArray}
     Nspcs = length(cs)
     rxns = d.phase.reactions
