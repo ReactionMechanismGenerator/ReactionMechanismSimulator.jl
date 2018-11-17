@@ -56,14 +56,31 @@ export getrate
 end
 export addreactionratecontribution!
 
-function dydtBatchReactor!(y::Array{U,1},t::Z,domain::Q) where {Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
+function dydtBatchReactor!(y::Array{U,1},t::Z,domain::Q;sensitivity::Bool=true) where {Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
     dydt = zeros(U,length(y))
+    if sensitivity #if sensitivity isn't explicitly set to false set it to domain.sensitivity
+        sensitivity = domain.sensitivity
+    end
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs = calcthermo(domain,y,t)
-    @simd for rxn in domain.phase.reactions
+    for rxn in domain.phase.reactions
         addreactionratecontribution!(dydt,rxn,cs,kfs,krevs)
     end
     dydt *= V
     calcdomainderivatives!(domain,dydt;T=T,Us=Us,V=V,C=C,ns=ns,N=N)
+    if sensitivity
+        Nspcs = length(cs)
+        Nrxns = length(domain.phase.reactions)
+        jacobianbatch!(domain.jacobian,y,nothing,t,domain)
+        dgdk = ratederivative(d=domain,cs=cs,V=V,T=T,kfs=kfs,krevs=krevs,sparse=false)
+        for j  = 1:Nspcs+Nrxns #kfs and Gfs
+            for i = 1:Nspcs #species
+                for z in 1:Nspcs
+                    dydt[j*Nspcs+i] += domain.jacobian[i,z]*y[j*Nspcs+z]
+                end
+                dydt[j*Nspcs+i] += dgdk[i,j]
+            end
+        end
+    end
     return dydt
 end
 export dydtBatchReactor!
