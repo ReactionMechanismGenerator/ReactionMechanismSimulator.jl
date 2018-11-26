@@ -17,7 +17,7 @@ export AbstractVariableKDomain
 @with_kw struct ConstantTPDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
-    indexes::Q
+    indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     T::W
     P::W
@@ -91,7 +91,7 @@ export ConstantTPDomain
 @with_kw struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
-    indexes::Q
+    indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     V::W
     jacobian::Array{W,2}
@@ -155,7 +155,7 @@ export ConstantVDomain
 @with_kw struct ConstantTVDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
-    indexes::Q
+    indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     T::W
     V::W
