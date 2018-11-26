@@ -55,7 +55,7 @@ export getrate
 end
 export addreactionratecontribution!
 
-function dydtBatchReactor!(y::Array{U,1},t::Z,domain::Q;sensitivity::Bool=true) where {Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
+@inline function dydtBatchReactor!(y::Array{U,1},t::Z,domain::Q;sensitivity::Bool=true) where {Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
     dydt = zeros(U,length(y))
     if sensitivity #if sensitivity isn't explicitly set to false set it to domain.sensitivity
         sensitivity = domain.sensitivity
