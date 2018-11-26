@@ -214,7 +214,7 @@ function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,
     if phase.diffusionlimited
         diffs = [x(T=T,mu=mu,P=P) for x in getfield.(phase.species,:diffusion)]
     else
-        diffs = []
+        diffs = Array{Float64,1}()
     end
     P = 1.0e9  #essentiallly assuming this is a liquid
     C = N/V
@@ -261,7 +261,7 @@ end
     if d.phase.diffusionlimited
         diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)
     else
-        diffs = []
+        diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs)
     return ns,cs,T,P,d.V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs
