@@ -18,3 +18,18 @@ function BatchSolution(sol::Q,domain::W) where {Q<:AbstractODESolution,W<:Abstra
     F(t::T) where {T<:Real} = N(t,nothing,Val{0},sol.prob.p,:left)
     return BatchSolution(sol,domain,names,F)
 end
+
+function molefractions(bsol::Q; name::W,t::E) where {Q<:AbstractSolution, W<:String, E<:Real}
+    @assert name in bsol.names
+    ind = findfirst(isequal(name),bsol.names)
+    return bsol(t)[ind]/bsol.N(t)
+end
+
+function molefractions(bsol::Q; t::E) where {Q<:AbstractSolution,E<:Real}
+    return bsol.sol(t)[bsol.domain.indexes[1]:bsol.domain.indexes[2]]./bsol.N(t)
+end
+
+function molefractions(bsol::Q) where {Q<:AbstractSolution}
+    return bsol.sol.u./bsol.N.u
+end
+
