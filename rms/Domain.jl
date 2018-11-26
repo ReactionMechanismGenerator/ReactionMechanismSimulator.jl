@@ -100,7 +100,7 @@ export ConstantTPDomain
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
 function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
-    sparse=false) where {E<:Real,Z<:IdealGas,Q<:AbstractInterface}
+    sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,Z<:IdealGas,Q<:AbstractInterface}
 
     #set conditions and initialconditions
     T = 0.0
