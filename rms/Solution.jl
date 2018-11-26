@@ -85,3 +85,61 @@ function rops(bsol,t)
     end
     return ropmat
 end
+
+function getconcentrationsensitivity(bsol::BatchSolution{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L}
+    @assert numerator in bsol.names
+    @assert denominator in bsol.names
+    indnum = findfirst(isequal(numerator),bsol.names)
+    inddeno = findfirst(isequal(denominator),bsol.names)
+    Nvars = bsol.domain.indexes[end]-bsol.domain.indexes[1]+1
+    Nrxns = length(bsol.domain.phase.reactions)
+    arr = bsol.sol(t)
+    s = arr[Nvars+Nrxns*Nvars+(inddeno-1)*Nvars+indnum]
+    return s/arr[indnum] #constant volume
+end
+
+function getconcentrationsensitivity(bsol::BatchSolution{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L}
+    @assert numerator in bsol.names
+    @assert denominator in bsol.names
+    indnum = findfirst(isequal(numerator),bsol.names)
+    inddeno = findfirst(isequal(denominator),bsol.names)
+    Nvars = bsol.domain.indexes[end]-bsol.domain.indexes[1]+1
+    Nrxns = length(bsol.domain.phase.reactions)
+    arr = bsol.sol(t)
+    s = arr[Nvars+Nrxns*Nvars+(inddeno-1)*Nvars+indnum]
+    V = getV(bsol,t)
+    c = arr[indnum]/V
+    return (s-c*sum(arr[Nvars+Nrxns*Nvars+(inddeno-1)*Nvars+1:Nvars+Nrxns*Nvars+inddeno*Nvars])*R*domain.T/domain.P)/(c*V) #known T and P
+end
+
+function getconcentrationsensitivity(bsol::BatchSolution{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Z<:Integer,Q,G,L}
+    @assert numerator in bsol.names
+    indnum = findfirst(isequal(numerator),bsol.names)
+    inddeno = denominator
+    Nvars = bsol.domain.indexes[end]-bsol.domain.indexes[1]+1
+    Nrxns = length(bsol.domain.phase.reactions)
+    arr = bsol.sol(t)
+    s = arr[Nvars+(inddeno-1)*Nvars+indnum]
+    T = getT(bsol,t)
+    P = getP(bsol,t)
+    C = getC(bsol,t)
+    k = bsol.domain.phase.reactions[inddeno].kinetics(T=T,P=P,C=C)
+    return s*k/arr[indnum] #constant volume
+end
+
+function getconcentrationsensitivity(bsol::BatchSolution{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:ConstantTPDomain,K<:Real,Z<:Integer,Q,G,L}
+    @assert numerator in bsol.names
+    indnum = findfirst(isequal(numerator),bsol.names)
+    inddeno = denominator
+    Nvars = bsol.domain.indexes[end]-bsol.domain.indexes[1]+1
+    Nrxns = length(bsol.domain.phase.reactions)
+    arr = bsol.sol(t)
+    s = arr[Nvars+(inddeno-1)*Nvars+indnum]
+    V = getV(bsol,t)
+    T = getT(bsol,t)
+    P = getP(bsol,t)
+    C = getC(bsol,t)
+    c = arr[indnum]/V
+    k = bsol.domain.phase.reactions[inddeno].kinetics(T=T,P=P,C=C)
+    return k*(s-c*sum(arr[Nvars+(inddeno-1)*Nvars+1:Nvars+inddeno*Nvars])*R*domain.T/domain.P)/(c*V) #known T and P
+end
