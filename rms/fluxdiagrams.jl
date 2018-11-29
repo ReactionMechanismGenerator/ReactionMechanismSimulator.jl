@@ -16,10 +16,19 @@ export length
 Broadcast.broadcastable(p::FluxDiagram) = Ref(p)
 export broadcastable
 
+"""
+return an array of all png images associated with a FluxDiagram object
+"""
 getimages(fd::FluxDiagram) = getdiagram.(fd,1:length(fd.ts))
 
+"""
+return the png image associated with the index ind
+"""
 getdiagram(fd::FluxDiagram,ind::Int64) = load(string(joinpath(fd.outputdirectory,"flux_diagram_"),ind,".png"))
 
+"""
+generate a png representing spc at location path
+"""
 function draw(spc::Species,path::String=".")
     name = spc.name
     fname = string(name,".png")
@@ -40,6 +49,9 @@ function draw(spc::Species,path::String=".")
     mol[:draw](joinpath(path,fname))
 end
 
+"""
+generate pngs for all species in phase and store them in the "species" folder
+"""
 function drawspecies(phase::T) where {T<:AbstractPhase}
     for spc in phase.species
         draw(spc,"species")
