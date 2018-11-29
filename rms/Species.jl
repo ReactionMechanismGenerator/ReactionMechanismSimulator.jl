@@ -4,6 +4,8 @@ import Base: length
 abstract type AbstractSpecies end
 export AbstractSpecies
 
+struct EmptySpecies <: AbstractSpecies end
+
 @with_kw struct Species{T<:AbstractThermo,N<:AbstractDiffusivity} <: AbstractSpecies
     name::String
     index::Integer
