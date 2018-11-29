@@ -1,5 +1,4 @@
 using Parameters
-include("Calculators.jl")
 
 abstract type AbstractSolvent end
 export AbstractSolvent
