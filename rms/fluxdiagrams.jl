@@ -46,7 +46,27 @@ function drawspecies(phase::T) where {T<:AbstractPhase}
     end
 end
 
-function makefluxdiagram(bsol,ts;centralspecieslist=Array{String,1}(),superimpose=false,
+"""
+generates and returns the image of a single flux diagram at the given time point
+"""
+function getfluxdiagram(bsol,t;centralspecieslist=Array{String,1}(),superimpose=false,
+    maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
+    maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams")
+
+    fd = makefluxdiagrams(bsol,[t]; centralspecieslist=centralspecieslist,superimpose=superimpose,
+        maximumnodecount=maximumnodecount, maximumedgecount=maximumedgecount, concentrationtol=concentrationtol,
+        speciesratetolerance=speciesratetolerance,maximumnodepenwidth=maximumnodepenwidth,
+        maximumedgepenwidth=maximumedgepenwidth,radius=radius,centralreactioncount=centralreactioncount,
+        outputdirectory=outputdirectory)
+
+    return getdiagram(fd,1)
+end
+
+"""
+generates a series of flux diagrams at the time points indicated
+each flux diagram will have the same nodes and edges as determined by the options
+"""
+function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpose=false,
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
     maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams")
 
