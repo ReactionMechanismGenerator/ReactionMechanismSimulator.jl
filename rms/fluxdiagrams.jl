@@ -1,6 +1,7 @@
 using PyCall
 using SparseArrays
 using Images
+import Base: length
 @pyimport rmgpy.molecule as molecule
 @pyimport pydot
 
@@ -9,7 +10,15 @@ struct FluxDiagram{T<:Real}
     outputdirectory::String
 end
 
-getimages(fd::FluxDiagram) = [load(string(joinpath(fd.outputdirectory,"flux_diagram_"),i,".png")) for i = 1:length(ts)]
+length(p::FluxDiagram) = 1
+export length
+
+Broadcast.broadcastable(p::FluxDiagram) = Ref(p)
+export broadcastable
+
+getimages(fd::FluxDiagram) = getdiagram.(fd,1:length(fd.ts))
+
+getdiagram(fd::FluxDiagram,ind::Int64) = load(string(joinpath(fd.outputdirectory,"flux_diagram_"),ind,".png"))
 
 function draw(spc::Species,path::String=".")
     name = spc.name
