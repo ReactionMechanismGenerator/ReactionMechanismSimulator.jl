@@ -1,9 +1,6 @@
 using Parameters
 using LinearAlgebra
 using StaticArrays
-include("Constants.jl")
-include("Phase.jl")
-include("Interface.jl")
 
 abstract type AbstractDomain end
 export AbstractDomain

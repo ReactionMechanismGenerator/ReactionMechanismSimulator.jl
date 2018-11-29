@@ -1,10 +1,6 @@
 using Parameters
 using SpecialFunctions
 using LinearAlgebra
-include("Constants.jl")
-include("Species.jl")
-include("Reaction.jl")
-include("Solvent.jl")
 
 @inline function calcgibbs(ph::U,T::W) where {U<:IdealPhase,W<:Real}
     return getGibbs.(getfield.(ph.species,:thermo),T)

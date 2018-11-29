@@ -1,9 +1,5 @@
 using Parameters
 import Base: length
-include("Constants.jl")
-include("Species.jl")
-include("Reaction.jl")
-include("Solvent.jl")
 
 abstract type AbstractPhase end
 export AbstractPhase

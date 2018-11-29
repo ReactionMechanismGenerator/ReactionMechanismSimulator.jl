@@ -4,18 +4,27 @@ using PyCall
 
 @pyimport rdkit.Chem as Chem
 
-include("Tools.jl")
-include("Calculators.jl")
-include("Species.jl")
-include("Reaction.jl")
-
 module Calc
-    include("Calculators.jl")
+    include("Calculators/RateUncertainty.jl")
+    include("Calculators/ThermoUncertainty.jl")
+    include("Calculators/Thermo.jl")
+    include("Calculators/Diffusion.jl")
+    include("Calculators/Rate.jl")
+    include("Calculators/Viscosity.jl")
 end
 module Spc
+    include("Calculators/ThermoUncertainty.jl")
+    include("Calculators/Thermo.jl")
+    include("Calculators/Diffusion.jl")
     include("Species.jl")
 end
 module Rxn
+    include("Calculators/RateUncertainty.jl")
+    include("Calculators/ThermoUncertainty.jl")
+    include("Calculators/Thermo.jl")
+    include("Calculators/Diffusion.jl")
+    include("Calculators/Rate.jl")
+    include("Species.jl")
     include("Reaction.jl")
 end
 

@@ -1,9 +1,6 @@
 using Test
 using Unitful
 
-include("Rate.jl")
-include("../Constants.jl")
-
 #Arrhenius testing
 arr = Arrhenius(A=1e6,n=0.5,Ea=41.84*1000.0)
 Tlist = 200:200:2000

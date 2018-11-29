@@ -1,9 +1,6 @@
 using Parameters
 using DifferentialEquations
 using ForwardDiff
-include("Phase.jl")
-include("PhaseState.jl")
-include("Domain.jl")
 
 abstract type AbstractReactor end
 export AbstractReactor

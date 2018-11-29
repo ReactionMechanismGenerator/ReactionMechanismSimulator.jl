@@ -1,9 +1,6 @@
 using Test
 using Unitful
 
-include("Thermo.jl")
-include("../Constants.jl")
-
 #Test NASA
 nasap1 = NASApolynomial(coefs=[4.03055,-0.00214171,4.90611e-05,-5.99027e-08,2.38945e-11,-11257.6,3.5613],Tmin=300.0,Tmax=650.73)
 nasap2 = NASApolynomial(coefs=[-0.307954,0.0245269,-1.2413e-05,3.07724e-09,-3.01467e-13,-10693,22.628],Tmin=650.73,Tmax=3000.0)

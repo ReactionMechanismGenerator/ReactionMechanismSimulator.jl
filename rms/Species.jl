@@ -1,6 +1,5 @@
 using Parameters
 import Base: length
-include("Calculators.jl")
 
 abstract type AbstractSpecies end
 export AbstractSpecies

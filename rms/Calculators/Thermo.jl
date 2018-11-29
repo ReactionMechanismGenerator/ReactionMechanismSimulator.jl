@@ -1,9 +1,5 @@
 using Parameters
 
-include("../Constants.jl")
-include("../Tools.jl") #evalpoly comes from here
-include("ThermoUncertainty.jl")
-
 abstract type AbstractThermo end
 export AbstractThermo
 

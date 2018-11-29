@@ -1,9 +1,6 @@
 using Test
 using Unitful
 
-include("Diffusion.jl")
-include("../Constants.jl")
-
 #EmptyDiffusivity
 dif = EmptyDiffusivity()
 @test_throws ErrorException dif(T=400.0)

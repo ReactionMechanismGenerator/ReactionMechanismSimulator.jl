@@ -1,6 +1,3 @@
-include("Phase.jl")
-include("Reaction.jl")
-
 abstract type AbstractInterface end
 export AbstractInterface
 

@@ -1,7 +1,5 @@
 using Parameters
 import Base: length
-include("Calculators.jl")
-include("Species.jl")
 
 abstract type AbstractReaction end
 export AbstractReaction

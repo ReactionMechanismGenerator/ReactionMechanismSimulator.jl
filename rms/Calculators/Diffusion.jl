@@ -1,7 +1,5 @@
 using Parameters
 
-include("../Constants.jl")
-
 abstract type AbstractDiffusivity end
 export AbstractDiffusivity
 
