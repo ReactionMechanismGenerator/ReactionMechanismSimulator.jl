@@ -1,6 +1,5 @@
 using Parameters
-import Base: length
-
+import Base: length,show,print,println
 using StaticArrays
 abstract type AbstractReaction end
 export AbstractReaction
@@ -16,5 +15,9 @@ export AbstractReaction
 end
 export ElementaryReaction
 
+getrxnstr(rxn::T) where {T<:AbstractReaction} = join([join(getfield.(rxn.reactants,:name),"+"),join(getfield.(rxn.products,:name),"+")],"<=>")
+show(io::IO,rxn::T) where {T<:AbstractReaction} = print(io,getrxnstr(rxn))
+print(rxn::T) where {T<:AbstractReaction} = print(getrxnstr(rxn))
+println(rxn::T) where {T<:AbstractReaction} = print(string(getrxnstr(rxn),"\n"))
 length(r::T) where {T<:AbstractReaction}= 1
 export length
