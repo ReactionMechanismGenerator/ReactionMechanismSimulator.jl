@@ -8,8 +8,6 @@ Unitful
 YAML
 PyCall
 ForwardDiff
-Test
 IterTools
-LinearAlgebra
 SpecialFunctions
 Images
