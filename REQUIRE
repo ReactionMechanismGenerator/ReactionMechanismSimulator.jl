@@ -1,0 +1,15 @@
+julia 1.0
+Parameters
+MathProgBase
+Clp
+StaticArrays
+DifferentialEquations
+Unitful
+YAML
+PyCall
+ForwardDiff
+Test
+IterTools
+LinearAlgebra
+SpecialFunctions
+Images
