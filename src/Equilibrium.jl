@@ -13,6 +13,7 @@ function equilibrium(phase::Q,y::V,T::B) where {Q<:Union{IdealGas,IdealDiluteSol
 
     atoms = Array{String,1}()
     for spc in phase.species
+        @assert length(spc.atomnums) > 0 "atomnums dictionary not defined for species $spc, cannot formulate constraints"
         for x in keys(spc.atomnums)
             if !(x in atoms)
                 push!(atoms,x)
@@ -48,6 +49,7 @@ function equilibrium(phase::Q,spcdict::Dict{String,V},T::B) where {Q<:Union{Idea
 
     atoms = Array{String,1}()
     for spc in phase.species
+        @assert length(spc.atomnums) > 0 "atomnums dictionary not defined for species $spc, cannot formulate constraints"
         for x in keys(spc.atomnums)
             if !(x in atoms)
                 push!(atoms,x)
