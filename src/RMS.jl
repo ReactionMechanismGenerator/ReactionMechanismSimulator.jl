@@ -28,4 +28,5 @@ module RMS
     include("Solution.jl")
     include("fluxdiagrams.jl")
     include("Equilibrium.jl")
+    include("Plotting.jl")
 end

@@ -11,3 +11,4 @@ ForwardDiff
 IterTools
 SpecialFunctions
 Images
+PyPlot
