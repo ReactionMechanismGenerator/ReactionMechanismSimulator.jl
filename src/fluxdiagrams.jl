@@ -2,13 +2,12 @@ using PyCall
 using SparseArrays
 using Images
 import Base: length
-@pyimport rmgpy.molecule as molecule
-@pyimport pydot
 
 struct FluxDiagram{T<:Real}
     ts::Array{T,1}
     outputdirectory::String
 end
+export FluxDiagram
 
 length(p::FluxDiagram) = 1
 export length
@@ -20,11 +19,13 @@ export broadcastable
 return an array of all png images associated with a FluxDiagram object
 """
 getimages(fd::FluxDiagram) = getdiagram.(fd,1:length(fd.ts))
+export getimages
 
 """
 return the png image associated with the index ind
 """
 getdiagram(fd::FluxDiagram,ind::Int64) = load(string(joinpath(fd.outputdirectory,"flux_diagram_"),ind,".png"))
+export getdiagram
 
 """
 generate a png representing spc at location path
@@ -40,14 +41,15 @@ function draw(spc::Species,path::String=".")
         end
     end
     if spc.inchi != ""
-        mol = molecule.Molecule()[:fromInChI](spc.inchi)
+        mol = molecule[:Molecule]()[:fromInChI](spc.inchi)
     elseif spc.smiles != ""
-        mol = molecule.Molecule()[:fromSMILES](spc.smiles)
+        mol = molecule[:Molecule]()[:fromSMILES](spc.smiles)
     else
         throw(error("no smiles or inchi for molecule $name"))
     end
     mol[:draw](joinpath(path,fname))
 end
+export draw
 
 """
 generate pngs for all species in phase and store them in the "species" folder
@@ -57,6 +59,7 @@ function drawspecies(phase::T) where {T<:AbstractPhase}
         draw(spc,"species")
     end
 end
+export drawspecies
 
 """
 generates and returns the image of a single flux diagram at the given time point
@@ -73,6 +76,7 @@ function getfluxdiagram(bsol,t;centralspecieslist=Array{String,1}(),superimpose=
 
     return getdiagram(fd,1)
 end
+export getfluxdiagram
 
 """
 generates a series of flux diagrams at the time points indicated
@@ -194,14 +198,14 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         end
     end
 
-    graph = pydot.Dot("flux_diagram",graph_type="digraph",overlap="false")
+    graph = pydot[:Dot]("flux_diagram",graph_type="digraph",overlap="false")
     graph[:set_rankdir]("LR")
     graph[:set_fontname]("sans")
     graph[:set_fontsize]("10")
 
     for index in nodes
         species = specieslist[index]
-        node = pydot.Node(name=species.name)
+        node = pydot[:Node](name=species.name)
         node[:set_penwidth](maximumnodepenwidth)
         graph[:add_node](node)
 
@@ -228,13 +232,13 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         if reactantindex in nodes && productindex in nodes
             reactant = specieslist[reactantindex]
             product = specieslist[productindex]
-            edge = pydot.Edge(reactant.name,product.name)
+            edge = pydot[:Edge](reactant.name,product.name)
             edge[:set_penwidth](maximumedgepenwidth)
             graph[:add_edge](edge)
         end
     end
 
-    graph = pydot.graph_from_dot_data(graph[:create_dot](prog="dot"))[1]
+    graph = pydot[:graph_from_dot_data](graph[:create_dot](prog="dot"))[1]
 
     for t in 1:length(ts)
         slope = -maximumnodepenwidth / log10(concentrationtol)
@@ -311,6 +315,8 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     end
     return FluxDiagram(ts,outputdirectory)
 end
+
+export makefluxdiagrams
 
 function addadjacentnodes!(targetnodeindex,nodes,edges,phase,maxreactionrates,maxspeciesrates,reactioncount,rad,mainnodes,speciesnamelist)
     if rad == 0

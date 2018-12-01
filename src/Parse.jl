@@ -1,8 +1,7 @@
 using Unitful
 using YAML
 using PyCall
-
-@pyimport rdkit.Chem as Chem
+using StaticArrays
 
 module Calc
     include("Calculators/RateUncertainty.jl")
@@ -106,8 +105,8 @@ function getatomdictfromrdkit(mol)
     return atmD,nbonds
 end
 
-getatomdictsmiles(smiles) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
-getatomdictinchi(inchi) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromInchi(inchi)))
+getatomdictsmiles(smiles) = getatomdictfromrdkit(Chem[:AddHs](Chem[:MolFromSmiles](smiles)))
+getatomdictinchi(inchi) = getatomdictfromrdkit(Chem[:AddHs](Chem[:MolFromInchi](inchi)))
 
 function getspeciesradius(atomdict::Dict{String,Int64},nbonds::Int64)
     """
@@ -169,6 +168,7 @@ function readinput(fname::String)
     parses a YAML input file into a dictionary containing
     partitions of Species and Reaction objects
     """
+
     D = YAML.load(open(fname))
     outdict = Dict()
 
@@ -279,3 +279,5 @@ function readinput(fname::String)
 
     return outdict
 end
+
+export readinput

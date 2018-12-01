@@ -20,6 +20,24 @@ end
     return Hs,Us,Gs
 end
 
+function makespcsvector(phase,spcdict)
+    y0 = zeros(length(phase.species))
+    spnames = [x.name for x in phase.species]
+    for (key,val) in spcdict
+        if key == "T"
+            continue
+        elseif key == "P"
+            continue
+        elseif key == "V"
+            continue
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"
+            y0[ind] = val
+        end
+    end
+end
+
 @inline function getkf(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,ns::Q,N::W4) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
     if isdefined(rxn.kinetics,:efficiencies) && length(rxn.kinetics.efficiencies) > 0
         @views @inbounds @fastmath C += dot(ns[keys(rxn.kinetics.efficiencies)],values(rxn.kinetics.efficiencies))/N

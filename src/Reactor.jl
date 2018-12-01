@@ -5,17 +5,17 @@ using ForwardDiff
 abstract type AbstractReactor end
 export AbstractReactor
 
-struct BatchReactor{D<:AbstractDomain}
+struct Reactor{D<:AbstractDomain} <: AbstractReactor
     domain::D
     ode::ODEProblem
 end
 
-function BatchReactor(domain::T,y0::Array{W,1},tspan::Tuple) where {T<:AbstractDomain,W<:Real}
-    dydt(y::Array{T,1},p::Nothing,t::Q) where {T<:Real,Q<:Real} = dydtBatchReactor!(y,t,domain)
+function Reactor(domain::T,y0::Array{W,1},tspan::Tuple) where {T<:AbstractDomain,W<:Real}
+    dydt(y::Array{T,1},p::Nothing,t::Q) where {T<:Real,Q<:Real} = dydtreactor!(y,t,domain)
     ode = ODEProblem(dydt,y0,tspan)
-    return BatchReactor(domain,ode)
+    return Reactor(domain,ode)
 end
-export BatchReactor
+export Reactor
 
 @inline function getrate(rxn::T,cs::Array{W,1},kfs::Array{Q,1},krevs::Array{Q,1}) where {T<:AbstractReaction,Q,W<:Real}
     Nreact = length(rxn.reactantinds)
@@ -52,7 +52,7 @@ export getrate
 end
 export addreactionratecontribution!
 
-@inline function dydtBatchReactor!(y::Array{U,1},t::Z,domain::Q;sensitivity::Bool=true) where {Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
+@inline function dydtreactor!(y::Array{U,1},t::Z,domain::Q;sensitivity::Bool=true) where {Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
     dydt = zeros(U,length(y))
     if sensitivity #if sensitivity isn't explicitly set to false set it to domain.sensitivity
         sensitivity = domain.sensitivity
@@ -66,7 +66,7 @@ export addreactionratecontribution!
     if sensitivity
         Nspcs = length(cs)
         Nrxns = length(domain.phase.reactions)
-        jacobianbatch!(domain.jacobian,y,nothing,t,domain)
+        jacobian!(domain.jacobian,y,nothing,t,domain)
         dgdk = ratederivative(d=domain,cs=cs,V=V,T=T,kfs=kfs,krevs=krevs,sparse=false)
         for j  = 1:Nspcs+Nrxns #kfs and Gfs
             for i = 1:Nspcs #species
@@ -79,9 +79,9 @@ export addreactionratecontribution!
     end
     return dydt
 end
-export dydtBatchReactor!
+export dydtreactor!
 
-function jacobianbatch!(J::Q,y::U,p::W,t::Z,domain::V) where {Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+function jacobian!(J::Q,y::U,p::W,t::Z,domain::V) where {Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     if domain.t[1] == t && domain.jacuptodate == true
         return domain.jacobian
     else
@@ -91,6 +91,7 @@ function jacobianbatch!(J::Q,y::U,p::W,t::Z,domain::V) where {Q<:AbstractArray,U
         return domain.jacobian
     end
 end
+export jacobian!
 
 function ratederivative(;d::W,cs::Q,V::Y,T::Y2,kfs::Z,krevs::X,sparse::Bool=false) where {W<:Union{ConstantTPDomain,ConstantTVDomain},Q<:AbstractArray,Y2<:Real,Y<:Real,Z<:AbstractArray,X<:AbstractArray}
     Nspcs = length(cs)
