@@ -25,7 +25,7 @@ module RMS
     include("Domain.jl")
     include("Parse.jl")
     include("Reactor.jl")
-    include("Solution.jl")
+    include("Simulation.jl")
     include("fluxdiagrams.jl")
     include("Equilibrium.jl")
     include("Plotting.jl")
