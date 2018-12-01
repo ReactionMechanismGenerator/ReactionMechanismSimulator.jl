@@ -1,54 +1,64 @@
 using DifferentialEquations
 import DifferentialEquations.DiffEqBase: AbstractODESolution, HermiteInterpolation,AbstractDiffEqInterpolation
 
-abstract type AbstractSolution end
+abstract type AbstractSimulation end
 
-struct Solution{Q<:AbstractODESolution,W<:AbstractDomain,L<:AbstractArray,G<:Function} <: AbstractSolution
+struct Simulation{Q<:AbstractODESolution,W<:AbstractDomain,L<:AbstractArray,G<:Function,G2<:AbstractArray} <: AbstractSimulation
     sol::Q
     domain::W
     names::L
     N::G
+    Ns::G2
 end
 
-function Solution(sol::Q,domain::W) where {Q<:AbstractODESolution,W<:AbstractDomain}
+function Simulation(sol::Q,domain::W) where {Q<:AbstractODESolution,W<:AbstractDomain}
     names = getfield.(domain.phase.species,:name)
     Ns = sum(hcat(sol.interp.u...)[domain.indexes[1]:domain.indexes[2],:],dims=1)
     Nderivs = sum(hcat(sol.interp.du...)[domain.indexes[1]:domain.indexes[2],:],dims=1)
     N = HermiteInterpolation(sol.interp.t,Ns,Nderivs)
     F(t::T) where {T<:Real} = N(t,nothing,Val{0},sol.prob.p,:left)
-    return Solution(sol,domain,names,F)
+    return Simulation(sol,domain,names,F,Ns)
 end
 
-export Solution
+export Simulation
 
-function molefractions(bsol::Q; name::W,t::E) where {Q<:AbstractSolution, W<:String, E<:Real}
+length(p::T) where {T<:AbstractSimulation} = 1
+export length
+
+iterate(p::T) where {T<:AbstractSimulation} = p
+export iterate
+
+Broadcast.broadcastable(p::T) where {T<:AbstractSimulation} = Ref(p)
+export broadcastable
+
+function molefractions(bsol::Q,name::W,t::E) where {Q<:AbstractSimulation, W<:String, E<:Real}
     @assert name in bsol.names
     ind = findfirst(isequal(name),bsol.names)
     return bsol(t)[ind]/bsol.N(t)
 end
 
-function molefractions(bsol::Q; t::E) where {Q<:AbstractSolution,E<:Real}
+function molefractions(bsol::Q, t::E) where {Q<:AbstractSimulation,E<:Real}
     return bsol.sol(t)[bsol.domain.indexes[1]:bsol.domain.indexes[2]]./bsol.N(t)
 end
 
-function molefractions(bsol::Q) where {Q<:AbstractSolution}
-    return bsol.sol.u./bsol.N.u
+function molefractions(bsol::Q) where {Q<:AbstractSimulation}
+    @views return hcat(bsol.sol.u...)[bsol.domain.indexes[1]:bsol.domain.indexes[2],:]./bsol.Ns
 end
 
 export molefractions
 
-getT(bsol::Solution{Q,W,L,G}, t::K) where {W<:Union{ConstantTPDomain,ConstantTVDomain},K<:Real,Q,G,L} = bsol.domain.T
-getT(bsol::Solution{Q,W,L,G}, t::K) where {W<:ConstantVDomain,K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[3]]
+getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTPDomain,ConstantTVDomain},K<:Real,Q,G,L} = bsol.domain.T
+getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantVDomain,K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[3]]
 export getT
-getV(bsol::Solution{Q,W,L,G}, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L} = bsol.N(t)*getT(bsol,t)*R /bsol.domain.P
-getV(bsol::Solution{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L} = bsol.domain.V
+getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L} = bsol.N(t)*getT(bsol,t)*R /bsol.domain.P
+getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L} = bsol.domain.V
 export getV
-getP(bsol::Solution{Q,W,L,G}, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L} = bsol.domain.P
-getP(bsol::Solution{Q,W,L,G}, t::K) where {W<:ConstantTVDomain,K<:Real,Q,G,L} = 1.0e6
-getP(bsol::Solution{Q,W,L,G}, t::K) where {W<:ConstantVDomain,K<:Real,Q,G,L} = bsol.N(t)*R*getT(bsol,t)/getV(bsol,t)
+getP(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L} = bsol.domain.P
+getP(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantTVDomain,K<:Real,Q,G,L} = 1.0e6
+getP(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantVDomain,K<:Real,Q,G,L} = bsol.N(t)*R*getT(bsol,t)/getV(bsol,t)
 export getP
-getC(bsol::Solution{Q,W,L,G}, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L} = bsol.domain.P/(R*bsol.domain.T)
-getC(bsol::Solution{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L} = bsol.N(t)/bsol.domain.V
+getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L} = bsol.domain.P/(R*bsol.domain.T)
+getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L} = bsol.N(t)/bsol.domain.V
 export getC
 """
 calculates the rates of production/loss at a given time point
@@ -92,7 +102,7 @@ end
 
 export rops
 
-function getconcentrationsensitivity(bsol::Solution{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L}
+function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L}
     @assert numerator in bsol.names
     @assert denominator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)
@@ -104,7 +114,7 @@ function getconcentrationsensitivity(bsol::Solution{Q,W,L,G}, numerator::String,
     return s/arr[indnum] #constant volume
 end
 
-function getconcentrationsensitivity(bsol::Solution{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L}
+function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L}
     @assert numerator in bsol.names
     @assert denominator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)
@@ -118,7 +128,7 @@ function getconcentrationsensitivity(bsol::Solution{Q,W,L,G}, numerator::String,
     return (s-c*sum(arr[Nvars+Nrxns*Nvars+(inddeno-1)*Nvars+1:Nvars+Nrxns*Nvars+inddeno*Nvars])*R*domain.T/domain.P)/(c*V) #known T and P
 end
 
-function getconcentrationsensitivity(bsol::Solution{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Z<:Integer,Q,G,L}
+function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Z<:Integer,Q,G,L}
     @assert numerator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)
     inddeno = denominator
@@ -133,7 +143,7 @@ function getconcentrationsensitivity(bsol::Solution{Q,W,L,G}, numerator::String,
     return s*k/arr[indnum] #constant volume
 end
 
-function getconcentrationsensitivity(bsol::Solution{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:ConstantTPDomain,K<:Real,Z<:Integer,Q,G,L}
+function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:ConstantTPDomain,K<:Real,Z<:Integer,Q,G,L}
     @assert numerator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)
     inddeno = denominator
