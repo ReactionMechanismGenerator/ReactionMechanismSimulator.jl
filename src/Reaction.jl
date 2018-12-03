@@ -16,6 +16,7 @@ end
 export ElementaryReaction
 
 getrxnstr(rxn::T) where {T<:AbstractReaction} = join([join(getfield.(rxn.reactants,:name),"+"),join(getfield.(rxn.products,:name),"+")],"<=>")
+export getrxnstr
 show(io::IO,rxn::T) where {T<:AbstractReaction} = print(io,getrxnstr(rxn))
 print(rxn::T) where {T<:AbstractReaction} = print(getrxnstr(rxn))
 println(rxn::T) where {T<:AbstractReaction} = print(string(getrxnstr(rxn),"\n"))
