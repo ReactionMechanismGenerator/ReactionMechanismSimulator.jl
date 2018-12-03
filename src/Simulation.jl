@@ -125,7 +125,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     s = arr[Nvars+Nrxns*Nvars+(inddeno-1)*Nvars+indnum]
     V = getV(bsol,t)
     c = arr[indnum]/V
-    return (s-c*sum(arr[Nvars+Nrxns*Nvars+(inddeno-1)*Nvars+1:Nvars+Nrxns*Nvars+inddeno*Nvars])*R*domain.T/domain.P)/(c*V) #known T and P
+    return (s-c*sum(arr[Nvars+Nrxns*Nvars+(inddeno-1)*Nvars+1:Nvars+Nrxns*Nvars+inddeno*Nvars])*R*bsol.domain.T/bsol.domain.P)/(c*V) #known T and P
 end
 
 function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Z<:Integer,Q,G,L}
@@ -157,7 +157,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     C = getC(bsol,t)
     c = arr[indnum]/V
     k = bsol.domain.phase.reactions[inddeno].kinetics(T=T,P=P,C=C)
-    return k*(s-c*sum(arr[Nvars+(inddeno-1)*Nvars+1:Nvars+inddeno*Nvars])*R*domain.T/domain.P)/(c*V) #known T and P
+    return k*(s-c*sum(arr[Nvars+(inddeno-1)*Nvars+1:Nvars+inddeno*Nvars])*R*bsol.domain.T/bsol.domain.P)/(c*V) #known T and P
 end
 
 export getconcentrationsensitivity
