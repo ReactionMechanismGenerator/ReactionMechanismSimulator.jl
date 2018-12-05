@@ -1,4 +1,4 @@
-include("rms.jl")
+include("rmstest.jl")
 """
 Runs all files whose names start with "Test" in the current directory
 or any directories below it

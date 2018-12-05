@@ -1,6 +1,6 @@
 using Test
 include("Parse.jl")
-out = readinput("testing/superminimal.yml")
+out = readinput("../src/testing/superminimal.yml")
 r = out["gas"]["Reactions"][1]
 s = r.products[1]
 
