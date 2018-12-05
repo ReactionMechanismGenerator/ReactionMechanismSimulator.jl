@@ -69,6 +69,7 @@ function parseentry(q,units=nothing)
     end
 
 end
+export parseentry
 
 function parsestring(s)
     """
@@ -87,6 +88,7 @@ function parsestring(s)
         return s
     end
 end
+export parsestring
 
 function getatomdictfromrdkit(mol)
     """
@@ -104,9 +106,12 @@ function getatomdictfromrdkit(mol)
     nbonds = length(mol[:GetBonds]())
     return atmD,nbonds
 end
+export getatomdictfromrdkit
 
 getatomdictsmiles(smiles) = getatomdictfromrdkit(Chem[:AddHs](Chem[:MolFromSmiles](smiles)))
+export getatomdictsmiles
 getatomdictinchi(inchi) = getatomdictfromrdkit(Chem[:AddHs](Chem[:MolFromInchi](inchi)))
+export getatomdictinchi
 
 function getspeciesradius(atomdict::Dict{String,Int64},nbonds::Int64)
     """
@@ -123,7 +128,7 @@ function getspeciesradius(atomdict::Dict{String,Int64},nbonds::Int64)
     r = (0.75/Base.pi*V)^(1.0/3.0)
     return r
 end
-
+export getspeciesradius
 
 function fcndict2obj(d::T,ymlunitsdict::Q) where {T,Q<:Any}
     """
@@ -162,6 +167,7 @@ function fcndict2obj(d::T,ymlunitsdict::Q) where {T,Q<:Any}
     ex = Expr(:call,fcn,Expr(:parameters,kwexprs...))
     return eval(ex)
 end
+export fcndict2obj
 
 function readinput(fname::String)
     """

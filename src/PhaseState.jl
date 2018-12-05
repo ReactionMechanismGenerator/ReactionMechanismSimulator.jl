@@ -5,6 +5,7 @@ using LinearAlgebra
 @inline function calcgibbs(ph::U,T::W) where {U<:IdealPhase,W<:Real}
     return getGibbs.(getfield.(ph.species,:thermo),T)
 end
+export calcgibbs
 
 @inline function calcenthalpyinternalgibbs(ph::U,T::W,P::Z,V::Q) where {U<:IdealPhase,W,Z,Q<:Real}
     Hs = getEnthalpy.(getfield.(ph.species,:thermo),T)
@@ -13,12 +14,15 @@ end
     return Hs,Us,Gs
 end
 
+
 @inline function calcenthalpyinternalgibbs(ph::IdealGas,T::W,P::Z,V::Q) where {W,Z,Q<:Real}
     Hs = getEnthalpy.(getfield.(ph.species,:thermo),T)
     Us = Hs .- R*T
     Gs = Hs .- T.*getEntropy.(getfield.(ph.species,:thermo),T)
     return Hs,Us,Gs
 end
+
+export calcenthalpyinternalgibbs
 
 function makespcsvector(phase,spcdict)
     y0 = zeros(length(phase.species))
@@ -37,6 +41,8 @@ function makespcsvector(phase,spcdict)
         end
     end
 end
+
+export makespcsvector
 
 @inline function getkf(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,ns::Q,N::W4) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
     if isdefined(rxn.kinetics,:efficiencies) && length(rxn.kinetics.efficiencies) > 0
@@ -70,6 +76,7 @@ Equations from Flegg 2016
     end
     return kf
 end
+export getDiffusiveRate
 
 @inline function getKc(rxn::ElementaryReaction,ph::U,T::Z,Gs::Array{Q,1}) where {U<:AbstractPhase,Q,Z<:Real}
     Nreact = length(rxn.reactantinds)
@@ -129,6 +136,7 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
     end
     return kf,krev
 end
+export getkfkrev
 
 @inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3) where {U<:AbstractPhase,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
     N = length(phase.reactions)

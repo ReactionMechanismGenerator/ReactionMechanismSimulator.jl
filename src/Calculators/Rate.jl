@@ -51,6 +51,7 @@ end
     end
     return out
 end
+export MultiArrhenius
 
 @with_kw struct MultiPdepArrhenius{Q<:AbstractRateUncertainty} <: AbstractRate
     parrs::Array{PdepArrhenius,1}
