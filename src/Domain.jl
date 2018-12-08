@@ -227,7 +227,7 @@ end
 export ConstantTVDomain
 
 
-@inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+@inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray{Float64,1},Q<:Float64}
     if t != d.t[1]
         d.t[1] = t
         d.jacuptodate[1] = false
@@ -238,9 +238,29 @@ export ConstantTVDomain
     cs = ns./V
     C = N/V
     for ind in d.efficiencyinds #efficiency related rates may have changed
-        d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,cs,d.Gs,d.diffusivity)
+        d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity)
     end
     return ns,cs,d.T,d.P,V,C,N,d.mu,d.kfs,d.krevs,[],[],[],[]
+end
+
+@inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        if isa(t,Float64)
+            d.t[1] = t
+        end
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    V = N*d.T*R/d.P
+    cs = ns./V
+    C = N/V
+    kfs = convert(typeof(y),copy(d.kfs))
+    krevs = convert(typeof(y),copy(d.krevs))
+    for ind in d.efficiencyinds #efficiency related rates may have changed
+        kfs[ind],krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity)
+    end
+    return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,[],[],[],[]
 end
 
 @inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
