@@ -4,7 +4,7 @@ using IterTools
 abstract type AbstractRate end
 export AbstractRate
 
-abstract type AbstractFalloffRate end
+abstract type AbstractFalloffRate <: AbstractRate end
 export AbstractFalloffRate
 
 @with_kw struct Arrhenius{N,K,Q<:Number,P<:AbstractRateUncertainty} <: AbstractRate
@@ -123,7 +123,7 @@ end
 end
 export Troe
 
-@with_kw struct Chebyshev{T,Q,S,V,B<:Number}
+@with_kw struct Chebyshev{T,Q,S,V,B<:Number} <: AbstractRate
     coefs::Array{T,2}
     Tmin::Q
     Tmax::S
@@ -168,7 +168,7 @@ end
     return @fastmath (2.0*log10(P)-log10(ch.Pmin)-log10(ch.Pmax))/(log10(ch.Pmax)-log10(ch.Pmin))
 end
 
-@inline function (ch::Chebyshev)(;T::N,P::Q=0.0) where {N,Q<:Number}
+@inline function (ch::Chebyshev)(;T::N,P::Q=0.0,C::B=0.0) where {N<:Number,B<:Number,Q<:Number}
     k = 0.0
     Tred = getRedTemp(ch,T)
     Pred = getRedPress(ch,P)

@@ -55,11 +55,25 @@ function parseentry(q,units=nothing)
         return q
     elseif isa(q,Quantity)
         return upreferred(q).val
-    elseif isa(q,Number) || isa(q,AbstractArray)
+    elseif isa(q,Number)
         if units == nothing
             return q
         else
             return upreferred(Quantity(q,units)).val
+        end
+    elseif isa(q,AbstractArray)
+        if units == nothing
+            if typeof(q[1]) <: AbstractArray
+                return hcat(q...)
+            else
+                return q
+            end
+        else
+            if typeof(q[1]) <: AbstractArray
+                return hcat(upreferred(Quantity(q,units)).val...)
+            else
+                return upreferred(Quantity(q,units)).val
+            end
         end
     elseif isa(q,Dict)
         return q
@@ -77,14 +91,18 @@ function parsestring(s)
     the string is parsed by julia's parser and then analyzed to check if it is in
     the format of a quantity input
     """
-    ex = Meta.parse(s)
-    if !isa(ex,Symbol) && !isa(ex,String) && length(ex.args) == 3 && ex.args[1] == :* &&
-        (isa(ex.args[2],Number) || (ex.args[2].head == :vec && all([isa(x,Number) for x in ex.args[2].args]))) &&
-        ex.args[3].args[1] == Symbol("@u_str") &&
-        isa(ex.args[3].args[2],LineNumberNode) && ex.args[3].args[2].line == 1 &&
-        ex.args[3].args[2].file == :none && isa(ex.args[3].args[3],String)
-        return eval(ex)
-    else
+    try
+        ex = Meta.parse(s)
+        if !isa(ex,Symbol) && !isa(ex,String) && length(ex.args) == 3 && ex.args[1] == :* &&
+            (isa(ex.args[2],Number) || (ex.args[2].head == :vec && all([isa(x,Number) for x in ex.args[2].args]))) &&
+            ex.args[3].args[1] == Symbol("@u_str") &&
+            isa(ex.args[3].args[2],LineNumberNode) && ex.args[3].args[2].line == 1 &&
+            ex.args[3].args[2].file == :none && isa(ex.args[3].args[3],String)
+            return eval(ex)
+        else
+            return s
+        end
+    catch
         return s
     end
 end
@@ -268,7 +286,7 @@ function readinput(fname::String)
         rxn["productinds"] =  [r.index for r in rxn["products"]]
         rxn["productinds"] = SVector(rxn["productinds"]...)
         if "efficiencies" in keys(rxn["kinetics"])
-            rxn["kinetics"]["efficiencies"] = Dict([spcdict[name].index=>val-1.0 for (name,val) in rxn["kinetics"]["efficiencies"]]) #in RMS we correct [M] rather than calculate it so we subtract 1
+            rxn["kinetics"]["efficiencies"] = Dict{Int64,Float64}([spcdict[name][1].index=>val-1.0 for (name,val) in rxn["kinetics"]["efficiencies"]]) #in RMS we correct [M] rather than calculate it so we subtract 1
         end
         r = fcndict2obj(rxn,ymlunitsdict)
         unique!(phs)
