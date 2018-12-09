@@ -57,17 +57,22 @@ export addreactionratecontribution!
     if sensitivity #if sensitivity isn't explicitly set to false set it to domain.sensitivity
         sensitivity = domain.sensitivity
     end
-    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs = calcthermo(domain,y,t)
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave = calcthermo(domain,y,t)
     for rxn in domain.phase.reactions
         addreactionratecontribution!(dydt,rxn,cs,kfs,krevs)
     end
     dydt *= V
-    calcdomainderivatives!(domain,dydt;T=T,Us=Us,V=V,C=C,ns=ns,N=N)
+    if sensitivity && isa(domain,ConstantVDomain)
+        wV = copy(dydt[domain.indexes[1]:domain.indexes[2]])
+    else
+        wV = Array{U,1}()
+    end
+    calcdomainderivatives!(domain,dydt;T=T,Us=Us,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
     if sensitivity
         Nspcs = length(cs)
         Nrxns = length(domain.phase.reactions)
         jacobian!(domain.jacobian,y,nothing,t,domain)
-        dgdk = ratederivative(d=domain,cs=cs,V=V,T=T,kfs=kfs,krevs=krevs,sparse=false)
+        dgdk = ratederivative(domain;cs=cs,V=V,T=T,kfs=kfs,Us=Us,Cvave=Cvave,N=N,krevs=krevs,wV=wV,sparse=false)
         for j  = 1:Nspcs+Nrxns #kfs and Gfs
             for i = 1:Nspcs #species
                 for z in 1:Nspcs
