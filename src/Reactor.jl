@@ -93,7 +93,7 @@ function jacobian!(J::Q,y::U,p::W,t::Z,domain::V) where {Q<:AbstractArray,U<:Abs
 end
 export jacobian!
 
-function ratederivative(;d::W,cs::Q,V::Y,T::Y2,kfs::Z,krevs::X,sparse::Bool=false) where {W<:Union{ConstantTPDomain,ConstantTVDomain},Q<:AbstractArray,Y2<:Real,Y<:Real,Z<:AbstractArray,X<:AbstractArray}
+function ratederivative(d::W; cs::Q,V::Y,T::Y2,Us::Z3,Cvave::Z4,N::Z5,kfs::Z,krevs::X,wV::Q2,sparse::Bool=false) where {W<:Union{ConstantTPDomain,ConstantTVDomain},Z4<:Real,Z5<:Real,Z3<:AbstractArray,Q2<:AbstractArray,Q<:AbstractArray,Y2<:Real,Y<:Real,Z<:AbstractArray,X<:AbstractArray}
     Nspcs = length(cs)
     rxns = d.phase.reactions
     Nrxns = length(rxns)
@@ -174,6 +174,94 @@ function ratederivative(;d::W,cs::Q,V::Y,T::Y2,kfs::Z,krevs::X,sparse::Bool=fals
         end
     end
     return V*ratederiv
+end
+
+function ratederivative(d::ConstantVDomain; cs::Q,V::Y,T::Y2,Us::Z3,Cvave::Y3,N::Y2,kfs::Z,krevs::X,wV::Q2,sparse::Bool=false) where {Z3<:AbstractArray,Q<:AbstractArray,Q2<:AbstractArray,Y3<:Real,Y2<:Real,Y<:Real,Z<:AbstractArray,X<:AbstractArray}
+    Nspcs = length(cs)
+    rxns = d.phase.reactions
+    Nrxns = length(rxns)
+
+    if sparse
+        ratederiv = spzeros(Nspcs+1,Nspcs+Nrxns)
+    else
+        ratederiv = zeros(Nspcs+1,Nspcs+Nrxns)
+    end
+    RTinv = 1.0/(R*T)
+
+    for (j,rxn) in enumerate(rxns)
+        Nreact = length(rxn.reactantinds)
+        Nprod = length(rxn.productinds)
+
+        if Nreact == 1
+            rind1 = rxn.reactantinds[1]
+            fderiv = cs[rind1]
+        elseif Nreact == 2
+            rind1,rind2 = rxn.reactantinds
+            fderiv = cs[rind1]*cs[rind2]
+        else
+            rind1,rind2,rind3 = rxn.reactantinds
+            fderiv = cs[rind1]*cs[rind2]*cs[rind3]
+        end
+
+        if Nprod == 1
+            pind1 = rxn.productinds[1]
+            rderiv = krevs[j]/kfs[j]*cs[pind1]
+        elseif Nprod == 2
+            pind1,pind2 = rxn.productinds
+            rderiv = krevs[j]/kfs[j]*cs[pind1]*cs[pind2]
+        else
+            pind1,pind2,pind3 = rxn.productinds
+        end
+
+        flux = fderiv-rderiv
+        gderiv = rderiv*kfs[j]*RTinv
+
+        deriv = zeros(Nspcs)
+
+        deriv[rind1] += gderiv
+        if Nreact > 1
+            deriv[rind2] += gderiv
+            if Nreact > 2
+                deriv[rind3] == gderiv
+            end
+        end
+
+        deriv[pind1] -= gderiv
+        if Nprod > 1
+            deriv[pind2] -= gderiv
+            if Nprod > 2
+                deriv[pind3] -= gderiv
+            end
+        end
+
+        ratederiv[rind1,j] -= flux
+        ratederiv[rind1,Nrxns+1:Nrxns+Nspcs] .-= deriv
+        if Nreact > 1
+            ratederiv[rind2,j] -= flux
+            ratederiv[rind2,Nrxns+1:Nrxns+Nspcs] .-= deriv
+            if Nreact > 2
+                ratederiv[rind3,j] -= flux
+                ratederiv[rind3,Nrxns+1:Nrxns+Nspcs] .-= deriv
+            end
+        end
+
+        ratederiv[pind1,j] += flux
+        ratederiv[pind1,Nrxns+1:Nrxns+Nspcs] .+= deriv
+        if Nprod > 1
+            ratederiv[pind2,j] += flux
+            ratederiv[pind2,Nrxns+1:Nrxns+Nspcs] .+= deriv
+            if Nprod > 2
+                ratederiv[pind3,j] += flux
+                ratederiv[pind3,Nrxns+1:Nrxns+Nspcs] .+= deriv
+            end
+        end
+    end
+    ratederiv *= V
+    #Temperature stuff
+    @views ratederiv[end,:] += (Us'*ratederiv[1:end-1,:])[1,:]
+    ratederiv[end,1:Nspcs] += wV
+    ratederiv[end,:] /= (N*Cvave)
+    return ratederiv
 end
 export ratederivative
 # function jacobianbatchreactor(y::Array{T,1},t::T,domain::Q,kfs::Array{T,1},krevs::Array{T,1},N::J,sparse::Bool=false) where {T<:Real,J<:Integer,Q<:AbstractConstantKDomain}
