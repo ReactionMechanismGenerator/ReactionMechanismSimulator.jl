@@ -92,6 +92,6 @@ function plotmaxratesensitivity(bsol, spcname; N=0, tol= 1e-2)
     xs = Array{Float64,1}(1:length(inds))
     barh(xs,values[inds])
     yticks(xs,getrxnstr.(bsol.domain.phase.reactions[outinds[inds]]))
-    xlabel("dLn([$spcname])/d(k_i) * k_i/[$spcname]")
+    xlabel("dLn([$spcname])/d(Ln(k_i))")
 end
 export plotmaxratesensitivity
