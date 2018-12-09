@@ -88,12 +88,12 @@ export dydtreactor!
 
 function jacobian!(J::Q,y::U,p::W,t::Z,domain::V) where {Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     if domain.t[1] == t && domain.jacuptodate == true
-        return domain.jacobian
+        return
     else
         f(y::Array{T,1}) where {T<:Real} = dydtreactor!(y,domain.t[1],domain;sensitivity=false)
-        ForwardDiff.jacobian!(domain.jacobian,f,y[1:length(domain.phase.species)])
+        ForwardDiff.jacobian!(domain.jacobian,f,y[1:domain.indexes[end]-domain.indexes[1]+1])
         domain.jacuptodate[1] = true
-        return domain.jacobian
+        return
     end
 end
 export jacobian!
