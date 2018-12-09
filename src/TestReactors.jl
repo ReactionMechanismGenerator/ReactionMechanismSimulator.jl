@@ -162,7 +162,7 @@ cs = y0[1:length(domain.phase.species)]/V
 C = sum(cs)
 kfs,krevs = getkfkrevs(phase=domain.phase,T=domain.T,P=domain.P,C=C,N=N,ns=y0[1:length(domain.phase.species)],Gs=Gs,diffs=[])
 
-dgdk = ratederivative(d=domain,cs=cs,V=V,T=domain.T,kfs=kfs,krevs=krevs,sparse=false)
+dgdk = ratederivative(domain;cs=cs,V=V,T=domain.T,kfs=kfs,krevs=krevs,Us=Array{Float64,1}(),N=1.0,wV=Array{Float64,1}(),Cvave=0.0,sparse=false)
 
 dgdkdif = (dgdk-rmgdgdk)./rmgdgdk
 @test all((dgdkdif .< 1e-4) .| isnan.(dgdkdif))
