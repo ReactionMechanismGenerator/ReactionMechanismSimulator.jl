@@ -240,7 +240,7 @@ export ConstantTVDomain
     for ind in d.efficiencyinds #efficiency related rates may have changed
         d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity)
     end
-    return ns,cs,d.T,d.P,V,C,N,d.mu,d.kfs,d.krevs,[],[],[],[]
+    return ns,cs,d.T,d.P,V,C,N,d.mu,d.kfs,d.krevs,[],[],[],[],0.0
 end
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
@@ -260,7 +260,7 @@ end
     for ind in d.efficiencyinds #efficiency related rates may have changed
         kfs[ind],krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity)
     end
-    return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,[],[],[],[]
+    return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,[],[],[],[],0.0
 end
 
 @inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
@@ -281,7 +281,9 @@ end
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs)
-    return ns,cs,T,P,d.V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs
+    @fastmath @inbounds f(spc::Species) = getHeatCapacity(spc.thermo,T)*ns[spc.index]
+    @fastmath @inbounds Cpave = mapreduce(f,+,d.phase.species)/N - R
+    return ns,cs,T,P,d.V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs,Cpave
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q) where {W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
@@ -294,20 +296,18 @@ end
     cs = ns./d.V
     C = N/d.V
     P = 1.0e9
-    return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,[],[],[],[]
+    return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,[],[],[],[],0.0
 end
 export calcthermo
 
-@inline function calcdomainderivatives!(d::Q,dydt::Array{Z7,1};T::Z4,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6) where {Q<:AbstractDomain,W<:IdealGas,Y<:Integer,Z7,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+@inline function calcdomainderivatives!(d::Q,dydt::Array{Z7,1};T::Z4,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z8) where {Q<:AbstractDomain,Z8<:Real,Z7<:Real,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
 end
 
-@inline function calcdomainderivatives!(d::ConstantVDomain{W,Y},dydt::Array{K,1};T::Z4,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6) where {W<:IdealGas,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
-    @fastmath @inbounds Cpave = mapreduce(x->getHeatCapacity(x.thermo,T)*ns[x.index],+,d.phase.species)/N
-    @fastmath Cvave = Cpave-R
-    @views @fastmath @inbounds dydt[d.indexes[3]] = -Us'*(dydt[d.indexes[1]:d.indexes[2]]/V)/(C*Cvave) #divide by V to cancel ωV to ω
+@inline function calcdomainderivatives!(d::ConstantVDomain{W,Y},dydt::Array{K,1};T::Z4,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+    @views @fastmath @inbounds dydt[d.indexes[3]] = -dot(Us,(dydt[d.indexes[1]:d.indexes[2]]/V))/(C*Cvave) #divide by V to cancel ωV to ω
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
