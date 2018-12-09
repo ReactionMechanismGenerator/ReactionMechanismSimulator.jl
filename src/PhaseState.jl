@@ -139,10 +139,10 @@ end
 export getkfkrev
 
 @inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3) where {U<:AbstractPhase,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
-    N = length(phase.reactions)
-    kf = zeros(N)
-    krev = zeros(N)
-    @simd for i = 1:N
+    len = length(phase.reactions)
+    kf = zeros(typeof(N),len)
+    krev = zeros(typeof(N),len)
+    @simd for i = 1:len
        @fastmath @inbounds kf[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs)
     end
     return kf,krev
