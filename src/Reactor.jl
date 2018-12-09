@@ -74,8 +74,8 @@ export addreactionratecontribution!
         jacobian!(domain.jacobian,y,nothing,t,domain)
         dgdk = ratederivative(domain;cs=cs,V=V,T=T,kfs=kfs,Us=Us,Cvave=Cvave,N=N,krevs=krevs,wV=wV,sparse=false)
         for j  = 1:Nspcs+Nrxns #kfs and Gfs
-            for i = 1:Nspcs #species
-                for z in 1:Nspcs
+            for i = 1:(domain.indexes[end]-domain.indexes[1]+1) #species
+                for z in 1:(domain.indexes[end]-domain.indexes[1]+1)
                     dydt[j*Nspcs+i] += domain.jacobian[i,z]*y[j*Nspcs+z]
                 end
                 dydt[j*Nspcs+i] += dgdk[i,j]
