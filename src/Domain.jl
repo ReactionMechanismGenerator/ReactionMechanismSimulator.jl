@@ -140,9 +140,9 @@ function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1
         constspcinds = Array{Int64,1}()
     end
     if sparse
-        jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
+        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
     else
-        jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
+        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
     end
     return ConstantVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
     V,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
