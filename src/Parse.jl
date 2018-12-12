@@ -64,13 +64,13 @@ function parseentry(q,units=nothing)
     elseif isa(q,AbstractArray)
         if units == nothing
             if typeof(q[1]) <: AbstractArray
-                return hcat(q...)
+                return convert(Array,hcat(q...)')
             else
                 return q
             end
         else
             if typeof(q[1]) <: AbstractArray
-                return hcat(upreferred(Quantity(q,units)).val...)
+                return convert(Array,hcat(upreferred(Quantity(q,units)).val...)')
             else
                 return upreferred(Quantity(q,units)).val
             end
@@ -175,7 +175,7 @@ function fcndict2obj(d::T,ymlunitsdict::Q) where {T,Q<:Any}
                     val = parseentry(val)
                 end
             else
-                @warn("assuming values for $strfcn,$key are in SI units")
+                #@warn("assuming values for $strfcn,$key are in SI units")
                 val = parseentry(val)
             end
         end
