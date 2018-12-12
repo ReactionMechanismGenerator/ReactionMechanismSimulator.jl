@@ -44,9 +44,9 @@ end
 
 export makespcsvector
 
-@inline function getkf(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,ns::Q,N::W4) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
+@inline function getkf(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
     if isdefined(rxn.kinetics,:efficiencies) && length(rxn.kinetics.efficiencies) > 0
-        @views @inbounds @fastmath C += sum([ns[i]*val for (i,val) in rxn.kinetics.efficiencies])/N
+        @views @inbounds @fastmath C += sum([ns[i]*val for (i,val) in rxn.kinetics.efficiencies])/V
     end
     return rxn.kinetics(T=T,P=P,C=C)
 end
@@ -104,8 +104,8 @@ export getKc
 Calculates the forward and reverse rate coefficients for a given reaction, phase and state
 Maintains diffusion limitations if the phase has diffusionlimited=true
 """
-@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3) where {U<:AbstractPhase,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
-    kf = getkf(rxn,ph,T,P,C,ns,N)
+@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5) where {U<:AbstractPhase,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
+    kf = getkf(rxn,ph,T,P,C,ns,V)
     Kc = getKc(rxn,ph,T,Gs)
     @fastmath krev = kf/Kc
     if ph.diffusionlimited
@@ -138,12 +138,12 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
 end
 export getkfkrev
 
-@inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3) where {U<:AbstractPhase,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
+@inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5) where {U<:AbstractPhase,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
     len = length(phase.reactions)
     kf = zeros(typeof(N),len)
     krev = zeros(typeof(N),len)
     @simd for i = 1:len
-       @fastmath @inbounds kf[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs)
+       @fastmath @inbounds kf[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V)
     end
     return kf,krev
 end

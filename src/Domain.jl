@@ -74,7 +74,8 @@ function ConstantTPDomain(;phase::V,interfaces::Array{Q,1}=Array{EmptyInterface,
         diffs = Array{typeof(T),1}()
     end
     C = P/(R*T)
-    kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs)
+    V = N*R*T/P
+    kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
     if sparse
         jacobian=spzeros(typeof(T),length(phase.species),length(phase.species))
     else
@@ -215,7 +216,7 @@ function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,
     end
     P = 1.0e9  #essentiallly assuming this is a liquid
     C = N/V
-    kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs)
+    kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
     if sparse
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     else
@@ -238,7 +239,7 @@ export ConstantTVDomain
     cs = ns./V
     C = N/V
     for ind in d.efficiencyinds #efficiency related rates may have changed
-        d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity)
+        d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity,V)
     end
     return ns,cs,d.T,d.P,V,C,N,d.mu,d.kfs,d.krevs,[],[],[],[],0.0
 end
@@ -258,7 +259,7 @@ end
     kfs = convert(typeof(y),copy(d.kfs))
     krevs = convert(typeof(y),copy(d.krevs))
     for ind in d.efficiencyinds #efficiency related rates may have changed
-        kfs[ind],krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity)
+        kfs[ind],krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity,V)
     end
     return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,[],[],[],[],0.0
 end
@@ -280,7 +281,7 @@ end
     else
         diffs = Array{Float64,1}()
     end
-    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs)
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=d.V)
     @fastmath @inbounds f(spc::Species) = getHeatCapacity(spc.thermo,T)*ns[spc.index]
     @fastmath @inbounds Cpave = mapreduce(f,+,d.phase.species)/N - R
     return ns,cs,T,P,d.V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs,Cpave
