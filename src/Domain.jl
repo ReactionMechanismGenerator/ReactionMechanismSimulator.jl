@@ -29,8 +29,8 @@ export AbstractVariableKDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ConstantTPDomain(;phase::V,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
-    sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,V<:AbstractPhase,Q<:AbstractInterface,W<:Real}
+function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,E2<:AbstractPhase,Q<:AbstractInterface,W<:Real}
 
     #set conditions and initialconditions
     T = 0.0
