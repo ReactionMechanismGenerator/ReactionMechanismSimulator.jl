@@ -151,34 +151,38 @@ end
         return T
     end
 end
+export evalChebyshevPolynomial
 
-@inline function getRedTemp(ch::Chebyshev,T::N) where {N<:Number}
+@inline function getredtemp(ch::Chebyshev,T::N) where {N<:Number}
     """
     return a reduced temperature corresponding to the given tempeprature
     for the Chebyshev polynomial, maps the inverse of temperautre onto [-1,1]
     """
     return @fastmath (2.0/T-1.0/ch.Tmin-1.0/ch.Tmax)/(1.0/ch.Tmax-1.0/ch.Tmin)
 end
+export getredtemp
 
-@inline function getRedPress(ch::Chebyshev,P::N) where {N<:Number}
+@inline function getredpress(ch::Chebyshev,P::N) where {N<:Number}
     """
     return a reduced pressure corresponding to the given temperature
     for the Chebyshev polynomial maps the logarithm of pressure onto [-1,1]
     """
     return @fastmath (2.0*log10(P)-log10(ch.Pmin)-log10(ch.Pmax))/(log10(ch.Pmax)-log10(ch.Pmin))
 end
+export getredpress
 
 @inline function (ch::Chebyshev)(;T::N,P::Q=0.0,C::B=0.0) where {N<:Number,B<:Number,Q<:Number}
     k = 0.0
-    Tred = getRedTemp(ch,T)
-    Pred = getRedPress(ch,P)
+    Tred = getredtemp(ch,T)
+    Pred = getredpress(ch,P)
     Tlen,Plen = size(ch.coefs)
     for i = 1:Tlen
         for j = 1:Plen
             @fastmath @inbounds k += ch.coefs[i,j]*evalChebyshevPolynomial(ch,i-1,Tred)*evalChebyshevPolynomial(ch,j-1,Pred)
         end
     end
-    return 10^k
+    return 10.0^k
 end
+
 
 export Chebyshev
