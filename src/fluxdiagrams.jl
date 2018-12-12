@@ -30,7 +30,7 @@ export getdiagram
 """
 generate a png representing spc at location path
 """
-function draw(spc::Species,path::String=".")
+function drawspc(spc::Species,path::String=".")
     name = spc.name
     fname = string(name,".png")
     if !(path in readdir("."))
@@ -49,14 +49,14 @@ function draw(spc::Species,path::String=".")
     end
     mol[:draw](joinpath(path,fname))
 end
-export draw
+export drawspc
 
 """
 generate pngs for all species in phase and store them in the "species" folder
 """
 function drawspecies(phase::T) where {T<:AbstractPhase}
     for spc in phase.species
-        draw(spc,"species")
+        drawspc(spc,"species")
     end
 end
 export drawspecies
