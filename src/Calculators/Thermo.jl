@@ -56,12 +56,10 @@ export NASA
     """
     for p in nasa.polys
         if T<=p.Tmax
-            if T>=p.Tmin
-                return p
-            end
+            return p
         end
     end
-    throw(error(String("No valid NASA polynomial at T=$T")))
+    return nasa.polys[end]
 end
 
 @inline getHeatCapacity(nasa::NASA,T::N) where {N<:Number} = getHeatCapacity(selectPoly(nasa,T),T)
