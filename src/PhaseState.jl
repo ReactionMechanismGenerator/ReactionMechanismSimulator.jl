@@ -134,7 +134,7 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
             end
         end
     end
-    return kf,krev
+    return (kf,krev)::Tuple{W3,W3}
 end
 export getkfkrev
 
