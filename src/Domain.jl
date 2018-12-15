@@ -320,3 +320,13 @@ end
     end
 end
 export calcdomainderivatives!
+
+function getreactionindices(ig::Q) where {Q<:AbstractPhase}
+    arr = zeros(UInt16,(6,length(ig.reactions)))
+    for (i,rxn) in enumerate(ig.reactions)
+        arr[1:length(rxn.reactantinds),i] = rxn.reactantinds
+        arr[4:length(rxn.productinds)+3,i] = rxn.productinds
+    end
+    return arr
+end
+export getreactionindices
