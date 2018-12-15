@@ -22,6 +22,7 @@ export AbstractVariableKDomain
     krevs::Array{W,1}
     efficiencyinds::Array{I,1}
     Gs::Array{W,1}
+    rxnarray::Array{UInt16,2}
     mu::W = 0.0
     diffusivity::Array{W,1} = Array{Float64,1}()
     jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
@@ -81,8 +82,9 @@ function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface
     else
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
+    rxnarray = getreactionindices(phase)
     return ConstantTPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-        T,P,kfs,krevs,efficiencyinds,Gs,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+        T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantTPDomain
 
@@ -92,6 +94,7 @@ export ConstantTPDomain
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     V::W
+    rxnarray::Array{UInt16,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
@@ -145,8 +148,9 @@ function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1
     else
         jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
     end
+    rxnarray = getreactionindices(phase)
     return ConstantVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    V,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+    V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantVDomain
 
@@ -161,6 +165,7 @@ export ConstantVDomain
     krevs::Array{W,1}
     efficiencyinds::Array{I,1}
     Gs::Array{W,1}
+    rxnarray::Array{UInt16,2}
     mu::W = 0.0
     diffusivity::Array{W,1} = Array{Float64,1}()
     jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
@@ -222,8 +227,9 @@ function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,
     else
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
+    rxnarray = getreactionindices(phase)
     return ConstantTVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-        T,V,kfs,krevs,efficiencyinds,Gs,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+        T,V,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantTVDomain
 

@@ -41,16 +41,40 @@ export Reactor
 end
 export getrate
 
-@inline function addreactionratecontribution!(dydt::Array{Q,1},rxn::ElementaryReaction,cs::Array{W,1},kfs::Array{Z,1},krevs::Array{Z,1}) where {Q<:Real,Z<:Real,T<:Integer,W<:Real}
-    R = getrate(rxn,cs,kfs,krevs)
-    for ind in rxn.reactantinds
-        @fastmath @inbounds dydt[ind] -= R
-    end
-    for ind in rxn.productinds
-        @fastmath @inbounds dydt[ind] += R
+@inline function addreactionratecontributions!(dydt::Array{Q,1},rarray::Array{UInt16,2},cs::Array{W,1},kfs::Array{Z,1},krevs::Array{Z,1}) where {Q<:Real,Z<:Real,T<:Integer,W<:Real}
+    @inbounds @simd for i = 1:size(rarray)[2]
+        if @inbounds rarray[2,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
+        elseif @inbounds rarray[3,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
+        else
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
+        end
+        if @inbounds rarray[5,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
+        elseif @inbounds rarray[6,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
+        else
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+        end
+        @fastmath R = fR - rR
+        @inbounds @fastmath dydt[rarray[1,i]] -= R
+        if @inbounds rarray[2,i] != 0
+            @inbounds @fastmath dydt[rarray[2,i]] -= R
+            if @inbounds rarray[3,i] != 0
+                @inbounds @fastmath dydt[rarray[3,i]] -= R
+            end
+        end
+        @inbounds @fastmath dydt[rarray[4,i]] += R
+        if @inbounds rarray[5,i] != 0
+            @inbounds @fastmath dydt[rarray[5,i]] += R
+            if @inbounds rarray[6,i] != 0
+                @inbounds @fastmath dydt[rarray[6,i]] += R
+            end
+        end
     end
 end
-export addreactionratecontribution!
+export addreactionratecontributions!
 
 @inline function dydtreactor!(y::Array{U,1},t::Z,domain::Q;sensitivity::Bool=true) where {Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
     dydt = zeros(U,length(y))
@@ -58,9 +82,7 @@ export addreactionratecontribution!
         sensitivity = domain.sensitivity
     end
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave = calcthermo(domain,y,t)
-    for rxn in domain.phase.reactions
-        addreactionratecontribution!(dydt,rxn,cs,kfs,krevs)
-    end
+    addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt *= V
     if sensitivity && isa(domain,ConstantVDomain)
         wV = copy(dydt[domain.indexes[1]:domain.indexes[2]])
