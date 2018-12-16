@@ -280,7 +280,7 @@ end
     N = sum(ns)
     cs = ns./d.V
     C = N/d.V
-    P = C*R/T
+    P = C*R*T
     @views Us,Gs = calcenthalpyinternalgibbs(d.phase,T,P,d.V)[2:3]
     if d.phase.diffusionlimited
         diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)
