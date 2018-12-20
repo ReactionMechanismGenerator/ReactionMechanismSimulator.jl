@@ -219,3 +219,48 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
 end
 
 export getconcentrationsensitivity
+
+"""
+calculate the rates of all reactions at time t
+"""
+function rates(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
+    rates = zeros(length(bsol.domain.phase.reactions))
+    xs = molefractions(bsol,t)
+    T = getT(bsol,t)
+    V = getV(bsol,t)
+    P = getP(bsol,t)
+    if :Gs in fieldnames(typeof(bsol.domain))
+        Gs = bsol.domain.Gs
+    else
+        Gs = calcgibbs(bsol.domain.phase,T)
+    end
+    if :solvent in fieldnames(typeof(bsol.domain.phase)) && typeof(bsol.domain.phase.solvent) != EmptySolvent
+        mu = phase.solvent.mu(T)
+    else
+        mu = 0.0
+    end
+    if bsol.domain.phase.diffusionlimited
+        diffs = getfield.(phase.species,:diffusion)(T=T,mu=mu,P=P)
+    else
+        diffs = Array{typeof(T),1}()
+    end
+    kfs,krevs = getkfkrevs(phase=bsol.domain.phase,V=V,T=T,P=P,C=1.0/V,N=1.0,ns=xs,Gs=Gs,diffs=diffs)
+    cs = xs./V
+    for i in 1:length(bsol.domain.phase.reactions)
+        rates[i] =  getrate(bsol.domain.phase.reactions[i],cs,kfs,krevs)
+    end
+    return rates
+end
+
+"""
+calculate the rates of all reactions at given times ts
+defaults to using bsol.sol.t if ts is not supplied
+"""
+function rates(bsol::Q;ts::X=Array{Float64,1}()) where {Q<:Simulation,X<:AbstractArray}
+    if length(ts) == 0
+        ts = bsol.sol.t
+    end
+    return hcat([rates(bsol,t) for t in ts]...)
+end
+
+export rates
