@@ -68,14 +68,14 @@ calculates the rates of production/loss at a given time point
 this outputs a sparse matrix of  num reactions xnum species containing the production/loss
 rate of that species associated with that reaction
 """
-function rops(bsol,t)
+function rops(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
     ropmat = spzeros(length(bsol.domain.phase.reactions),length(bsol.domain.phase.species))
-    xs = molefractions(bsol,t=t)
+    xs = molefractions(bsol,t)
     T = getT(bsol,t)
     V = getV(bsol,t)
     P = getP(bsol,t)
     if :Gs in fieldnames(typeof(bsol.domain))
-        Gs = domain.Gs
+        Gs = bsol.domain.Gs
     else
         Gs = calcgibbs(bsol.domain.phase,T)
     end
@@ -89,20 +89,55 @@ function rops(bsol,t)
     else
         diffs = Array{typeof(T),1}()
     end
-    kfs,krevs = getkfkrevs(phase=bsol.domain.phase,T=T,P=P,C=1.0/V,N=1.0,ns=xs,Gs=Gs,diffs=diffs)
+    kfs,krevs = getkfkrevs(phase=bsol.domain.phase,V=V,T=T,P=P,C=1.0/V,N=1.0,ns=xs,Gs=Gs,diffs=diffs)
     cs = xs./V
     for (i,rxn) in enumerate(bsol.domain.phase.reactions)
         R = getrate(rxn,cs,kfs,krevs)
-        for ind in rxn.reactantinds
-            ropmat[i,ind] = -R
-        end
-        for ind in rxn.productinds
-            ropmat[i,ind] = R
-        end
+        ropmat[i,ind] = R*(count(isequal(ind),rxn.productinds)-count(isequal(ind),rxn.reactantinds))
     end
     return ropmat
 end
 
+"""
+calculates the rates of production/loss at a given time point for a single species
+this outputs a sparse vector of length num reactions containing the production/loss
+rate associated with that reaction for the given species
+"""
+function rops(bsol::Y,name::X,t::Z) where {Y<:Simulation, X<:AbstractString, Z<:Real}
+    rop = spzeros(length(bsol.domain.phase.reactions))
+    xs = molefractions(bsol,t)
+    T = getT(bsol,t)
+    V = getV(bsol,t)
+    P = getP(bsol,t)
+    if :Gs in fieldnames(typeof(bsol.domain))
+        Gs = bsol.domain.Gs
+    else
+        Gs = calcgibbs(bsol.domain.phase,T)
+    end
+    if :solvent in fieldnames(typeof(bsol.domain.phase)) && typeof(bsol.domain.phase.solvent) != EmptySolvent
+        mu = phase.solvent.mu(T)
+    else
+        mu = 0.0
+    end
+    if bsol.domain.phase.diffusionlimited
+        diffs = getfield.(phase.species,:diffusion)(T=T,mu=mu,P=P)
+    else
+        diffs = Array{typeof(T),1}()
+    end
+    kfs,krevs = getkfkrevs(phase=bsol.domain.phase,V=V,T=T,P=P,C=1.0/V,N=1.0,ns=xs,Gs=Gs,diffs=diffs)
+    cs = xs./V
+    ind = findfirst(isequal(name),getfield.(bsol.domain.phase.species,:name))
+    for (i,rxn) in enumerate(bsol.domain.phase.reactions)
+        c = 0
+        R = getrate(rxn,cs,kfs,krevs)
+        c -= count(isequal(ind),rxn.reactantinds)
+        c += count(isequal(ind),rxn.productinds)
+        if c != 0
+            rop[i] = c*R
+        end
+    end
+    return rop
+end
 export rops
 
 function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L}
