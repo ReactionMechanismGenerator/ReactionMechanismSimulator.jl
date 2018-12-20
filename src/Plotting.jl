@@ -95,3 +95,32 @@ function plotmaxratesensitivity(bsol, spcname; N=0, tol= 1e-2)
     xlabel("dLn([$spcname])/d(Ln(k_i))")
 end
 export plotmaxratesensitivity
+
+"""
+make a bar graph of the production/loss for the given species
+associated with each reaction
+N reactions are included all of which must have absolute value greater than abs(maximum prod or loss rate)*tol
+"""
+function plotrops(bsol::Y,name::X,t::Z;N=0,tol=0.01) where {Y<:Simulation, X<:AbstractString, Z<:Real}
+    rop = rops(bsol,name,t)
+    inds = rop.nzind[reverse(sortperm(abs.(rop.nzval)))]
+    if N == 0
+        N = length(inds)
+    elseif N > length(inds)
+        N = length(inds)
+    end
+    inds = inds[1:N]
+    mval = abs(rop[inds[1]])
+    minval = mval*tol
+    k = 1
+    while k < length(inds) && abs(rop[inds[k]]) >= minval
+        k += 1
+    end
+    inds = inds[1:k]
+    xs = Array{Float64,1}(1:length(inds))
+    barh(xs,reverse(rop[inds]))
+    yticks(xs,reverse(getrxnstr.(bsol.domain.phase.reactions[inds])))
+    xlabel("Production/Loss Rate mol/(m^3*s)")
+    return
+end
+
