@@ -2,6 +2,7 @@ using DifferentialEquations
 import DifferentialEquations.DiffEqBase: AbstractODESolution, HermiteInterpolation,AbstractDiffEqInterpolation
 
 abstract type AbstractSimulation end
+export AbstractSimulation
 
 struct Simulation{Q<:AbstractODESolution,W<:AbstractDomain,L<:AbstractArray,G<:Function,G2<:AbstractArray} <: AbstractSimulation
     sol::Q
@@ -30,6 +31,8 @@ export iterate
 
 Broadcast.broadcastable(p::T) where {T<:AbstractSimulation} = Ref(p)
 export broadcastable
+
+spcindex(bsol::Z,name::Q) where {Z<:Simulation,Q<:AbstractString} = findfirst(isequal(name),getfield.(bsol.domain.phase.species,:name))
 
 function molefractions(bsol::Q,name::W,t::E) where {Q<:AbstractSimulation, W<:String, E<:Real}
     @assert name in bsol.names
