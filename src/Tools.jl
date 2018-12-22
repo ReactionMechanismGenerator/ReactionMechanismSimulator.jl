@@ -19,18 +19,21 @@ end
     return out
 end
 
+export evalpoly
+
 @inline function getBoundingIndsSorted(el::Q,x::T) where {T<:AbstractArray,Q<:Any}
     if el <= x[1]
-        return (1,)
+        return (1,-1)
     end
     for i in 1:length(x)
         if @inbounds x[i] >= el
             if @inbounds x[i] == el
-                return (i,)
+                return (i,-1)
             else
                 return (i-1,i)
             end
         end
     end
-    return (length(x),)
+    return (length(x),-1)
 end
+export getBoundingIndsSorted

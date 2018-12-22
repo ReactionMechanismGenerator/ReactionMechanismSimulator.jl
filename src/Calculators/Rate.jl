@@ -17,17 +17,17 @@ end
 @inline (arr::Arrhenius)(T::Q;P::N=0.0,C::S=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))::Q
 export Arrhenius
 
-@with_kw struct PdepArrhenius{T<:Real,Q<:AbstractRateUncertainty} <: AbstractRate
+@with_kw struct PdepArrhenius{T<:Real,Q<:AbstractRateUncertainty,Z<:AbstractRate} <: AbstractRate
     Ps::Array{T,1}
-    arrs::Array{Arrhenius,1}
+    arrs::Array{Z,1}
     unc::Q = EmptyRateUncertainty()
 end
-PdepArrhenius(Ps::Array{Q,1},arrs::Array{Arrhenius,1}) where {Q<:Real} = PdepArrhenius(sort(Ps),arrs)
+PdepArrhenius(Ps::Array{Q,1},arrs::Array{Z,1}) where {Q<:Real,Z<:AbstractRate} = PdepArrhenius(sort(Ps),arrs)
 
 @inline function (parr::PdepArrhenius)(;T::Q=nothing,P::V=nothing,C::S=0.0) where {Q<:Real,V<:Real,S<:Real}
-    inds = getBoundingIndsSorted(P,parr.Ps)::Array{Int64,1}
+    inds = getBoundingIndsSorted(P,parr.Ps)::Tuple{Int64,Int64}
 
-    if length(inds) == 1
+    if inds[2] == -1
         return @inbounds parr.arrs[inds[1]](T=T)::Q
     else
         @inbounds highk = parr.arrs[inds[2]](T=T)::Q
