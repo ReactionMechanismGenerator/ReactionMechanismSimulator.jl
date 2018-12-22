@@ -33,6 +33,7 @@ Broadcast.broadcastable(p::T) where {T<:AbstractSimulation} = Ref(p)
 export broadcastable
 
 spcindex(bsol::Z,name::Q) where {Z<:Simulation,Q<:AbstractString} = findfirst(isequal(name),getfield.(bsol.domain.phase.species,:name))
+export spcindex
 
 function molefractions(bsol::Q,name::W,t::E) where {Q<:AbstractSimulation, W<:String, E<:Real}
     @assert name in bsol.names
