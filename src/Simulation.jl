@@ -70,27 +70,7 @@ rate of that species associated with that reaction
 """
 function rops(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
     ropmat = spzeros(length(bsol.domain.phase.reactions),length(bsol.domain.phase.species))
-    xs = molefractions(bsol,t)
-    T = getT(bsol,t)
-    V = getV(bsol,t)
-    P = getP(bsol,t)
-    if :Gs in fieldnames(typeof(bsol.domain))
-        Gs = bsol.domain.Gs
-    else
-        Gs = calcgibbs(bsol.domain.phase,T)
-    end
-    if :solvent in fieldnames(typeof(bsol.domain.phase)) && typeof(bsol.domain.phase.solvent) != EmptySolvent
-        mu = phase.solvent.mu(T)
-    else
-        mu = 0.0
-    end
-    if bsol.domain.phase.diffusionlimited
-        diffs = getfield.(phase.species,:diffusion)(T=T,mu=mu,P=P)
-    else
-        diffs = Array{typeof(T),1}()
-    end
-    kfs,krevs = getkfkrevs(phase=bsol.domain.phase,V=V,T=T,P=P,C=1.0/V,N=1.0,ns=xs,Gs=Gs,diffs=diffs)
-    cs = xs./V
+    cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
     for (i,rxn) in enumerate(bsol.domain.phase.reactions)
         R = getrate(rxn,cs,kfs,krevs)
         ropmat[i,ind] = R*(count(isequal(ind),rxn.productinds)-count(isequal(ind),rxn.reactantinds))
@@ -105,27 +85,7 @@ rate associated with that reaction for the given species
 """
 function rops(bsol::Y,name::X,t::Z) where {Y<:Simulation, X<:AbstractString, Z<:Real}
     rop = spzeros(length(bsol.domain.phase.reactions))
-    xs = molefractions(bsol,t)
-    T = getT(bsol,t)
-    V = getV(bsol,t)
-    P = getP(bsol,t)
-    if :Gs in fieldnames(typeof(bsol.domain))
-        Gs = bsol.domain.Gs
-    else
-        Gs = calcgibbs(bsol.domain.phase,T)
-    end
-    if :solvent in fieldnames(typeof(bsol.domain.phase)) && typeof(bsol.domain.phase.solvent) != EmptySolvent
-        mu = phase.solvent.mu(T)
-    else
-        mu = 0.0
-    end
-    if bsol.domain.phase.diffusionlimited
-        diffs = getfield.(phase.species,:diffusion)(T=T,mu=mu,P=P)
-    else
-        diffs = Array{typeof(T),1}()
-    end
-    kfs,krevs = getkfkrevs(phase=bsol.domain.phase,V=V,T=T,P=P,C=1.0/V,N=1.0,ns=xs,Gs=Gs,diffs=diffs)
-    cs = xs./V
+    cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
     ind = findfirst(isequal(name),getfield.(bsol.domain.phase.species,:name))
     for (i,rxn) in enumerate(bsol.domain.phase.reactions)
         c = 0
@@ -224,32 +184,8 @@ export getconcentrationsensitivity
 calculate the rates of all reactions at time t
 """
 function rates(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
-    rates = zeros(length(bsol.domain.phase.reactions))
-    xs = molefractions(bsol,t)
-    T = getT(bsol,t)
-    V = getV(bsol,t)
-    P = getP(bsol,t)
-    if :Gs in fieldnames(typeof(bsol.domain))
-        Gs = bsol.domain.Gs
-    else
-        Gs = calcgibbs(bsol.domain.phase,T)
-    end
-    if :solvent in fieldnames(typeof(bsol.domain.phase)) && typeof(bsol.domain.phase.solvent) != EmptySolvent
-        mu = phase.solvent.mu(T)
-    else
-        mu = 0.0
-    end
-    if bsol.domain.phase.diffusionlimited
-        diffs = getfield.(phase.species,:diffusion)(T=T,mu=mu,P=P)
-    else
-        diffs = Array{typeof(T),1}()
-    end
-    kfs,krevs = getkfkrevs(phase=bsol.domain.phase,V=V,T=T,P=P,C=1.0/V,N=1.0,ns=xs,Gs=Gs,diffs=diffs)
-    cs = xs./V
-    for i in 1:length(bsol.domain.phase.reactions)
-        rates[i] =  getrate(bsol.domain.phase.reactions[i],cs,kfs,krevs)
-    end
-    return rates
+    cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
+    return [getrate(rxn,cs,kfs,krevs) for rxn in bsol.domain.phase.reactions]
 end
 
 """
