@@ -6,7 +6,7 @@ using N logarithmically spaced time points
 only plots species who have mole fractions > tol at some point
 in the simulation
 """
-function plotmolefractions(bsol, tf; t0=1e-15,N=1000,tol=0.01)
+function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01) where {Q<:Simulation, V<:Real, Z<:Real, Z2<:Real, Z3<:Real}
     ts = exp.(range(log(t0),length=N,stop=log(tf)))
     xs = hcat(molefractions.(bsol,ts)...)
     maxes = maximum(xs,dims=2)
@@ -27,7 +27,7 @@ Plot the mole fractions of the simulation bsol at the time points solved for
 only plots species who have mole fractions > tol at some point
 in the simulation
 """
-function plotmolefractions(bsol; tol=0.01)
+function plotmolefractions(bsol::Q; tol::V=0.01) where {Q<:Simulation, V<:Real}
     xs = molefractions(bsol)
     maxes = maximum(xs,dims=2)
     spnames = []
@@ -40,6 +40,17 @@ function plotmolefractions(bsol; tol=0.01)
     legend(spnames)
     xlabel("Time in sec")
     ylabel("Mole Fraction")
+end
+
+"""
+Plot the molefractions of the species with names in spcnames over
+the bsol time interval
+"""
+function plotmolefractions(bsol::Q,spcnames::V) where {Q<:Simulation,V<:AbstractArray}
+    for name in spcnames
+        plot(bsol.sol.t,[molefractions(bsol,name,t) for t in bsol.sol.t])
+    end
+    legend(spcnames)
 end
 
 export plotmolefractions
