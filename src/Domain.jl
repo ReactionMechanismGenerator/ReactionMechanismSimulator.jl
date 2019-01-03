@@ -281,15 +281,23 @@ end
     cs = ns./d.V
     C = N/d.V
     P = C*R*T
-    @views Us,Gs = calcenthalpyinternalgibbs(d.phase,T,P,d.V)[2:3]
+    Gs = zeros(length(d.phase.species))
+    Us = zeros(length(d.phase.species))
+    Cvave = 0.0
+    @simd for i = 1:length(d.phase.species)
+        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
+        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
+        @fastmath @inbounds Us[i] = (hdivRT-1.0)*R*T
+        @fastmath @inbounds Cvave += cpdivR*ns[i]
+    end
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
     if d.phase.diffusionlimited
         diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)
     else
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=d.V)
-    @fastmath @inbounds f(spc::Species) = getHeatCapacity(spc.thermo,T)*ns[spc.index]
-    @fastmath @inbounds Cvave = mapreduce(f,+,d.phase.species)/N - R
     return ns,cs,T,P,d.V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs,Cvave
 end
 
