@@ -15,29 +15,48 @@ end
 export NASApolynomial
 
 @inline function calcHSCpdless(poly::NASApolynomial,T::N) where {N<:Real}
-    Tpoly0 = T
-    Tpoly1 = T*T
-    Tpoly2 = Tpoly1*T
-    Tpoly3 = Tpoly2*T
-    Tpoly4 = 1.0/T
-    Tpoly5 = Tpoly4*Tpoly4
-    Tpoly6 = log(T)
-
-    ct0 = poly.coefs[1]*Tpoly5
-    ct1 = poly.coefs[2]*Tpoly4
-    ct2 = poly.coefs[3]
-    ct3 = poly.coefs[4]*Tpoly0
-    ct4 = poly.coefs[5]*Tpoly1
-    ct5 = poly.coefs[6]*Tpoly2
-    ct6 = poly.coefs[7]*Tpoly3
-
-    cpdivR = ct0 + ct1 + ct2 + ct3 + ct4 + ct5 + ct6
     if length(poly.coefs) != 7
+        Tpoly0 = T
+        Tpoly1 = T*T
+        Tpoly2 = Tpoly1*T
+        Tpoly3 = Tpoly2*T
+        Tpoly4 = 1.0/T
+        Tpoly5 = Tpoly4*Tpoly4
+        Tpoly6 = log(T)
+
+        ct0 = poly.coefs[1]*Tpoly5
+        ct1 = poly.coefs[2]*Tpoly4
+        ct2 = poly.coefs[3]
+        ct3 = poly.coefs[4]*Tpoly0
+        ct4 = poly.coefs[5]*Tpoly1
+        ct5 = poly.coefs[6]*Tpoly2
+        ct6 = poly.coefs[7]*Tpoly3
+
+        cpdivR = ct0 + ct1 + ct2 + ct3 + ct4 + ct5 + ct6
+
         hdivRT = -ct0+Tpoly6*ct1+ct2+0.5*ct3+0.33333333333*ct4+0.25*ct5+0.2*ct6+poly.coefs[8]*Tpoly4
         sdivR = -0.5*ct0 - ct1 + Tpoly6*ct2 + ct3 + 0.5*ct4 + 0.33333333333*ct5 + 0.25*ct6 + poly.coefs[9]
     else
-        hdivRT = -ct0+Tpoly6*ct1+ct2+0.5*ct3+0.33333333333*ct4+0.25*ct5+0.2*ct6
-        sdivR = -0.5*ct0 - ct1 + Tpoly6*ct2 + ct3 + 0.5*ct4 + 0.33333333333*ct5 + 0.25*ct6
+        Tpoly0 = T
+        Tpoly1 = T*T
+        Tpoly2 = Tpoly1*T
+        Tpoly3 = Tpoly2*T
+        Tpoly4 = 1.0/T
+        #Tpoly5 = Tpoly4*Tpoly4
+        Tpoly6 = log(T)
+
+        #ct0 = 0.0
+        #ct1 = 0.0
+        ct2 = poly.coefs[1]
+        ct3 = poly.coefs[2]*Tpoly0
+        ct4 = poly.coefs[3]*Tpoly1
+        ct5 = poly.coefs[4]*Tpoly2
+        ct6 = poly.coefs[5]*Tpoly3
+
+        cpdivR = ct2 + ct3 + ct4 + ct5 + ct6
+
+        hdivRT =ct2+0.5*ct3+0.33333333333*ct4+0.25*ct5+0.2*ct6+poly.coefs[6]*Tpoly4
+        sdivR = Tpoly6*ct2 + ct3 + 0.5*ct4 + 0.33333333333*ct5 + 0.25*ct6 + poly.coefs[7]
     end
     return (cpdivR,hdivRT,sdivR)
 end
