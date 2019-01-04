@@ -7,14 +7,14 @@ export AbstractThermo
     return @fastmath getEnthalpy(th,T)-T*getEntropy(th,T)
 end
 
-@with_kw struct NASApolynomial{N,Q,P<:Number} <: AbstractThermo
-    coefs::Array{N,1}
-    Tmin::Q
-    Tmax::P
+@with_kw struct NASApolynomial <: AbstractThermo
+    coefs::Array{Float64,1}
+    Tmin::Float64
+    Tmax::Float64
 end
 export NASApolynomial
 
-@inline function calcHSCpdless(poly::NASApolynomial,T::N) where {N<:Real}
+@inline function calcHSCpdless(poly::NASApolynomial,T::Float64)
     if length(poly.coefs) != 7
         Tpoly0 = T
         Tpoly1 = T*T
@@ -58,7 +58,7 @@ export NASApolynomial
         hdivRT =ct2+0.5*ct3+0.33333333333*ct4+0.25*ct5+0.2*ct6+poly.coefs[6]*Tpoly4
         sdivR = Tpoly6*ct2 + ct3 + 0.5*ct4 + 0.33333333333*ct5 + 0.25*ct6 + poly.coefs[7]
     end
-    return (cpdivR,hdivRT,sdivR)
+    return (cpdivR,hdivRT,sdivR)::Tuple{Float64,Float64,Float64}
 end
 export calcHSCpdless
 
@@ -98,7 +98,7 @@ end
 end
 export NASA
 
-@inline function selectPoly(nasa::NASA,T::N) where {N<:Number}
+@inline function selectPoly(nasa::NASA,T::N) where {N<:Real}
     """
     retrieve the nasa polynomial corresponding to the T range
     """
@@ -109,6 +109,7 @@ export NASA
     end
     return nasa.polys[end]
 end
+export selectPoly
 
 @inline getHeatCapacity(nasa::NASA,T::N) where {N<:Number} = getHeatCapacity(selectPoly(nasa,T),T)
 @inline getEntropy(nasa::NASA,T::N) where {N<:Number} = getEntropy(selectPoly(nasa,T),T)
