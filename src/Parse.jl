@@ -187,12 +187,34 @@ function fcndict2obj(d::T,ymlunitsdict::Q) where {T,Q<:Any}
 end
 export fcndict2obj
 
-function readinput(fname::String)
-    """
-    parses a YAML input file into a dictionary containing
-    partitions of Species and Reaction objects
-    """
+"""
+examines the input file and parses as appropriate
+for chemkin (.inp files) with or without species dictionaries
+calls rmgpy to convert it to yml and then parses the yml file
+for rms (.rms, .yml, .rmg) it parses it directly
+"""
+function readinput(fname::String;spcdict::String="",output::String="chem.rms")
+    extension = split(fname,".")[end]
+    if extension in ["rms","yml","rmg"]
+        return readinputyml(fname)
+    elseif extension in ["inp"]
+        if spcdict == ""
+            yml[:convertchemkin2yml](fname;output=output)
+        else
+            yml[:convertchemkin2yml](fname;spcdictpath=spcdict,outputpath=output)
+        end
+        return readinputyml(output)
+    else
+        throw(error("file extension $extension not understood, use .inp for chemkin files or .rms for rms yaml files"))
+    end
+end
+export readinput
 
+"""
+parses a YAML input file into a dictionary containing
+partitions of Species and Reaction objects
+"""
+function readinputyml(fname::String)
     D = YAML.load(open(fname))
     outdict = Dict()
 
@@ -304,4 +326,4 @@ function readinput(fname::String)
     return outdict
 end
 
-export readinput
+export readinputyml

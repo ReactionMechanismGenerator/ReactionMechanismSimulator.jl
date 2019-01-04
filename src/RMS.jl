@@ -1,12 +1,17 @@
 module RMS
+    using Pkg
     using PyCall
+    push!(PyVector(pyimport("sys")["path"]), "")
     const Chem = PyNULL()
     const molecule = PyNULL()
     const pydot = PyNULL()
+    const yml = PyNULL()
     function __init__()
         copy!(Chem,pyimport_conda("rdkit.Chem","rdkit","rmg"))
         copy!(molecule,pyimport_conda("rmgpy.molecule","rmgpy","rmg"))
         copy!(pydot,pyimport_conda("pydot","pydot","rmg"))
+        push!(PyVector(pyimport("sys")["path"]), joinpath(Pkg.dir("RMS"),"src"))
+        copy!(yml,pyimport("yml"))
     end
     include("Constants.jl")
     include("Tools.jl")
