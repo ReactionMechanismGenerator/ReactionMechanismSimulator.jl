@@ -10,9 +10,12 @@ from rmgpy.kinetics.falloff import *
 from rmgpy.kinetics.chebyshev import *
 from rmgpy.data.solvation import *
 
-def convertchemkin2yml(chemkinpath,spcdictpath=None,outputpath="chem.rms"):
-    spcs,rxns = loadChemkinFile(chemkinpath,spcdictpath)
-    writeyml(spcs,rxns,path=outputpath)
+def convertchemkin2yml(chemkinpath,spcdictpath=None,output="chem.rms"):
+    if spcdictpath:
+        spcs,rxns = loadChemkinFile(chemkinpath,dictionaryPath=spcdictpath)
+    else:
+        spcs,rxns = loadChemkinFile(chemkinpath)
+    writeyml(spcs,rxns,path=output)
 
 def writeyml(spcs,rxns,path="chem.yml"):
     D = getmechdict(spcs,rxns)
