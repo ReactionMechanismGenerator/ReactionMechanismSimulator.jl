@@ -88,9 +88,9 @@ function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface
     V = N*R*T/P
     kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
     if sparse
-        jacobian=spzeros(typeof(T),length(phase.species),length(phase.species))
+        jacobian=spzeros(typeof(T),length(y0),length(y0))
     else
-        jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
+        jacobian=zeros(typeof(T),length(y0),length(y0))
     end
     rxnarray = getreactionindices(phase)
     return ConstantTPDomain(phase,interfaces,MVector(phase.species[1].index,phase.species[end].index,length(phase.species)+1),constspcinds,
