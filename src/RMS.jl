@@ -32,6 +32,5 @@ module RMS
     include("Reactor.jl")
     include("Simulation.jl")
     include("fluxdiagrams.jl")
-    include("Equilibrium.jl")
     include("Plotting.jl")
 end
