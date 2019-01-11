@@ -1,7 +1,20 @@
 language: julia
+os:
+  - linux
+  - osx
 julia:
   - 1.0
 
+before_install:
+  - cd ..
+  # Install miniconda
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH=$HOME/miniconda/bin:$PATH
+  # Update conda
+  - conda update --yes conda
+  - julia -e 'ENV["PYTHON"]=joinpath(ENV["HOME"],"bin","python"); using Pkg; Pkg.add("PyCall"); Pkg.build("PyCall"); Pkg.add("PyPlot");
 jobs:
   include:
     - stage: "Documentation"
@@ -11,4 +24,4 @@ jobs:
         - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
                                                Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
-      after_success: skip 
+      after_success: skip
