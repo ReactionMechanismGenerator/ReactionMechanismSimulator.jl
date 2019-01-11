@@ -1,7 +1,7 @@
-name = "ReactionMechanismSimulator"
-uuid = "d07ed9ee-f698-11e8-24c4-e3b867299635"
 authors = ["Matt Johnson <mjohnson541@gmail.com>"]
-version = "0.0.0"
+name = "ReactionMechanismSimulator"
+uuid = "311e5216-15cf-11e9-05d7-a146a2b8c9cd"
+version = "0.1.0"
 
 [deps]
 Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"

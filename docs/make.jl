@@ -1,9 +1,9 @@
-using Documenter, RMS
+using Documenter, ReactionMechanismSimulator
 
 makedocs(
     format = :html,
     sitename = "ReactionMechanismSimulator.jl",
-    modules = [RMS],
+    modules = [ReactionMechanismSimulator],
     pages = [
         "Input.md",
         "Simulating.md",
