@@ -11,7 +11,7 @@ Diffusion limited rates.
 Sensitivity analysis for all reactors.  
 Flux diagrams with molecular images (if molecular information is provided).  
 Handy plotting and other solution analysis tools.  
-Easy to add features.  
+Easy to add new features.  
 
 ## Installation
 
