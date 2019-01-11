@@ -1,4 +1,4 @@
-name = "RMS"
+name = "ReactionMechanismSimulator"
 uuid = "d07ed9ee-f698-11e8-24c4-e3b867299635"
 authors = ["Matt Johnson <mjohnson541@gmail.com>"]
 version = "0.0.0"
