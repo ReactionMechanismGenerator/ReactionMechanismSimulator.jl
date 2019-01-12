@@ -1,10 +1,10 @@
 language: julia
+env:
+   - CONDA_JL_HOME=$HOME/miniconda/envs/conda_jl PYTHON=$HOME/miniconda/envs/conda_jl/bin/python
 os:
   - linux
-  - osx
 julia:
   - 1.0
-  - nightly
 before_install:
   - cd ..
   # Install miniconda
@@ -12,11 +12,32 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH=$HOME/miniconda/bin:$PATH
-  # Update conda
+  #create julia conda enviornment
+  - conda create -n conda_jl --yes python conda
+  - source activate conda_jl
+  #install used packages
+  - conda install -c rmg --yes rmg
+  - conda install -c rmg --yes rdkit
+  - conda install --yes pydot
+  - conda install --yes yaml
   - conda update --yes conda
-  - julia -e 'ENV["PYTHON"]=joinpath(ENV["HOME"],"bin","python"); using Pkg; Pkg.add("PyCall"); Pkg.build("PyCall"); Pkg.add("PyPlot");'
+script:
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia -e 'using Pkg; Pkg.clone("https://github.com/mjohnson541/ReactionMechanismSimulator.jl.git");'
+  - julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator"); Pkg.test("ReactionMechanismSimulator"; coverage=true);'
 branches:
   only:
     - master
-after_success:
-  - julia -e 'using Pkg; ps=Pkg.PackageSpec(name="Documenter", version="0.19"); Pkg.add(ps); Pkg.pin(ps); include(joinpath("docs", "make.jl"))'
+jobs:
+  include:
+    - stage: "Documentation"
+      julia: 1.0
+      os: linux
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
+        - julia -e 'using Pkg; Pkg.add("Documenter"); Pkg.build("Documenter");'
+        - julia -e 'using Pkg; Pkg.clone("https://github.com/mjohnson541/ReactionMechanismSimulator.jl.git");'
+        - julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator");'
+        - cd ReactionMechanismSimulator.jl
+        - julia --project=docs/ docs/make.jl
+      after_success: skip
