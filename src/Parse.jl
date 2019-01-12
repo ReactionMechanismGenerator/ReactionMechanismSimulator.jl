@@ -199,9 +199,9 @@ function readinput(fname::String;spcdict::String="",output::String="chem.rms")
         return readinputyml(fname)
     elseif extension in ["inp"]
         if spcdict == ""
-            yml[:convertchemkin2yml](fname,output=output)
+            convertchemkin2yml(fname,output=output)
         else
-            yml[:convertchemkin2yml](fname,spcdictpath=spcdict,output=output)
+            convertchemkin2yml(fname,spcdictpath=spcdict,output=output)
         end
         return readinputyml(output)
     else
