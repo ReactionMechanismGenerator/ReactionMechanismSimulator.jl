@@ -1,6 +1,6 @@
-authors = ["Matt Johnson <mjohnson541@gmail.com>"]
 name = "ReactionMechanismSimulator"
 uuid = "311e5216-15cf-11e9-05d7-a146a2b8c9cd"
+authors = ["Matt Johnson <mjohnson541@gmail.com>"]
 version = "0.1.0"
 
 [deps]

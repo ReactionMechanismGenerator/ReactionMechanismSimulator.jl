@@ -666,9 +666,9 @@ uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PoissonRandom]]
 deps = ["Random", "Statistics", "Test"]
-git-tree-sha1 = "831a15553303ad6ee277503672b51d1abfd83d38"
+git-tree-sha1 = "99d878d6de90bbf73bca7c970c1a25386b16b11f"
 uuid = "e409e4f3-bfea-5376-8464-e040bb5c01ab"
-version = "0.3.0"
+version = "0.3.1"
 
 [[PositiveFactorizations]]
 deps = ["LinearAlgebra", "Test"]
@@ -694,9 +694,9 @@ version = "1.18.5"
 
 [[PyPlot]]
 deps = ["Colors", "Compat", "LaTeXStrings", "PyCall", "VersionParsing"]
-git-tree-sha1 = "777c48006c57c8bd322d2032267085983a5fd50f"
+git-tree-sha1 = "dd9f4a0bba3933f907640a567e1ce2a8ab44c58c"
 uuid = "d330b81b-6aea-500a-939a-2ce795aea3ee"
-version = "2.6.3"
+version = "2.7.0"
 
 [[QuadGK]]
 deps = ["DataStructures", "LinearAlgebra", "Test"]
