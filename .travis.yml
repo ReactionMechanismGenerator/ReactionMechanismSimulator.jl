@@ -4,7 +4,7 @@ os:
   - osx
 julia:
   - 1.0
-
+  - nightly
 before_install:
   - cd ..
   # Install miniconda
@@ -15,13 +15,8 @@ before_install:
   # Update conda
   - conda update --yes conda
   - julia -e 'ENV["PYTHON"]=joinpath(ENV["HOME"],"bin","python"); using Pkg; Pkg.add("PyCall"); Pkg.build("PyCall"); Pkg.add("PyPlot");'
-jobs:
-  include:
-    - stage: "Documentation"
-      julia: 1.0
-      os: linux
-      script:
-        - julia --project=docs/ -e 'using Pkg; Pkg.develop("ReactionMechanismSimulator");
-                                               Pkg.instantiate()'
-        - julia --project=docs/ docs/make.jl
-      after_success: skip
+branches:
+  only:
+    - master
+after_success:
+  - julia -e 'using Pkg; ps=Pkg.PackageSpec(name="Documenter", version="0.19"); Pkg.add(ps); Pkg.pin(ps); include(joinpath("docs", "make.jl"))'
