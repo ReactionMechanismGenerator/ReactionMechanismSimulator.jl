@@ -53,6 +53,10 @@ function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface
             y0[ind] = val
         end
     end
+
+
+    @assert T != 0.0
+    @assert P != 0.0
     ns = y0
     N = sum(ns)
 
@@ -122,6 +126,7 @@ function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1
             ns[ind] = val
         end
     end
+    @assert V != 0.0
     N = sum(ns)
     if V == 0.0
         V = N*R*T/P
@@ -198,6 +203,8 @@ function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,
             y0[ind] = val
         end
     end
+    @assert T != 0.0
+    @assert V != 0.0
     ns = y0
     N = sum(ns)
 
