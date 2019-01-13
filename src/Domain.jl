@@ -126,7 +126,7 @@ function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1
             ns[ind] = val
         end
     end
-    @assert V != 0.0
+    @assert V != 0.0 || (T != 0.0 && P != 0.0)
     N = sum(ns)
     if V == 0.0
         V = N*R*T/P
