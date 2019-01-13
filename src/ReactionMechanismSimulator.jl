@@ -1,5 +1,4 @@
 module ReactionMechanismSimulator
-    using Pkg
     using PyCall
     push!(PyVector(pyimport("sys")["path"]), "")
     const Chem = PyNULL()
