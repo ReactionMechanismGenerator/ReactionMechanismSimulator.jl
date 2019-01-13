@@ -176,6 +176,8 @@ function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1
         end
     end
     legend(leg,loc="upper left", bbox_to_anchor=(1,1))
+    ylabel("Flux in mol/s")
+    xlabel("Time in sec")
 end
 
 export plotrops
