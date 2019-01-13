@@ -37,9 +37,9 @@ function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface
     T = 0.0
     P = 0.0
     if sensitivity
-        y0 = zeros(length(phase.species)*(1+length(phase.species)+length(phase.reactions)))
+        y0 = zeros((length(phase.species)+1)*(1+length(phase.species)+length(phase.reactions)))
     else
-        y0 = zeros(length(phase.species))
+        y0 = zeros(length(phase.species)+1)
     end
     spnames = [x.name for x in phase.species]
     for (key,val) in initialconds
@@ -54,11 +54,17 @@ function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface
         end
     end
 
-
     @assert T != 0.0
     @assert P != 0.0
-    ns = y0
+    ns = y0[1:end-1]
+
     N = sum(ns)
+
+    if isa(phase,IdealGas)
+        y0[end] = N*R*T/P
+    else
+        throw(error("couldn't determine initial volume for phase of type $phase"))
+    end
 
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -87,7 +93,7 @@ function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     rxnarray = getreactionindices(phase)
-    return ConstantTPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+    return ConstantTPDomain(phase,interfaces,MVector(phase.species[1].index,phase.species[end].index,length(phase.species)+1),constspcinds,
         T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantTPDomain
@@ -266,7 +272,7 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*d.T*R/d.P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     kfs = convert(typeof(y),copy(d.kfs))
@@ -323,6 +329,13 @@ end
 export calcthermo
 
 @inline function calcdomainderivatives!(d::Q,dydt::Array{Z7,1};T::Z4,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z8) where {Q<:AbstractDomain,Z8<:Real,Z7<:Real,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+    for ind in d.constantspeciesinds #make dydt zero for constant species
+        @inbounds dydt[ind] = 0.0
+    end
+end
+
+@inline function calcdomainderivatives!(d::ConstantTPDomain,dydt::Array{Z7,1};T::Z4,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z8) where {Z8<:Real,Z7<:Real,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+    @views @fastmath @inbounds dydt[d.indexes[3]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*d.T/d.P
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
