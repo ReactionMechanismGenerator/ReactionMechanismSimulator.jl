@@ -88,6 +88,7 @@ function rops(bsol::Y,name::X,t::Z) where {Y<:Simulation, X<:AbstractString, Z<:
     rop = spzeros(length(bsol.domain.phase.reactions))
     cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
     ind = findfirst(isequal(name),getfield.(bsol.domain.phase.species,:name))
+    @assert !isa(ind,Nothing) "species $name not in species array"
     for (i,rxn) in enumerate(bsol.domain.phase.reactions)
         c = 0
         R = getrate(rxn,cs,kfs,krevs)
