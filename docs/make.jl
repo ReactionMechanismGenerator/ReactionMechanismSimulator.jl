@@ -5,6 +5,7 @@ makedocs(
     sitename = "ReactionMechanismSimulator.jl",
     modules = [ReactionMechanismSimulator],
     pages = [
+        "Home" => "index.md",
         "Input.md",
         "Simulating.md",
         "Analysis.md",
