@@ -12,8 +12,8 @@ phaseDict = readinput("../src/testing/mech.rms")
 or
 
 ```
-phaseDict = readinput("/Users/mattjohnson/Desktop/pme_analysis/pme1pdep/chem_annotated.inp";
-              spcdict="/Users/mattjohnson/Desktop/pme_analysis/pme1pdep/species_dictionary.txt")
+phaseDict = readinput("chem_annotated.inp";
+              spcdict="species_dictionary.txt")
 ```
 
 respectively.  Note that `spcdict` is an optional parameter.  

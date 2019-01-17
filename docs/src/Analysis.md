@@ -102,7 +102,7 @@ While we are trying to build up a library of plotting functions that make mechan
 we may not have the one you need.  However, the tools in the Useful Properties section should be enough
 most of the time. We're happy to provide guidance on our Github issues page and add plotting functions you find useful.  
 
-##Flux Diagrams
+## Flux Diagrams
 
 RMS generates flux diagrams with molecular images (or names when images aren't available) using the `getfluxdiagram` function:  
 ```
