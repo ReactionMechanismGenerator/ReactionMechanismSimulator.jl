@@ -25,8 +25,7 @@ script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia -e 'using Pkg; Pkg.clone("https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git");'
   - julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator"); Pkg.test("ReactionMechanismSimulator"; coverage=true);'
-after_success:
-  - export CODECOV_TOKEN="a3d6f230-026a-4fad-ae18-0e67d8c01e57"
+after_success: 
   - julia -e 'cd(Pkg.dir("ReactionMechanismSimulator")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
 branches:
   only:
