@@ -1,7 +1,6 @@
 language: julia
 env:
    - CONDA_JL_HOME=$HOME/miniconda/envs/conda_jl PYTHON=$HOME/miniconda/envs/conda_jl/bin/python
-   - CODECOV_TOKEN="a3d6f230-026a-4fad-ae18-0e67d8c01e57"
 os:
   - linux
 julia:
@@ -27,6 +26,7 @@ script:
   - julia -e 'using Pkg; Pkg.clone("https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git");'
   - julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator"); Pkg.test("ReactionMechanismSimulator"; coverage=true);'
 after_success:
+  - export CODECOV_TOKEN="a3d6f230-026a-4fad-ae18-0e67d8c01e57"
   - julia -e 'cd(Pkg.dir("ReactionMechanismSimulator")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
 branches:
   only:
