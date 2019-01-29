@@ -1,4 +1,4 @@
-# <img align="top" src="https://raw.githubusercontent.com/mjohnson541/ReactionMechanismSimulator.jl/branch/master/logos/rmg-logo-small.png"> RMS - Reaction Mechanism Simulator
+# <img align="top" src="https://github.com/mjohnson541/ReactionMechanismSimulator/blob/master/logos/rms-logo-small.png"> RMS - Reaction Mechanism Simulator
 
 [![Build status](https://img.shields.io/travis/mjohnson541/ReactionMechanismSimulator.jl/master.svg)](https://travis-ci.org/mjohnson541/ReactionMechanismSimulator.jl)
 [![codecov](https://codecov.io/gh/mjohnson541/ReactionMechanismSimulator.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/mjohnson541/ReactionMechanismSimulator.jl)
