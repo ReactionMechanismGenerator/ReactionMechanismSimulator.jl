@@ -24,7 +24,7 @@ before_install:
   - conda update --yes conda
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'using Pkg; Pkg.clone("https://github.com/mjohnson541/ReactionMechanismSimulator.jl.git");'
+  - julia -e 'using Pkg; Pkg.clone("https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git");'
   - julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator"); Pkg.test("ReactionMechanismSimulator"; coverage=true);'
 after_success:
   - julia -e 'cd(Pkg.dir("ReactionMechanismSimulator")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
@@ -39,7 +39,7 @@ jobs:
       script:
         - julia --project=docs/ -e 'using Pkg; Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
         - julia -e 'using Pkg; Pkg.add("Documenter"); Pkg.build("Documenter");'
-        - julia -e 'using Pkg; Pkg.clone("https://github.com/mjohnson541/ReactionMechanismSimulator.jl.git");'
+        - julia -e 'using Pkg; Pkg.clone("https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git");'
         - julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator");'
         - cd ReactionMechanismSimulator.jl
         - julia --project=docs/ docs/make.jl

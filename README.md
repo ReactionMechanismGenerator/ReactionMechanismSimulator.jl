@@ -1,7 +1,7 @@
-# <img align="top" src="https://github.com/mjohnson541/ReactionMechanismSimulator.jl/blob/master/logos/rms-logo-small.png"> RMS - Reaction Mechanism Simulator
+# <img align="top" src="https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl/blob/master/logos/rms-logo-small.png"> RMS - Reaction Mechanism Simulator
 
-[![Build status](https://img.shields.io/travis/mjohnson541/ReactionMechanismSimulator.jl/master.svg)](https://travis-ci.org/mjohnson541/ReactionMechanismSimulator.jl)
-[![codecov](https://codecov.io/gh/mjohnson541/ReactionMechanismSimulator.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/mjohnson541/ReactionMechanismSimulator.jl)
+[![Build status](https://img.shields.io/travis/ReactionMechanismGenerator/ReactionMechanismSimulator.jl/master.svg)](https://travis-ci.org/ReactionMechanismGenerator/ReactionMechanismSimulator.jl)
+[![codecov](https://codecov.io/gh/ReactionMechanismGenerator/ReactionMechanismSimulator.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/ReactionMechanismGenerator/ReactionMechanismSimulator.jl)
 
 ## Description
 RMS is a Julia package designed for simulating and analyzing large chemical reaction mechanisms.  

@@ -13,6 +13,6 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/mjohnson541/ReactionMechanismSimulator.jl.git",
+    repo = "github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git",
     target = "build",
 )
