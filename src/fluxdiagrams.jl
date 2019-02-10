@@ -1,6 +1,7 @@
 using PyCall
 using SparseArrays
 using Images
+using Base64
 import Base: length
 
 struct FluxDiagram{T<:Real}
@@ -26,6 +27,14 @@ return the png image associated with the index ind
 """
 getdiagram(fd::FluxDiagram,ind::Int64) = load(string(joinpath(fd.outputdirectory,"flux_diagram_"),ind,".png"))
 export getdiagram
+
+"""
+return the mpeg4 associated with the flux diagram
+"""
+function getfluxvideo(fd::FluxDiagram)
+    display("text/html", string("""<video autoplay controls><source src="data:video/x-m4v;base64,""",
+        base64encode(open(read,joinpath(fd.outputdirectory,"flux_diagram.mp4"))),"""" type="video/mp4"></video>"""));
+end
 
 """
 generate a png representing spc at location path
@@ -79,12 +88,35 @@ end
 export getfluxdiagram
 
 """
+generates and returns video of the flux diagram at the times in ts
+"""
+function getfluxvideo(bsol;ts=[],centralspecieslist=Array{String,1}(),superimpose=false,
+    maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
+    maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
+    framespersecond=6,initialpadding=5,finalpadding=5)
+
+    if ts == []
+        ts = bsol.sol.t
+    end
+
+    fd = makefluxdiagrams(bsol,ts; centralspecieslist=centralspecieslist,superimpose=superimpose,
+        maximumnodecount=maximumnodecount, maximumedgecount=maximumedgecount, concentrationtol=concentrationtol,
+        speciesratetolerance=speciesratetolerance,maximumnodepenwidth=maximumnodepenwidth,
+        maximumedgepenwidth=maximumedgepenwidth,radius=radius,centralreactioncount=centralreactioncount,
+        outputdirectory=outputdirectory,framespersecond=6,initialpadding=5,finalpadding=5)
+
+    return getfluxvideo(fd)
+end
+export getfluxvideo
+
+"""
 generates a series of flux diagrams at the time points indicated
 each flux diagram will have the same nodes and edges as determined by the options
 """
 function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpose=false,
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
-    maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams")
+    maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
+    framespersecond=6,initialpadding=5,finalpadding=5)
 
     specieslist = bsol.domain.phase.species
     speciesnamelist = getfield.(specieslist,:name)
@@ -239,7 +271,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     end
 
     graph = pydot[:graph_from_dot_data](graph[:create_dot](prog="dot"))[1]
-
+    framenumber = 1
     for t in 1:length(ts)
         slope = -maximumnodepenwidth / log10(concentrationtol)
         for index in nodes
@@ -302,16 +334,40 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
             end
         end
 
+
         if ts[t] == 0.0
             label = "t = 0 s"
         else
             tval = log10(ts[t])
             label = "t = 10^$tval s"
         end
-
         graph[:set_label](label)
-        graph[:write_dot](joinpath(outputdirectory,"flux_diagram_$t.dot"))
-        graph[:write_png](joinpath(outputdirectory,"flux_diagram_$t.png"))
+        if length(ts) > 1
+            if t == 0
+                repeat = framespersecond*initialpadding
+            elseif t == length(ts) -1
+                repeat = framespersecond*finalpadding
+            else
+                repeat = 1
+            end
+            for r in 1:repeat
+                fn = lpad(string(framenumber - 1),4,"0") #change indexing for ffmpeg
+                graph[:write_dot](joinpath(outputdirectory,"flux_diagram_$fn.dot"))
+                graph[:write_png](joinpath(outputdirectory,"flux_diagram_$fn.png"))
+                framenumber += 1
+            end
+        else
+            graph[:write_dot](joinpath(outputdirectory,"flux_diagram_$t.dot"))
+            graph[:write_png](joinpath(outputdirectory,"flux_diagram_$t.png"))
+        end
+    end
+    if length(ts) > 1
+        com1 = `pwd`
+        run(com1)
+        com2 = `ffmpeg -framerate $framespersecond -i fluxdiagrams/flux_diagram_%04d.png -c:v mpeg4 -r 30 -pix_fmt yuv420p flux_diagram.mp4`
+        run(com2)
+        com3 = `mv flux_diagram.mp4 fluxdiagrams`
+        run(com3)
     end
     return FluxDiagram(ts,outputdirectory)
 end
