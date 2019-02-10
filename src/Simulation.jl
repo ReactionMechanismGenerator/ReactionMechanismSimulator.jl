@@ -74,7 +74,12 @@ function rops(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
     cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
     for (i,rxn) in enumerate(bsol.domain.phase.reactions)
         R = getrate(rxn,cs,kfs,krevs)
-        ropmat[i,ind] = R*(count(isequal(ind),rxn.productinds)-count(isequal(ind),rxn.reactantinds))
+        for ind in rxn.productinds
+            ropmat[i,ind] += R
+        end
+        for ind in rxn.reactantinds
+            ropmat[i,ind] -= R
+        end
     end
     return ropmat
 end
