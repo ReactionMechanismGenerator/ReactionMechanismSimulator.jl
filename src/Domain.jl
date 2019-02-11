@@ -160,6 +160,90 @@ function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1
 end
 export ConstantVDomain
 
+@with_kw struct ParametrizedTPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+    phase::N
+    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
+    indexes::Q #assumed to be in ascending order
+    constantspeciesinds::Array{S,1}
+    T::Function
+    P::Function
+    rxnarray::Array{UInt16,2}
+    jacobian::Array{W,2}
+    sensitivity::Bool = false
+    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
+    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+end
+function ParametrizedTPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,Any},constantspecies::Array{String,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {Z<:IdealGas,Q<:AbstractInterface}
+
+    #set conditions and initialconditions
+    T = 0.0
+    P = 0.0
+    V = 0.0
+    ts = 0.0
+    ns = zeros(length(phase.species))
+    spnames = [x.name for x in phase.species]
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "P"
+            P = val
+        elseif key == "V"
+            V = val
+        elseif key == "ts"
+            ts = val
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind) <: Integer  "$key not found in species list: $spnames"
+            ns[ind] = val
+        end
+    end
+    @assert V != 0.0 || (T != 0.0 && P != 0.0)
+    if isa(T,AbstractArray)
+        q = Spline1D(ts,T)
+        Tfcn(x::Float64) = q(x)
+    elseif isa(T,Function)
+        Tfcn = T
+    else
+        throw(error("ParametrizedTPDomain must take \"T\" as a function or if an array of times for \"ts\" is supplied as an array of volumes"))
+    end
+    if isa(P,AbstractArray)
+        v = Spline1D(ts,P)
+        Pfcn(x::Float64) = v(x)
+    elseif isa(P,Function)
+        Pfcn = P
+    else
+        throw(error("ParametrizedTPDomain must take \"P\" as a function or if an array of times for \"ts\" is supplied as an array of volumes"))
+    end
+
+    N = sum(ns)
+    V = N*R*Tfcn(0.0)/Pfcn(0.0)
+
+    if sensitivity
+        y0 = zeros(length(phase.species)*(length(phase.species)+1+length(phase.reactions)))
+    else
+        y0 = zeros(length(phase.species))
+    end
+
+    y0[phase.species[1].index:phase.species[end].index] = ns
+
+    if length(constantspecies) > 0
+        spcnames = getfield.(phase.species,:name)
+        constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    if sparse
+        jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
+    else
+        jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
+    end
+    rxnarray = getreactionindices(phase)
+    return ParametrizedTPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+    Tfcn,Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+end
+export ParametrizedTPDomain
+
 @with_kw struct ParametrizedVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
