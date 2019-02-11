@@ -1,6 +1,7 @@
 using Parameters
 using LinearAlgebra
 using StaticArrays
+using Dierckx
 
 abstract type AbstractDomain end
 export AbstractDomain
