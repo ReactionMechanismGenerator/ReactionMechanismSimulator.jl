@@ -165,6 +165,12 @@ version = "4.7.0"
 deps = ["Mmap"]
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
+[[Dierckx]]
+deps = ["BinaryProvider", "Libdl", "Random", "Test"]
+git-tree-sha1 = "27a74763c20938a814da26f31a9e8408d16fec44"
+uuid = "39dd38d3-220a-591b-8e3c-4c3a8c710a94"
+version = "0.4.1"
+
 [[DiffBase]]
 deps = ["StaticArrays"]
 git-tree-sha1 = "38522d70e417cf9ace93848f17eb9fff20d486d2"
