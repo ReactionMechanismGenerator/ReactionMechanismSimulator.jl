@@ -401,6 +401,80 @@ function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,
 end
 export ConstantTVDomain
 
+@with_kw struct ParametrizedTConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+    phase::N
+    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
+    indexes::Q #assumed to be in ascending order
+    constantspeciesinds::Array{S,1}
+    T::Function
+    V::W
+    rxnarray::Array{UInt16,2}
+    jacobian::Array{W,2}
+    sensitivity::Bool = false
+    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
+    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+end
+function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,Any},constantspecies::Array{String,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {Q<:AbstractInterface}
+    #set conditions and initialconditions
+    T = 0.0
+    P = 0.0
+    V = 0.0
+    ts = Array{Float64,1}()
+    ns = zeros(length(phase.species))
+    spnames = [x.name for x in phase.species]
+    @assert "V" in keys(initialconds)
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "P"
+            P = val
+        elseif key == "V"
+            V = val
+        elseif key == "ts"
+            ts = val
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"
+            ns[ind] = val
+        end
+    end
+    if isa(T,AbstractArray)
+        q = Spline1D(ts,T)
+        Tfcn = f(x::Float64) = q(x)
+    elseif isa(T,Function)
+        Tfcn = T
+    else
+        throw(error("ParametrizedTConstantVDomain must take \"T\" as a function or if an array of times for \"ts\" is supplied as an array of volumes"))
+    end
+    N = sum(ns)
+    if P == 0.0
+        P = 1e8
+    else
+        throw(error("ParametrizedTConstantVDomain cannot specify P"))
+    end
+    if sensitivity
+        y0 = zeros(length(phase.species)*(length(phase.species)+1+length(phase.reactions)))
+    else
+        y0 = zeros(length(phase.species))
+    end
+    y0[phase.species[1].index:phase.species[end].index] = ns
+    if length(constantspecies) > 0
+        spcnames = getfield.(phase.species,:name)
+        constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    if sparse
+        jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
+    else
+        jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
+    end
+    rxnarray = getreactionindices(phase)
+    return ParametrizedTConstantVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+    Tfcn,V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+end
+export ParametrizedTConstantVDomain
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray{Float64,1},Q<:Float64}
     if t != d.t[1]
