@@ -575,6 +575,33 @@ end
     return ns,cs,T,P,V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs,Cvave
 end
 
+@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q) where {W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    V = d.V
+    T = d.T(t)
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./V
+    C = N/V
+    P = C*R*T
+    Gs = zeros(length(d.phase.species))
+    mu = d.phase.solvent.mu(T)
+    for i = 1:length(d.phase.species)
+        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
+        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
+    end
+    if d.phase.diffusionlimited
+        diffs = [x(T=T,mu=mu,P=P) for x in getfield.(d.phase.species,:diffusion)]
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,[],[],Gs,diffs,0.0
+end
+
 @inline function calcthermo(d::ParametrizedTPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
     if t != d.t[1]
         d.t[1] = t
