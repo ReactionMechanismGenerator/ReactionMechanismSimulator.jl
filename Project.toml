@@ -4,6 +4,7 @@ authors = ["Matt Johnson <mjohnson541@gmail.com>"]
 version = "0.1.0"
 
 [deps]
+Calculus = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
 Dierckx = "39dd38d3-220a-591b-8e3c-4c3a8c710a94"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
