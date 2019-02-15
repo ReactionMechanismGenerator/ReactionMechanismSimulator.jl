@@ -2,6 +2,7 @@ using Parameters
 using LinearAlgebra
 using StaticArrays
 using Dierckx
+using Calculus
 
 abstract type AbstractDomain end
 export AbstractDomain
@@ -200,7 +201,7 @@ function ParametrizedTPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterf
     end
     @assert V != 0.0 || (T != 0.0 && P != 0.0)
     if isa(T,AbstractArray)
-        q = Spline1D(ts,T)
+        q = Spline1D(ts,T;k=3,s=1e-11)
         Tfcn(x::Float64) = q(x)
     elseif isa(T,Function)
         Tfcn = T
@@ -208,7 +209,7 @@ function ParametrizedTPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterf
         throw(error("ParametrizedTPDomain must take \"T\" as a function or if an array of times for \"ts\" is supplied as an array of volumes"))
     end
     if isa(P,AbstractArray)
-        v = Spline1D(ts,P)
+        v = Spline1D(ts,P;k=3,s=1e-11)
         Pfcn(x::Float64) = v(x)
     elseif isa(P,Function)
         Pfcn = P
@@ -284,7 +285,7 @@ function ParametrizedVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterfa
     end
     @assert isa(V,Function) || isa(V,AbstractArray)
     if isa(V,AbstractArray)
-        q = Spline1D(ts,V)
+        q = Spline1D(ts,V;k=3,s=1e-11)
         Vfcn = f(x::Float64) = q(x)
     elseif isa(V,Function)
         Vfcn = V
@@ -297,7 +298,7 @@ function ParametrizedVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterfa
     elseif P == 0.0
         P = N*R*T/Vfcn(0.0)
     else
-        throw(error("ParametrizedVDomain overspecified with T,P and V"))
+        ns *= (P*Vfcn(0.0)/(R*T))/sum(ns) #automatically scale down moles if pressure specified
     end
     if sensitivity
         y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
@@ -440,7 +441,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,interfaces::Ar
         end
     end
     if isa(T,AbstractArray)
-        q = Spline1D(ts,T)
+        q = Spline1D(ts,T;k=3,s=1e-11)
         Tfcn = f(x::Float64) = q(x)
     elseif isa(T,Function)
         Tfcn = T
@@ -648,14 +649,22 @@ end
 end
 export calcthermo
 
-@inline function calcdomainderivatives!(d::Q,dydt::Array{Z7,1};T::Z4,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z8) where {Q<:AbstractDomain,Z8<:Real,Z7<:Real,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+@inline function calcdomainderivatives!(d::Q,dydt::Array{Z7,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z8) where {Q<:AbstractDomain,Z10,Z9,Z8<:Real,Z7<:Real,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
 end
 
-@inline function calcdomainderivatives!(d::Union{ConstantVDomain{W,Y},ParametrizedVDomain{W,Y}},dydt::Array{K,1};T::Z4,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+@inline function calcdomainderivatives!(d::ConstantVDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
     @views @fastmath @inbounds dydt[d.indexes[3]] = -dot(Us,dydt[d.indexes[1]:d.indexes[2]])/(N*Cvave) #divide by V to cancel ωV to ω
+    for ind in d.constantspeciesinds #make dydt zero for constant species
+        @inbounds dydt[ind] = 0.0
+    end
+end
+
+@inline function calcdomainderivatives!(d::ParametrizedVDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+    @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Us,dydt[d.indexes[1]:d.indexes[2]])-P*Calculus.derivative(d.V,t))/(N*Cvave) #divide by V to cancel ωV to ω
+
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end

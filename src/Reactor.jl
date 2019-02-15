@@ -89,7 +89,7 @@ export addreactionratecontributions!
     else
         wV = Array{U,1}()
     end
-    calcdomainderivatives!(domain,dydt;T=T,Us=Us,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
+    calcdomainderivatives!(domain,dydt;t=t,T=T,P=P,Us=Us,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
     if sensitivity
         Nspcs = length(cs)
         Nrxns = length(domain.phase.reactions)
