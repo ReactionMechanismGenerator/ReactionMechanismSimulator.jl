@@ -201,7 +201,7 @@ function ParametrizedTPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterf
     end
     @assert V != 0.0 || (T != 0.0 && P != 0.0)
     if isa(T,AbstractArray)
-        q = Spline1D(ts,T)
+        q = Spline1D(ts,T;k=3,s=1e-11)
         Tfcn(x::Float64) = q(x)
     elseif isa(T,Function)
         Tfcn = T
@@ -209,7 +209,7 @@ function ParametrizedTPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterf
         throw(error("ParametrizedTPDomain must take \"T\" as a function or if an array of times for \"ts\" is supplied as an array of volumes"))
     end
     if isa(P,AbstractArray)
-        v = Spline1D(ts,P)
+        v = Spline1D(ts,P;k=3,s=1e-11)
         Pfcn(x::Float64) = v(x)
     elseif isa(P,Function)
         Pfcn = P
@@ -285,7 +285,7 @@ function ParametrizedVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterfa
     end
     @assert isa(V,Function) || isa(V,AbstractArray)
     if isa(V,AbstractArray)
-        q = Spline1D(ts,V)
+        q = Spline1D(ts,V;k=3,s=1e-11)
         Vfcn = f(x::Float64) = q(x)
     elseif isa(V,Function)
         Vfcn = V
@@ -441,7 +441,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,interfaces::Ar
         end
     end
     if isa(T,AbstractArray)
-        q = Spline1D(ts,T)
+        q = Spline1D(ts,T;k=3,s=1e-11)
         Tfcn = f(x::Float64) = q(x)
     elseif isa(T,Function)
         Tfcn = T
