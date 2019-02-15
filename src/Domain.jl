@@ -297,7 +297,7 @@ function ParametrizedVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterfa
     elseif P == 0.0
         P = N*R*T/Vfcn(0.0)
     else
-        throw(error("ParametrizedVDomain overspecified with T,P and V"))
+        ns *= (P*Vfcn(0.0)/(R*T))/sum(ns) #automatically scale down moles if pressure specified
     end
     if sensitivity
         y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
