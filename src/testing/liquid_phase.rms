@@ -1,6 +1,7 @@
 Phases:
 - Species:
   - name: Ar
+    radicalelectrons: 0
     smiles: '[Ar]'
     thermo:
       polys:
@@ -17,6 +18,7 @@ Phases:
       type: NASA
     type: Species
   - name: He
+    radicalelectrons: 0
     smiles: '[He]'
     thermo:
       polys:
@@ -33,6 +35,7 @@ Phases:
       type: NASA
     type: Species
   - name: Ne
+    radicalelectrons: 0
     smiles: '[Ne]'
     thermo:
       polys:
@@ -49,6 +52,7 @@ Phases:
       type: NASA
     type: Species
   - name: N2
+    radicalelectrons: 0
     smiles: N#N
     thermo:
       polys:
@@ -65,6 +69,7 @@ Phases:
       type: NASA
     type: Species
   - name: octane
+    radicalelectrons: 0
     smiles: CCCCCCCC
     thermo:
       polys:
@@ -81,6 +86,7 @@ Phases:
       type: NASA
     type: Species
   - name: oxygen
+    radicalelectrons: 0
     smiles: '[O][O]'
     thermo:
       polys:
@@ -97,6 +103,7 @@ Phases:
       type: NASA
     type: Species
   - name: CC[CH]CCCCC
+    radicalelectrons: 1
     smiles: CC[CH]CCCCC
     thermo:
       polys:
@@ -113,6 +120,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCC[CH]CCCC
+    radicalelectrons: 1
     smiles: CCC[CH]CCCC
     thermo:
       polys:
@@ -129,6 +137,7 @@ Phases:
       type: NASA
     type: Species
   - name: C[CH]CCCCCC
+    radicalelectrons: 1
     smiles: C[CH]CCCCCC
     thermo:
       polys:
@@ -145,6 +154,7 @@ Phases:
       type: NASA
     type: Species
   - name: '[O]O'
+    radicalelectrons: 1
     smiles: '[O]O'
     thermo:
       polys:
@@ -161,6 +171,7 @@ Phases:
       type: NASA
     type: Species
   - name: OH(D)
+    radicalelectrons: 1
     smiles: '[OH]'
     thermo:
       polys:
@@ -177,6 +188,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCCCCCC(C)O[O]
+    radicalelectrons: 1
     smiles: CCCCCCC(C)O[O]
     thermo:
       polys:
@@ -193,6 +205,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCCCCCC(C)OO
+    radicalelectrons: 0
     smiles: CCCCCCC(C)OO
     thermo:
       polys:
@@ -209,6 +222,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCCCC(CCC)O[O]
+    radicalelectrons: 1
     smiles: CCCCC(CCC)O[O]
     thermo:
       polys:
@@ -225,6 +239,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCCCC(CCC)OO
+    radicalelectrons: 0
     smiles: CCCCC(CCC)OO
     thermo:
       polys:
@@ -241,6 +256,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCCCC[CH]C(C)OO
+    radicalelectrons: 1
     smiles: CCCCC[CH]C(C)OO
     thermo:
       polys:
@@ -257,6 +273,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCCC[CH]CC(C)OO
+    radicalelectrons: 1
     smiles: CCCC[CH]CC(C)OO
     thermo:
       polys:
@@ -273,6 +290,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCC[CH]CCC(C)OO
+    radicalelectrons: 1
     smiles: CCC[CH]CCC(C)OO
     thermo:
       polys:
@@ -289,6 +307,7 @@ Phases:
       type: NASA
     type: Species
   - name: CC[CH]CCCC(C)OO
+    radicalelectrons: 1
     smiles: CC[CH]CCCC(C)OO
     thermo:
       polys:
@@ -305,6 +324,7 @@ Phases:
       type: NASA
     type: Species
   - name: C[CH]CCCCC(C)OO
+    radicalelectrons: 1
     smiles: C[CH]CCCCC(C)OO
     thermo:
       polys:
@@ -321,6 +341,7 @@ Phases:
       type: NASA
     type: Species
   - name: CC[CH]C(CCCC)OO
+    radicalelectrons: 1
     smiles: CC[CH]C(CCCC)OO
     thermo:
       polys:
@@ -337,6 +358,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCC[CH]C(CCC)OO
+    radicalelectrons: 1
     smiles: CCC[CH]C(CCC)OO
     thermo:
       polys:
@@ -353,6 +375,7 @@ Phases:
       type: NASA
     type: Species
   - name: C[CH]CC(CCCC)OO
+    radicalelectrons: 1
     smiles: C[CH]CC(CCCC)OO
     thermo:
       polys:
@@ -369,6 +392,7 @@ Phases:
       type: NASA
     type: Species
   - name: CC[CH]CC(CCC)OO
+    radicalelectrons: 1
     smiles: CC[CH]CC(CCC)OO
     thermo:
       polys:
@@ -385,6 +409,7 @@ Phases:
       type: NASA
     type: Species
   - name: C[CH]CCC(CCC)OO
+    radicalelectrons: 1
     smiles: C[CH]CCC(CCC)OO
     thermo:
       polys:
@@ -401,6 +426,7 @@ Phases:
       type: NASA
     type: Species
   - name: '[CH2]CCCC(CCC)OO'
+    radicalelectrons: 1
     smiles: '[CH2]CCCC(CCC)OO'
     thermo:
       polys:
@@ -417,6 +443,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCCCCC(CC)O[O]
+    radicalelectrons: 1
     smiles: CCCCCC(CC)O[O]
     thermo:
       polys:
@@ -433,6 +460,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCCCCC(CC)OO
+    radicalelectrons: 0
     smiles: CCCCCC(CC)OO
     thermo:
       polys:
@@ -449,6 +477,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCCC[CH]C(CC)OO
+    radicalelectrons: 1
     smiles: CCCC[CH]C(CC)OO
     thermo:
       polys:
@@ -465,6 +494,7 @@ Phases:
       type: NASA
     type: Species
   - name: C[CH]C(CCCCC)OO
+    radicalelectrons: 1
     smiles: C[CH]C(CCCCC)OO
     thermo:
       polys:
@@ -481,6 +511,7 @@ Phases:
       type: NASA
     type: Species
   - name: CCC[CH]CC(CC)OO
+    radicalelectrons: 1
     smiles: CCC[CH]CC(CC)OO
     thermo:
       polys:
@@ -497,6 +528,7 @@ Phases:
       type: NASA
     type: Species
   - name: CC[CH]CCC(CC)OO
+    radicalelectrons: 1
     smiles: CC[CH]CCC(CC)OO
     thermo:
       polys:
@@ -513,6 +545,7 @@ Phases:
       type: NASA
     type: Species
   - name: C[CH]CCCC(CC)OO
+    radicalelectrons: 1
     smiles: C[CH]CCCC(CC)OO
     thermo:
       polys:
@@ -529,6 +562,7 @@ Phases:
       type: NASA
     type: Species
   - name: '[CH2]CCCCC(CC)OO'
+    radicalelectrons: 1
     smiles: '[CH2]CCCCC(CC)OO'
     thermo:
       polys:
@@ -545,6 +579,7 @@ Phases:
       type: NASA
     type: Species
   - name: '[CH2]CCCCCC(C)OO'
+    radicalelectrons: 1
     smiles: '[CH2]CCCCCC(C)OO'
     thermo:
       polys:
@@ -564,1522 +599,1902 @@ Phases:
 Reactions:
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, octane]
+  radicalchange: -2
   reactants: ['C[CH]CCCCCC', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, octane]
+  radicalchange: -2
   reactants: ['CCC[CH]CCCC', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 1100000000.0, Ea: 152297.6, n: 1.01, type: Arrhenius}
   products: ['C[CH]CCCCCC']
+  radicalchange: 0
   reactants: ['CCC[CH]CCCC']
   type: ElementaryReaction
 - kinetics: {A: 1100000000.0, Ea: 152297.6, n: 1.01, type: Arrhenius}
   products: ['C[CH]CCCCCC']
+  radicalchange: 0
   reactants: ['CCC[CH]CCCC']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [octane, 'C[CH]CCCCCC']
+  radicalchange: 0
   reactants: [octane, 'CCC[CH]CCCC']
   type: ElementaryReaction
 - kinetics: {A: 1100000000.0, Ea: 152297.6, n: 1.01, type: Arrhenius}
   products: ['C[CH]CCCCCC']
+  radicalchange: 0
   reactants: ['CCC[CH]CCCC']
   type: ElementaryReaction
 - kinetics: {A: 0.00228, Ea: 46735.28, n: 3.95, type: Arrhenius}
   products: ['C[CH]CCCCCC']
+  radicalchange: 0
   reactants: ['CCC[CH]CCCC']
   type: ElementaryReaction
 - kinetics: {A: 7540000.000000001, Ea: 0.0, n: 0.0, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: [oxygen, 'C[CH]CCCCCC']
   type: ElementaryReaction
 - kinetics: {A: 7540000.000000001, Ea: 0.0, n: 0.0, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: [oxygen, 'CCC[CH]CCCC']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, octane]
+  radicalchange: -2
   reactants: ['CC[CH]CCCCC', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['C[CH]CCCCCC']
+  radicalchange: 0
   reactants: ['CC[CH]CCCCC']
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['C[CH]CCCCCC']
+  radicalchange: 0
   reactants: ['CC[CH]CCCCC']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [octane, 'C[CH]CCCCCC']
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CCCCC']
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['CCC[CH]CCCC']
+  radicalchange: 0
   reactants: ['CC[CH]CCCCC']
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['CCC[CH]CCCC']
+  radicalchange: 0
   reactants: ['CC[CH]CCCCC']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [octane, 'CCC[CH]CCCC']
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CCCCC']
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['CC[CH]CCCCC']
+  radicalchange: 0
   reactants: ['CCC[CH]CCCC']
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['C[CH]CCCCCC']
+  radicalchange: 0
   reactants: ['CC[CH]CCCCC']
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['CC[CH]CCCCC']
+  radicalchange: 0
   reactants: ['CCC[CH]CCCC']
   type: ElementaryReaction
 - kinetics: {A: 0.07569835, Ea: 26882.2, n: 3.26, type: Arrhenius}
   products: ['C[CH]CCCCCC']
+  radicalchange: 0
   reactants: ['CC[CH]CCCCC']
   type: ElementaryReaction
 - kinetics: {A: 7540000.000000001, Ea: 0.0, n: 0.0, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: [oxygen, 'CC[CH]CCCCC']
   type: ElementaryReaction
 - kinetics: {A: 6030000.000000001, Ea: 0.0, n: 0.0, type: Arrhenius}
   products: [CCCCCCC(C)OO]
+  radicalchange: -2
   reactants: ['C[CH]CCCCCC', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [octane, 'CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['CC[CH]CCCCC', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [octane, 'CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['CCC[CH]CCCC', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [octane, 'CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['C[CH]CCCCCC', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 120000.00000000001, Ea: -8158.8, n: 0.0, type: Arrhenius}
   products: [oxygen, CCCCCCC(C)OO]
+  radicalchange: -2
   reactants: ['[O]O', 'CCCCCCC(C)O[O]']
   type: ElementaryReaction
 - kinetics: {A: 6030000.000000001, Ea: 0.0, n: 0.0, type: Arrhenius}
   products: [CCCCC(CCC)OO]
+  radicalchange: -2
   reactants: ['CCC[CH]CCCC', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [octane, 'CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['CC[CH]CCCCC', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [octane, 'CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['CCC[CH]CCCC', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [octane, 'CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['C[CH]CCCCCC', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 120000.00000000001, Ea: -8158.8, n: 0.0, type: Arrhenius}
   products: [oxygen, CCCCC(CCC)OO]
+  radicalchange: -2
   reactants: ['[O]O', 'CCCCC(CCC)O[O]']
   type: ElementaryReaction
 - kinetics: {A: 9.200000000000002e-08, Ea: 27739.92, n: 3.96, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCCCCCC(C)O[O]', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 6030000.000000001, Ea: 0.0, n: 0.0, type: Arrhenius}
   products: [CCCCCC(CC)OO]
+  radicalchange: -2
   reactants: ['CC[CH]CCCCC', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [octane, 'CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]CCCCC']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [octane, 'CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]CCCC']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [octane, 'CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'C[CH]CCCCCC']
   type: ElementaryReaction
 - kinetics: {A: 120000.00000000001, Ea: -8158.8, n: 0.0, type: Arrhenius}
   products: [oxygen, CCCCCC(CC)OO]
+  radicalchange: -2
   reactants: ['CCCCCC(CC)O[O]', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 9.200000000000002e-08, Ea: 27739.92, n: 3.96, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCCCCC(C)O[O]']
   type: ElementaryReaction
 - kinetics: {A: 9.200000000000002e-08, Ea: 27739.92, n: 3.96, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCCC(CCC)O[O]']
   type: ElementaryReaction
 - kinetics: {A: 423.6886, Ea: 106315.44, n: 2.584, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['C[CH]CCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCCCC(C)OO]
+  radicalchange: -2
   reactants: ['C[CH]CCCCC(C)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'C[CH]CCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'C[CH]CCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['C[CH]CCCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['C[CH]CCCCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'C[CH]CCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'C[CH]CCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 67600000000.0, Ea: 77404.0, n: 0.21, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['CCCCC(CCC)O[O]']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCC(CCC)OO]
+  radicalchange: -2
   reactants: ['C[CH]CC(CCCC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'C[CH]CC(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'C[CH]CC(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['C[CH]CC(CCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['C[CH]CC(CCCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'C[CH]CC(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'C[CH]CC(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['C[CH]CC(CCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 0.03784917, Ea: 26882.2, n: 3.26, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['CCCC[CH]CC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCCCC(C)OO]
+  radicalchange: -2
   reactants: ['CCCC[CH]CC(C)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CCCC[CH]CC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CCCC[CH]CC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCCC[CH]CC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCCC[CH]CC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CCCC[CH]CC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCC[CH]CC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 0.00228, Ea: 46735.28, n: 3.95, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]CC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCCC[CH]CC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCCC[CH]CC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 46.1, Ea: 60793.52, n: 3.21, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['CCC[CH]CCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCCCC(C)OO]
+  radicalchange: -2
   reactants: ['CCC[CH]CCC(C)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CCC[CH]CCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CCC[CH]CCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]CCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]CCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CCC[CH]CCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]CCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 1100000000.0, Ea: 152297.6, n: 1.01, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]CCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]CCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]CCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]CCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]CCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 423.6886, Ea: 106315.44, n: 2.584, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCCCC(C)OO]
+  radicalchange: -2
   reactants: ['CC[CH]CCCC(C)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]CCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 28414780.0, Ea: 148322.80000000002, n: 1.625, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['CCC[CH]CCC(C)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2740000.0, Ea: 76023.28000000001, n: 0.99, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: ['CCCCCC(CC)O[O]']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCCC(CC)OO]
+  radicalchange: -2
   reactants: ['C[CH]CCCC(CC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCCC']
+  radicalchange: 0
   reactants: [octane, 'C[CH]CCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCCC']
+  radicalchange: 0
   reactants: [octane, 'C[CH]CCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['C[CH]CCCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['C[CH]CCCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCCC']
+  radicalchange: 0
   reactants: [octane, 'C[CH]CCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'C[CH]CCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['C[CH]CCCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['C[CH]CCCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCC[CH]CC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]CCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]CCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 46.1, Ea: 60793.52, n: 3.21, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['C[CH]CCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCC(CCC)OO]
+  radicalchange: -2
   reactants: ['C[CH]CCC(CCC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'C[CH]CCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'C[CH]CCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['C[CH]CCC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['C[CH]CCC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'C[CH]CCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'C[CH]CCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['C[CH]CCC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 1542.323, Ea: 51735.16, n: 2.44, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['C[CH]CCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['C[CH]CCC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCCC[CH]CC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]CCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CCCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'C[CH]CCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 0.03784917, Ea: 26882.2, n: 3.26, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCC(CCC)OO]
+  radicalchange: -2
   reactants: ['CC[CH]CC(CCC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]CC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 0.07569835, Ea: 26882.2, n: 3.26, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]CC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]CC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 0.03784917, Ea: 26882.2, n: 3.26, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCCC(CC)OO]
+  radicalchange: -2
   reactants: ['CCC[CH]CC(CC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCCC']
+  radicalchange: 0
   reactants: [octane, 'CCC[CH]CC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCCC']
+  radicalchange: 0
   reactants: [octane, 'CCC[CH]CC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCCC']
+  radicalchange: 0
   reactants: [octane, 'CCC[CH]CC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]CC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCC[CH]CC(C)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCC(C)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCC(C)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 1100000000.0, Ea: 152297.6, n: 1.01, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]CC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCC(CCC)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CC(CCC)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]CC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 46.1, Ea: 60793.52, n: 3.21, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCCC(CC)OO]
+  radicalchange: -2
   reactants: ['CC[CH]CCC(CC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCCC']
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCCC']
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCCC']
+  radicalchange: 0
   reactants: [octane, 'CC[CH]CCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]CCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCC[CH]CC(C)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCC(C)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCC(C)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]CCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCC(CCC)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CC(CCC)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['CCC[CH]CC(CC)OO']
+  radicalchange: 0
   reactants: ['CC[CH]CCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]CCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2960.0, Ea: 84098.40000000001, n: 2.11, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCCCC(C)OO]
+  radicalchange: -2
   reactants: ['[O]O', 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCCC(C)OO, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCCCC[CH]C(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 0.07569835, Ea: 26882.2, n: 3.26, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCCC(C)OO, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCCCC[CH]C(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO']
+  radicalchange: 0
   reactants: ['CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCCC(C)OO, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 28414780.0, Ea: 148322.80000000002, n: 1.625, type: Arrhenius}
   products: ['CCC[CH]CCC(C)OO']
+  radicalchange: 0
   reactants: ['CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCCC(C)OO, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 0.00228, Ea: 46735.28, n: 3.95, type: Arrhenius}
   products: ['CC[CH]CCCC(C)OO']
+  radicalchange: 0
   reactants: ['CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCCC(C)OO, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCCCC[CH]C(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CC(CCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['CCCCC[CH]C(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CC(CC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCC(CC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCCC[CH]C(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2960.0, Ea: 84098.40000000001, n: 2.11, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCCC(CC)OO]
+  radicalchange: -2
   reactants: ['C[CH]C(CCCCC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCCC']
+  radicalchange: 0
   reactants: [octane, 'C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCCC']
+  radicalchange: 0
   reactants: [octane, 'C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCCC']
+  radicalchange: 0
   reactants: [octane, 'C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCC[CH]CC(C)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCC(C)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCC(C)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 1542.323, Ea: 51735.16, n: 2.44, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCC(CCC)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CC(CCC)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 0.00228, Ea: 46735.28, n: 3.95, type: Arrhenius}
   products: ['CCC[CH]CC(CC)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 0.0564, Ea: 24727.440000000002, n: 3.28, type: Arrhenius}
   products: ['CC[CH]CCC(CC)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'C[CH]C(CCCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCC[CH]C(C)OO']
+  radicalchange: 0
   reactants: ['C[CH]C(CCCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2960.0, Ea: 84098.40000000001, n: 2.11, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCC(CCC)OO]
+  radicalchange: -2
   reactants: ['[O]O', 'CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 0.07569835, Ea: 26882.2, n: 3.26, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO']
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 0.00228, Ea: 46735.28, n: 3.95, type: Arrhenius}
   products: ['CC[CH]CC(CCC)OO']
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CC(CCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCCCC[CH]C(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CC[CH]C(CCCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]C(CCCCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CC[CH]C(CCCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2960.0, Ea: 84098.40000000001, n: 2.11, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCCC(CC)OO]
+  radicalchange: -2
   reactants: ['CCCC[CH]C(CC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCCC']
+  radicalchange: 0
   reactants: [octane, 'CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCCC']
+  radicalchange: 0
   reactants: [octane, 'CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCCC']
+  radicalchange: 0
   reactants: [octane, 'CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCC[CH]CC(C)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCC(C)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCC(C)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 0.00228, Ea: 46735.28, n: 3.95, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCC(CCC)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CC(CCC)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['CCC[CH]CC(CC)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 28414780.0, Ea: 148322.80000000002, n: 1.625, type: Arrhenius}
   products: ['CC[CH]CCC(CC)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCC[CH]C(C)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 1100000000.0, Ea: 152297.6, n: 1.01, type: Arrhenius}
   products: ['C[CH]C(CCCCC)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]C(CCCCC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCCC[CH]C(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]C(CCCC)OO']
+  radicalchange: 0
   reactants: ['CCCC[CH]C(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2960.0, Ea: 84098.40000000001, n: 2.11, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.7590590000000007e-08, Ea: 26459.615999999998, n: 3.802, type: Arrhenius}
   products: [oxygen, CCCCC(CCC)OO]
+  radicalchange: -2
   reactants: ['CCC[CH]C(CCC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 5.147495000000001e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, 'CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 0.00228, Ea: 46735.28, n: 3.95, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 1100000000.0, Ea: 152297.6, n: 1.01, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 6760000000.0, Ea: 158992.0, n: 0.88, type: Arrhenius}
   products: ['CC[CH]CC(CCC)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CC(CCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCCCC[CH]C(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['C[CH]C(CCCCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 28414780.0, Ea: 148322.80000000002, n: 1.625, type: Arrhenius}
   products: ['CC[CH]C(CCCC)OO']
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CC[CH]C(CCCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['CCC[CH]C(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5737480000000003e-09, Ea: 32271.192, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]C(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, 'CCC[CH]C(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 3.0623230000000007e-06, Ea: 39137.136, n: 3.295, type: Arrhenius}
   products: [oxygen, CCCCCCC(C)OO]
+  radicalchange: -2
   reactants: ['[CH2]CCCCCC(C)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 4.327734e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, '[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 4.327734e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, '[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 4.327734e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [octane, '[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 64800000.0, Ea: 147695.19999999998, n: 1.57, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 262000.0, Ea: 46442.4, n: 1.62, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 754000.0, Ea: 74893.59999999999, n: 1.63, type: Arrhenius}
   products: ['CCC[CH]CCC(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 1064000.0, Ea: 141419.19999999998, n: 1.93, type: Arrhenius}
   products: ['CC[CH]CCCC(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCC(C)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CC(CCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CC(CC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCC(CC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 25800.0, Ea: 42676.799999999996, n: 1.67, type: Arrhenius}
   products: ['CCCCC[CH]C(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCCC(C)OO, 'CCCCC[CH]C(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]C(CCCCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CC[CH]C(CCCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]C(CC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCCC(C)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]C(CCC)OO', CCCCCCC(C)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCCCC(C)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 271800.0, Ea: 83470.8, n: 1.51, type: Arrhenius}
   products: ['[CH2]CCCC(CCC)OO']
+  radicalchange: 0
   reactants: ['CCCCC(CCC)O[O]']
   type: ElementaryReaction
 - kinetics: {A: 3.0623230000000007e-06, Ea: 39137.136, n: 3.295, type: Arrhenius}
   products: [oxygen, CCCCC(CCC)OO]
+  radicalchange: -2
   reactants: ['[CH2]CCCC(CCC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 4.327734e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, '[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 4.327734e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, '[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCCC(C)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCC(CCC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 4.327734e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCCC', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [octane, '[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 1062.0, Ea: 55228.799999999996, n: 1.81, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]CC(CCCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]CC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 64800000.0, Ea: 147695.19999999998, n: 1.57, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]CCC(CCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 1064000.0, Ea: 141419.19999999998, n: 1.93, type: Arrhenius}
   products: ['CC[CH]CC(CCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CC(CCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]CC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CC[CH]CCC(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCCCC[CH]C(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['C[CH]C(CCCCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 25800.0, Ea: 42676.799999999996, n: 1.67, type: Arrhenius}
   products: ['CC[CH]C(CCCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CC[CH]C(CCCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCCC[CH]C(CC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 754000.0, Ea: 74893.59999999999, n: 1.63, type: Arrhenius}
   products: ['CCC[CH]C(CCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: ['CCC[CH]C(CCC)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 1.6303009999999998e-10, Ea: 35522.16, n: 4.81, type: Arrhenius}
   products: ['[CH2]CCCCCC(C)OO', CCCCC(CCC)OO]
+  radicalchange: 0
   reactants: ['[CH2]CCCC(CCC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2270000.0, Ea: 141000.80000000002, n: 1.5, type: Arrhenius}
   products: ['CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 3.0623230000000007e-06, Ea: 39137.136, n: 3.295, type: Arrhenius}
   products: [oxygen, CCCCCC(CC)OO]
+  radicalchange: -2
   reactants: ['[CH2]CCCCC(CC)OO', '[O]O']
   type: ElementaryReaction
 - kinetics: {A: 4.327734e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCCC']
+  radicalchange: 0
   reactants: [octane, '[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 4.327734e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCCC']
+  radicalchange: 0
   reactants: [octane, '[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCCC(C)O[O]']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCC(CCC)O[O]']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 4.327734e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCCC']
+  radicalchange: 0
   reactants: [octane, '[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.5100000000000004e-17, Ea: -35982.4, n: 6.77, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCCC(CC)O[O]']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCCC(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CC(CCCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCC[CH]CC(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CCC(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCCC(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 64800000.0, Ea: 147695.19999999998, n: 1.57, type: Arrhenius}
   products: ['C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCCC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]CCC(CCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CC(CCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 754000.0, Ea: 74893.59999999999, n: 1.63, type: Arrhenius}
   products: ['CCC[CH]CC(CC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]CC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 1064000.0, Ea: 141419.19999999998, n: 1.93, type: Arrhenius}
   products: ['CC[CH]CCC(CC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]CCC(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCCC[CH]C(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 1062.0, Ea: 55228.799999999996, n: 1.81, type: Arrhenius}
   products: ['C[CH]C(CCCCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'C[CH]C(CCCCC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CC[CH]C(CCCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 262000.0, Ea: 46442.4, n: 1.62, type: Arrhenius}
   products: ['CCCC[CH]C(CC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCCC[CH]C(CC)OO']
+  radicalchange: 0
   reactants: [CCCCCC(CC)OO, '[CH2]CCCCC(CC)OO']
   type: ElementaryReaction
 - kinetics: {A: 2.163867e-09, Ea: 31530.624, n: 4.29, type: Arrhenius}
   products: [CCCCCC(CC)OO, 'CCC[CH]C(CCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 - kinetics: {A: 1.6303009999999998e-10, Ea: 35522.16, n: 4.81, type: Arrhenius}
   products: [CCCCCC(CC)OO, '[CH2]CCCCCC(C)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCCCC(C)OO]
   type: ElementaryReaction
 - kinetics: {A: 1.6303009999999998e-10, Ea: 35522.16, n: 4.81, type: Arrhenius}
   products: [CCCCCC(CC)OO, '[CH2]CCCC(CCC)OO']
+  radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
 Units: {}
