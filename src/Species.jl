@@ -16,6 +16,7 @@ struct EmptySpecies <: AbstractSpecies end
     bondnum::Int64=-1
     diffusion::N = EmptyDiffusivity()
     radius::Float64 = 0.0
+    radicalelectrons::Int64 = NaN
 end
 export Species
 
