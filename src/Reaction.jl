@@ -11,6 +11,7 @@ export AbstractReaction
     products::V3
     productinds::V4
     kinetics::T
+    radicalchange::Int64 = NaN
     pairs::V5 = @SArray [@SArray [""]]
 end
 export ElementaryReaction
