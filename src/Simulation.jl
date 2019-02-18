@@ -76,9 +76,10 @@ this outputs a sparse matrix of  num reactions xnum species containing the produ
 rate of that species associated with that reaction
 """
 function rops(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
-    ropmat = spzeros(length(bsol.domain.phase.reactions),length(bsol.domain.phase.species))
+    ropmat = zeros(length(bsol.domain.phase.reactions),length(bsol.domain.phase.species))
     cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
-    for (i,rxn) in enumerate(bsol.domain.phase.reactions)
+    @simd for i in 1:length(bsol.domain.phase.reactions)
+        rxn = bsol.domain.phase.reactions[i]
         R = getrate(rxn,cs,kfs,krevs)
         for ind in rxn.productinds
             ropmat[i,ind] += R
