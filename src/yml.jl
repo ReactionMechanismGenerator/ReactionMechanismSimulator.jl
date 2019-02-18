@@ -23,6 +23,15 @@ function getmechdict(spcs,rxns)
     return D
 end
 
+function getradicals(obj::T) where {T}
+    sm = obj[:molecule][1][:toSMILES]()
+    if sm == "[O][O]"
+        return 0
+    else
+        return obj[:molecule][1][:multiplicity]-1
+    end
+end
+
 function obj2dict(obj,spcs;label="solvent")
     D = Dict([])
     if pybuiltin("isinstance")(obj,species[:Species])
@@ -30,6 +39,11 @@ function obj2dict(obj,spcs;label="solvent")
         D["type"] = "Species"
         D["smiles"] = obj[:molecule][1][:toSMILES]()
         D["thermo"] = obj2dict(obj[:thermo],spcs)
+        if D["smiles"] != "[O][O]"
+            D["radicalelectrons"] = obj[:molecule][1][:multiplicity]-1
+        else
+            D["radicalelectrons"] = 0
+        end
     elseif pybuiltin("isinstance")(obj,nasa[:NASA])
         D["polys"] = [obj2dict(k,spcs) for k in obj[:polynomials]]
         D["type"] = "NASA"
@@ -43,6 +57,7 @@ function obj2dict(obj,spcs;label="solvent")
         D["products"] = [x[:label] for x in obj[:products]]
         D["kinetics"] = obj2dict(obj[:kinetics],spcs)
         D["type"] = "ElementaryReaction"
+        D["radicalchange"] = sum([getradicals(x) for x in obj[:products]])-sum([getradicals(x) for x in obj[:reactants]])
     elseif pybuiltin("isinstance")(obj,arrhenius[:Arrhenius])
         D["type"] = "Arrhenius"
         D["A"] = obj[:A][:value_si]

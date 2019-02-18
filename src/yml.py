@@ -31,6 +31,12 @@ def getmechdict(spcs,rxns):
     D["Reactions"] = [obj2dict(x,spcs) for x in rxns]
     return D
 
+def getradicals(spc):
+    if spc.molecule[0].toSMILES() == "[O][O]":
+        return 0
+    else:
+        return spc.molecule[0].multiplicity-1
+
 def obj2dict(obj,spcs,label="solvent"):
     D = dict()
     if isinstance(obj,Species):
@@ -38,6 +44,10 @@ def obj2dict(obj,spcs,label="solvent"):
         D["type"] = "Species"
         D["smiles"] = obj.molecule[0].toSMILES()
         D["thermo"] = obj2dict(obj.thermo,spcs)
+        if D["smiles"]  == "[O][O]":
+            D["radicalelectrons"] = 0
+        else:
+            D["radicalelectrons"] = obj.molecule[0].multiplicity-1
     elif isinstance(obj,NASA):
         D["polys"] = [obj2dict(k,spcs) for k in obj.polynomials]
         D["type"] = "NASA"
@@ -51,6 +61,7 @@ def obj2dict(obj,spcs,label="solvent"):
         D["products"] = [x.label for x in obj.products]
         D["kinetics"] = obj2dict(obj.kinetics,spcs)
         D["type"] = "ElementaryReaction"
+        D["radicalchange"] = sum([getradicals(x) for x in obj.products]) -  sum([getradicals(x) for x in obj.reactants])
     elif isinstance(obj,Arrhenius):
         D["type"] = "Arrhenius"
         D["A"] = obj.A.value_si
