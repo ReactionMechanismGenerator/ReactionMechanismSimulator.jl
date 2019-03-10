@@ -1,6 +1,7 @@
 using PyCall
 using SparseArrays
 using Images
+using Colors
 import Base: length
 
 struct FluxDiagram{T<:Real}
@@ -63,16 +64,18 @@ export drawspecies
 
 """
 generates and returns the image of a single flux diagram at the given time point
+all PyPlot colorscheme names are valid inputs for colorscheme
 """
 function getfluxdiagram(bsol,t;centralspecieslist=Array{String,1}(),superimpose=false,
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
-    maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams")
+    maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
+    colorscheme="viridis")
 
     fd = makefluxdiagrams(bsol,[t]; centralspecieslist=centralspecieslist,superimpose=superimpose,
         maximumnodecount=maximumnodecount, maximumedgecount=maximumedgecount, concentrationtol=concentrationtol,
         speciesratetolerance=speciesratetolerance,maximumnodepenwidth=maximumnodepenwidth,
         maximumedgepenwidth=maximumedgepenwidth,radius=radius,centralreactioncount=centralreactioncount,
-        outputdirectory=outputdirectory)
+        outputdirectory=outputdirectory,colorscheme=colorscheme)
 
     return getdiagram(fd,1)
 end
@@ -81,10 +84,12 @@ export getfluxdiagram
 """
 generates a series of flux diagrams at the time points indicated
 each flux diagram will have the same nodes and edges as determined by the options
+all PyPlot colorscheme names are valid inputs for colorscheme
 """
 function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpose=false,
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
-    maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams")
+    maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
+    colorscheme="viridis")
 
     specieslist = bsol.domain.phase.species
     speciesnamelist = getfield.(specieslist,:name)
@@ -262,6 +267,15 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         end
 
         slope = -maximumedgepenwidth / log10(speciesratetolerance)
+        minspeciesrate = Inf
+        for index in 1:length(edges)
+            reactantindex,productindex = edges[index]
+            sprate = abs(speciesrates[reactantindex,productindex,t])
+            if sprate > speciesratetolerance && minspeciesrate > sprate
+                minspeciesrate = sprate
+            end
+        end
+
         for index in 1:length(edges)
             reactantindex,productindex = edges[index]
             if reactantindex in nodes && productindex in nodes
@@ -298,6 +312,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
                 end
 
                 edge[:set_penwidth](penwidth)
+                edge[:set_color](getcolor(speciesrates[reactantindex,productindex,t],maxspeciesrate,minspeciesrate,colorscheme))
 
             end
         end
@@ -312,6 +327,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         graph[:set_label](label)
         graph[:write_dot](joinpath(outputdirectory,"flux_diagram_$t.dot"))
         graph[:write_png](joinpath(outputdirectory,"flux_diagram_$t.png"))
+        graph[:write_svg](joinpath(outputdirectory,"flux_diagram_$t.svg"))
     end
     return FluxDiagram(ts,outputdirectory)
 end
@@ -368,4 +384,15 @@ function addadjacentnodes!(targetnodeindex,nodes,edges,phase,maxreactionrates,ma
             end
         end
     end
+end
+
+function getcolor(speciesrate,maxspeciesrate,minspeciesrate,colorscheme="viridis")
+    """
+    gives the color corresponding to the scaled log species rate
+    for a given PyPlot color scheme
+    """
+    scale = log(maxspeciesrate)-log(minspeciesrate)
+    value = (log(abs(speciesrate))-log(minspeciesrate))/scale
+    out = PyPlot.get_cmap(colorscheme)(value)[1:3]
+    return "#"*hex(RGB(out...))
 end
