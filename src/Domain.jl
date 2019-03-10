@@ -32,9 +32,8 @@ export AbstractVariableKDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
-    sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,E2<:AbstractPhase,Q<:AbstractInterface,W<:Real}
-
+function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,X2},constantspecies::Array{X3,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,E2<:AbstractPhase,Q<:AbstractInterface,W<:Real,X,X2,X3}
     #set conditions and initialconditions
     T = 0.0
     P = 0.0
@@ -106,8 +105,8 @@ export ConstantTPDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
-    sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,Z<:IdealGas,Q<:AbstractInterface}
+function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {E,X,X2,Z<:IdealGas,Q<:AbstractInterface}
 
     #set conditions and initialconditions
     T = 0.0
@@ -174,8 +173,8 @@ export ConstantVDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ParametrizedTPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,Any},constantspecies::Array{String,1}=Array{String,1}(),
-    sparse::Bool=false,sensitivity::Bool=false) where {Z<:IdealGas,Q<:AbstractInterface}
+function ParametrizedTPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {X,X2,Z<:IdealGas,Q<:AbstractInterface}
 
     #set conditions and initialconditions
     T = 0.0
@@ -257,8 +256,8 @@ export ParametrizedTPDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ParametrizedVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,Any},constantspecies::Array{String,1}=Array{String,1}(),
-    sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,Z<:IdealGas,Q<:AbstractInterface}
+function ParametrizedVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {X,X2,E<:Real,Z<:IdealGas,Q<:AbstractInterface}
 
     #set conditions and initialconditions
     T = 0.0
@@ -340,8 +339,8 @@ export ParametrizedVDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,E},constantspecies::Array{String,1}=Array{String,1}(),
-    sparse=false,sensitivity=false) where {E<:Real, Z<:AbstractPhase,Q<:AbstractInterface,W<:Real}
+function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
+    sparse=false,sensitivity=false) where {E,X,X2, Z<:AbstractPhase,Q<:AbstractInterface,W<:Real}
     #set conditions and initialconditions
     T = 0.0
     V = 0.0
@@ -415,8 +414,8 @@ export ConstantTVDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{String,Any},constantspecies::Array{String,1}=Array{String,1}(),
-    sparse::Bool=false,sensitivity::Bool=false) where {Q<:AbstractInterface}
+function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,X3},constantspecies::Array{X2,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {X,X2,X3,Q<:AbstractInterface}
     #set conditions and initialconditions
     T = 0.0
     P = 0.0
