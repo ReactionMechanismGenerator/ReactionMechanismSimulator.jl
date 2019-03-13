@@ -113,22 +113,22 @@ function getatomdictfromrdkit(mol)
     retrives the number of each type of atom and the number of bonds of an rdkit molecule
     """
     atmD = Dict{String,Int64}()
-    for atm in mol[:GetAtoms]()
-        v = elementdict[atm[:GetAtomicNum]()]
+    for atm in mol.GetAtoms()
+        v = elementdict[atm.GetAtomicNum()]
         if v in keys(atmD)
             atmD[v] += 1
         else
             atmD[v] = 1
         end
     end
-    nbonds = length(mol[:GetBonds]())
+    nbonds = length(mol.GetBonds())
     return atmD,nbonds
 end
 export getatomdictfromrdkit
 
-getatomdictsmiles(smiles) = getatomdictfromrdkit(Chem[:AddHs](Chem[:MolFromSmiles](smiles)))
+getatomdictsmiles(smiles) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
 export getatomdictsmiles
-getatomdictinchi(inchi) = getatomdictfromrdkit(Chem[:AddHs](Chem[:MolFromInchi](inchi)))
+getatomdictinchi(inchi) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromInchi(inchi)))
 export getatomdictinchi
 
 function getspeciesradius(atomdict::Dict{String,Int64},nbonds::Int64)
