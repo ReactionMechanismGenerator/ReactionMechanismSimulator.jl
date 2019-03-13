@@ -42,13 +42,13 @@ function drawspc(spc::Species,path::String=".")
         end
     end
     if spc.inchi != ""
-        mol = molecule[:Molecule]()[:fromInChI](spc.inchi)
+        mol = molecule.Molecule().fromInChI(spc.inchi)
     elseif spc.smiles != ""
-        mol = molecule[:Molecule]()[:fromSMILES](spc.smiles)
+        mol = molecule.Molecule().fromSMILES(spc.smiles)
     else
         throw(error("no smiles or inchi for molecule $name"))
     end
-    mol[:draw](joinpath(path,fname))
+    mol.draw(joinpath(path,fname))
 end
 export drawspc
 
@@ -203,16 +203,16 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         end
     end
 
-    graph = pydot[:Dot]("flux_diagram",graph_type="digraph",overlap="false")
-    graph[:set_rankdir]("LR")
-    graph[:set_fontname]("sans")
-    graph[:set_fontsize]("10")
+    graph = pydot.Dot("flux_diagram",graph_type="digraph",overlap="false")
+    graph.set_rankdir("LR")
+    graph.set_fontname("sans")
+    graph.set_fontsize("10")
 
     for index in nodes
         species = specieslist[index]
-        node = pydot[:Node](name=species.name)
-        node[:set_penwidth](maximumnodepenwidth)
-        graph[:add_node](node)
+        node = pydot.Node(name=species.name)
+        node.set_penwidth(maximumnodepenwidth)
+        graph.add_node(node)
 
         speciesindex = string(species.name,".png")
         imagepath = ""
@@ -228,8 +228,8 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
             end
         end
         if isfile(imagepath)
-            node[:set_image](imagepath)
-            node[:set_label](" ")
+            node.set_image(imagepath)
+            node.set_label(" ")
         end
     end
 
@@ -237,13 +237,13 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         if reactantindex in nodes && productindex in nodes
             reactant = specieslist[reactantindex]
             product = specieslist[productindex]
-            edge = pydot[:Edge](reactant.name,product.name)
-            edge[:set_penwidth](maximumedgepenwidth)
-            graph[:add_edge](edge)
+            edge = pydot.Edge(reactant.name,product.name)
+            edge.set_penwidth(maximumedgepenwidth)
+            graph.add_edge(edge)
         end
     end
 
-    graph = pydot[:graph_from_dot_data](graph[:create_dot](prog="dot"))[1]
+    graph = pydot.graph_from_dot_data(graph.create_dot(prog="dot"))[1]
 
     for t in 1:length(ts)
         slope = -maximumnodepenwidth / log10(concentrationtol)
@@ -255,7 +255,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
                 species_string = string("\"",species.name,"\"")
             end
 
-            node = graph[:get_node](species_string)[1]
+            node = graph.get_node(species_string)[1]
             concentration = concentrations[index,t] / maxconcentration
             if concentration < concentrationtol
                 penwidth = 0.0
@@ -263,7 +263,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
                 penwidth = round((slope*log10(concentration)+maximumnodepenwidth)*1.0e3)/1.0e3
             end
 
-            node[:set_penwidth](penwidth)
+            node.set_penwidth(penwidth)
         end
 
         slope = -maximumedgepenwidth / log10(speciesratetolerance)
@@ -294,25 +294,25 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
                     product_string = string("\"",product.name,"\"")
                 end
 
-                edge = graph[:get_edge](reactant_string,product_string)[1]
+                edge = graph.get_edge(reactant_string,product_string)[1]
 
                 speciesrate = speciesrates[reactantindex,productindex,t] / maxspeciesrate
                 if speciesrate < 0
-                    edge[:set_dir]("back")
+                    edge.set_dir("back")
                     speciesrate = -speciesrate
                 else
-                    edge[:set_dir]("forward")
+                    edge.set_dir("forward")
                 end
 
                 if speciesrate < speciesratetolerance
                     penwidth = 0.0
-                    edge[:set_dir]("none")
+                    edge.set_dir("none")
                 else
                     penwidth = round((slope*log10(speciesrate) + maximumedgepenwidth)*1.0e3)/1.0e3
                 end
 
-                edge[:set_penwidth](penwidth)
-                edge[:set_color](getcolor(speciesrates[reactantindex,productindex,t],maxspeciesrate,minspeciesrate,colorscheme))
+                edge.set_penwidth(penwidth)
+                edge.set_color(getcolor(speciesrates[reactantindex,productindex,t],maxspeciesrate,minspeciesrate,colorscheme))
 
             end
         end
@@ -324,10 +324,10 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
             label = "t = 10^$tval s"
         end
 
-        graph[:set_label](label)
-        graph[:write_dot](joinpath(outputdirectory,"flux_diagram_$t.dot"))
-        graph[:write_png](joinpath(outputdirectory,"flux_diagram_$t.png"))
-        graph[:write_svg](joinpath(outputdirectory,"flux_diagram_$t.svg"))
+        graph.set_label(label)
+        graph.write_dot(joinpath(outputdirectory,"flux_diagram_$t.dot"))
+        graph.write_png(joinpath(outputdirectory,"flux_diagram_$t.png"))
+        graph.write_svg(joinpath(outputdirectory,"flux_diagram_$t.svg"))
     end
     return FluxDiagram(ts,outputdirectory)
 end
