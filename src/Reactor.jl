@@ -155,6 +155,7 @@ function ratederivative(d::W; cs::Q,V::Y,T::Y2,Us::Z3,Cvave::Z4,N::Z5,kfs::Z,kre
             rderiv = krevs[j]/kfs[j]*cs[pind1]*cs[pind2]
         else
             pind1,pind2,pind3 = rxn.productinds
+            rderiv = krevs[j]/kfs[j]*cs[pind1]*cs[pind2]*cs[pind3]
         end
 
         flux = fderiv-rderiv
@@ -238,6 +239,7 @@ function ratederivative(d::ConstantVDomain; cs::Q,V::Y,T::Y2,Us::Z3,Cvave::Y3,N:
             rderiv = krevs[j]/kfs[j]*cs[pind1]*cs[pind2]
         else
             pind1,pind2,pind3 = rxn.productinds
+            rderiv = krevs[j]/kfs[j]*cs[pind1]*cs[pind2]*cs[pind3]
         end
 
         flux = fderiv-rderiv
