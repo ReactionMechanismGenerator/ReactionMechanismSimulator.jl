@@ -320,6 +320,84 @@ function ParametrizedVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterfa
     Vfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ParametrizedVDomain
+
+@with_kw struct ParametrizedPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+    phase::N
+    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
+    indexes::Q #assumed to be in ascending order
+    constantspeciesinds::Array{S,1}
+    P::Function
+    rxnarray::Array{UInt16,2}
+    jacobian::Array{W,2}
+    sensitivity::Bool = false
+    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
+    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+end
+function ParametrizedPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {X,X2,E<:Real,Z<:IdealGas,Q<:AbstractInterface}
+
+    #set conditions and initialconditions
+    T = 0.0
+    P = 0.0
+    V = 0.0
+    ts = Array{Float64,1}()
+    ns = zeros(length(phase.species))
+    spnames = [x.name for x in phase.species]
+    @assert "P" in keys(initialconds)
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "P"
+            P = val
+        elseif key == "V"
+            V = val
+        elseif key == "ts"
+            ts = val
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"
+            ns[ind] = val
+        end
+    end
+    @assert isa(P,Function) || isa(P,AbstractArray)
+    if isa(P,AbstractArray)
+        q = Spline1D(ts,P;k=3,s=1e-11)
+        Pfcn = f(x::Float64) = q(x)
+    elseif isa(P,Function)
+        Pfcn = P
+    else
+        throw(error("ParametrizedPDomain must take \"P\" as a function or if an array of times for \"ts\" is supplied as an array of volumes"))
+    end
+    N = sum(ns)
+    if T == 0.0
+        T = Pfcn(0.0)*V/(R*N)
+    elseif V == 0.0
+        V = N*R*T/Pfcn(0.0)
+    else
+        ns *= (Pfcn(0.0)*V/(R*T))/sum(ns) #automatically scale down moles if volume specified
+    end
+    if sensitivity
+        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
+    else
+        y0 = vcat(ns,T)
+    end
+    if length(constantspecies) > 0
+        spcnames = getfield.(phase.species,:name)
+        constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    if sparse
+        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+    else
+        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+    end
+    rxnarray = getreactionindices(phase)
+    return ParametrizedPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+end
+export ParametrizedPDomain
+
 @with_kw struct ConstantTVDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
