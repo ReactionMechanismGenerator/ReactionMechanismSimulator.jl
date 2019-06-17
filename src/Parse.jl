@@ -232,8 +232,8 @@ function readinputyml(fname::String)
         for sol in s
             sol["type"] = "Solvent"
         end
-        solvents = map(fcndict2obj,s)
-        outDict["Solvents"] = solvents
+        solvents = [fcndict2obj(q,ymlunitsdict) for q in s]
+        outdict["Solvents"] = solvents
     end
 
     #phases
