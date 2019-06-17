@@ -6,18 +6,18 @@ export AbstractViscosity
 struct EmptyViscosity <: AbstractViscosity end
 export EmptyViscosity
 
-@with_kw struct ConstantViscosity{T<:Number} <: AbstractViscosity
+@with_kw struct ConstantViscosity{T<:AbstractFloat} <: AbstractViscosity
     mu::T
 end
 
-(cv::ConstantViscosity)(T::Q) where {Q<:Number} = cv.mu
+(cv::ConstantViscosity)(T::Q) where {Q<:AbstractFloat} = cv.mu
 export ConstantViscosity
 
-@with_kw struct RiedelViscosity{Q,V,X,Z,N<:Number} <: AbstractViscosity
-    A::Q
-    B::V
-    C::X
-    D::Z
+@with_kw struct RiedelViscosity{N<:AbstractFloat} <: AbstractViscosity
+    A::N
+    B::N
+    C::N
+    D::N
     E::N
 end
 
