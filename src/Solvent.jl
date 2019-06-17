@@ -6,7 +6,7 @@ export AbstractSolvent
 struct EmptySolvent <: AbstractSolvent end
 export EmptySolvent
 
-struct Solvent <: AbstractSolvent
+@with_kw struct Solvent <: AbstractSolvent
     name::String
     mu::AbstractViscosity
 end
