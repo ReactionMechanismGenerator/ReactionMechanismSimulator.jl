@@ -2497,4 +2497,8 @@ Reactions:
   radicalchange: 0
   reactants: ['[CH2]CCCCC(CC)OO', CCCCC(CCC)OO]
   type: ElementaryReaction
+Solvents:
+- mu: {A: -98.805, B: 3905.5, C: 14.103, D: -2.5112e-05, E: 2.0, type: RiedelViscosity}
+  name: octane
+  type: Solvent
 Units: {}
