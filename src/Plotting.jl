@@ -12,9 +12,11 @@ function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01) 
     maxes = maximum(xs,dims=2)
     spnames = []
     for i = 1:length(maxes)
-        if maxes[i] > tol
-            plot(ts,xs[i,:])
-            push!(spnames,bsol.domain.phase.species[i].name)
+        if (maxes[i] > tol)
+            if !(split(lowercase(bsol.names[i]),"(")[1] in ["ar","he","ne","n2"])
+                plot(ts,xs[i,:])
+                push!(spnames,bsol.domain.phase.species[i].name)
+            end
         end
     end
     legend(spnames)
