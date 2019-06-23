@@ -24,11 +24,15 @@ function getmechdict(spcs,rxns)
 end
 
 function getradicals(obj::T) where {T}
-    sm = obj.molecule[1].toSMILES()
-    if sm == "[O][O]"
-        return 0
+    if length(obj.molecule) != 0
+        sm = obj.molecule[1].toSMILES()
+        if sm == "[O][O]"
+            return 0
+        else
+            return obj.molecule[1].multiplicity-1
+        end
     else
-        return obj.molecule[1].multiplicity-1
+        return 0
     end
 end
 
@@ -37,17 +41,16 @@ function obj2dict(obj,spcs;label="solvent")
     if pybuiltin("isinstance")(obj,species.Species)
         D["name"] = obj.label
         D["type"] = "Species"
-        if length(obj.molecule) == 0
-            println(obj)
-            println(obj.label)
+        if length(obj.molecule) != 0
+            D["smiles"] = obj.molecule[1].toSMILES()
+            if D["smiles"] != "[O][O]"
+                D["radicalelectrons"] = obj.molecule[1].multiplicity-1
+            else
+                D["radicalelectrons"] = 0
+            end
         end
-        D["smiles"] = obj.molecule[1].toSMILES()
         D["thermo"] = obj2dict(obj.thermo,spcs)
-        if D["smiles"] != "[O][O]"
-            D["radicalelectrons"] = obj.molecule[1].multiplicity-1
-        else
-            D["radicalelectrons"] = 0
-        end
+
     elseif pybuiltin("isinstance")(obj,nasa.NASA)
         D["polys"] = [obj2dict(k,spcs) for k in obj.polynomials]
         D["type"] = "NASA"
