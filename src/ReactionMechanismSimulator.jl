@@ -52,4 +52,5 @@ module ReactionMechanismSimulator
     include("Simulation.jl")
     include("fluxdiagrams.jl")
     include("Plotting.jl")
+    include("Results.jl")
 end
