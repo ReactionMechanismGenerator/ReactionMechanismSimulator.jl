@@ -129,7 +129,7 @@ function obj2dict(obj,spcs;label="solvent")
         dsub["D"] = obj.D.value_si
         dsub["E"] = obj.E.value_si
         D["mu"] = dsub
-    elseif pybuiltin("is")(obj,pybuiltin("None"))
+    elseif pybuiltin("isinstance")(obj,pybuiltin("None"))
         return pybuiltin("None")
     else
         throw(error("object $obj not understood"))
