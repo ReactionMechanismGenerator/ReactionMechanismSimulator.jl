@@ -105,10 +105,10 @@ function rops(bsol::Y,name::X,t::Z) where {Y<:Simulation, X<:AbstractString, Z<:
     @assert !isa(ind,Nothing) "species $name not in species array"
     for (i,rxn) in enumerate(bsol.domain.phase.reactions)
         c = 0
-        R = getrate(rxn,cs,kfs,krevs)
         c -= count(isequal(ind),rxn.reactantinds)
         c += count(isequal(ind),rxn.productinds)
         if c != 0
+            R = getrate(rxn,cs,kfs,krevs)
             rop[i] = c*R
         end
     end
