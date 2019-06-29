@@ -109,9 +109,6 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         reactionrates[:,i] = [getrate(rxn,cs,kfs,krevs) for rxn in reactionlist]
     end
 
-    drawspecies(bsol.domain.phase)
-    speciesdirectory = joinpath(pwd(),"species")
-
     #find central species
     centralspeciesindices = Array{Int64,1}()
     if length(centralspecieslist) != 0
@@ -209,12 +206,17 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     graph.set_fontname("sans")
     graph.set_fontsize("10")
 
+    if !isdir(speciesdirectory)
+        mkpath(speciesdirectory)
+    end
+
     for index in nodes
         species = specieslist[index]
         node = pydot.Node(name=species.name)
         node.set_penwidth(maximumnodepenwidth)
         graph.add_node(node)
 
+        drawspc(species, speciesdirectory)
         speciesindex = string(species.name,".png")
         imagepath = ""
         if !isdir(speciesdirectory)
