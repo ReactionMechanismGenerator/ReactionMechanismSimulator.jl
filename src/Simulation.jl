@@ -116,6 +116,31 @@ function rops(bsol::Y,name::X,t::Z) where {Y<:Simulation, X<:AbstractString, Z<:
 end
 export rops
 
+function calcropthermo(bsol::Y,t::Z1;spcinvolved::Z2,rxninvolved::Z3) where {Y<:Simulation, Z1<:Real,Z2<:AbstractArray,Z3<:AbstractArray}
+    T = getT(bsol,t)
+    P = getP(bsol,t)
+    V = getV(bsol,t)
+    ns = bsol.sol(t)
+    cs = ns./V
+    N = sum(ns)
+    C = N/V
+    Gs = zeros(length(bsol.domain.phase.species))
+
+    @simd for i in spcinvolved
+        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(bsol.domain.phase.species[i].thermo,T)
+        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
+    end
+
+    if bsol.domain.phase.diffusionlimited
+        diffs = getfield.(bsol.domain.phase.species,:diffusion)(T=T,mu=mu,P=P)
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getropkfkrevs(phase=bsol.domain.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V,rxninvolved=rxninvolved)
+    return cs,kfs,krevs
+end
+export getropthermo
+
 function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L}
     @assert numerator in bsol.names
     @assert denominator in bsol.names
