@@ -39,6 +39,29 @@ export Reactor
 
     return R
 end
+
+@inline function getrate(rxn::T,cs::Array{W,1},kfs::Q,krevs::W) where {T<:AbstractReaction,Q,W<:Real}
+    Nreact = length(rxn.reactantinds)
+    Nprod = length(rxn.productinds)
+    R = 0.0
+    if Nreact == 1
+        @fastmath @inbounds R += kfs*cs[rxn.reactantinds[1]]
+    elseif Nreact == 2
+        @fastmath @inbounds R += kfs*cs[rxn.reactantinds[1]]*cs[rxn.reactantinds[2]]
+    elseif Nreact == 3
+        @fastmath @inbounds R += kfs*cs[rxn.reactantinds[1]]*cs[rxn.reactantinds[2]]*cs[rxn.reactantinds[3]]
+    end
+
+    if Nprod == 1
+        @fastmath @inbounds R -= krevs*cs[rxn.productinds[1]]
+    elseif Nprod == 2
+        @fastmath @inbounds R -= krevs*cs[rxn.productinds[1]]*cs[rxn.productinds[2]]
+    elseif Nprod == 3
+        @fastmath @inbounds R -= krevs*cs[rxn.productinds[1]]*cs[rxn.productinds[2]]*cs[rxn.productinds[3]]
+    end
+
+    return R
+end
 export getrate
 
 @inline function addreactionratecontributions!(dydt::Array{Q,1},rarray::Array{UInt16,2},cs::Array{W,1},kfs::Array{Z,1},krevs::Array{Z,1}) where {Q<:Real,Z<:Real,T<:Integer,W<:Real}
