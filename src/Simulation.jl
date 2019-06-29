@@ -114,6 +114,46 @@ function rops(bsol::Y,name::X,t::Z) where {Y<:Simulation, X<:AbstractString, Z<:
     end
     return rop
 end
+
+"""
+calculates the rates of production/loss for a single species across timespan
+this outputs a sparse matrix of size(num time steps, num reactions) containing
+the production/loss rate associated with that reaction for the given species
+"""
+function rops(bsol::Y,name::Z1,ts::Array{Z2,1}) where {Y<:Simulation, X<:AbstractString, Z1<:AbstractString, Z2<:Real}
+    ind = findfirst(isequal(name),getfield.(bsol.domain.phase.species,:name))
+    @assert !isa(ind,Nothing) "species $name not in species array"
+    rxninvolved = Array{Int,1}()
+    spcinvolved = Array{Int,1}()
+    stoich = Array{Int,1}()
+    for (rxnind, rxn) in enumerate(bsol.domain.phase.reactions)
+        @inbounds c = 0
+        @inbounds c -= count(isequal(ind),rxn.reactantinds)
+        @inbounds c += count(isequal(ind),rxn.productinds)
+        if c != 0
+            push!(rxninvolved,rxnind)
+            for reactantind in rxn.reactantinds
+            push!(spcinvolved, reactantind)
+            end
+            for productind in rxn.productinds
+                push!(spcinvolved, productind)
+            end
+            push!(stoich,c)
+        end
+    end
+    unique!(spcinvolved)
+
+    rop = zeros(length(ts), length(rxninvolved))
+    for (tind, t) in enumerate(ts)
+        cs,kfs,krevs = calcropthermo(bsol,t;spcinvolved=spcinvolved,rxninvolved=rxninvolved)
+        @simd for i = 1:length(rxninvolved)
+            R = getrate(bsol.domain.phase.reactions[rxninvolved[i]],cs,kfs[i],krevs[i])
+            @inbounds @fastmath rop[tind,i] = stoich[i] * R
+        end
+    end
+    return (rop, rxninvolved)
+end
+
 export rops
 
 function calcropthermo(bsol::Y,t::Z1;spcinvolved::Z2,rxninvolved::Z3) where {Y<:Simulation, Z1<:Real,Z2<:AbstractArray,Z3<:AbstractArray}
