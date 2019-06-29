@@ -36,7 +36,7 @@ function drawspc(spc::Species,path::String=".")
     name = spc.name
     fname = string(name,".png")
     if !(path in readdir("."))
-        mkdir(path)
+        mkpath(path)
     else
         if fname in readdir(path)
             return
@@ -56,9 +56,9 @@ export drawspc
 """
 generate pngs for all species in phase and store them in the "species" folder
 """
-function drawspecies(phase::T) where {T<:AbstractPhase}
+function drawspecies(phase::T,path::Z=".") where {T<:AbstractPhase,Z<:String}
     for spc in phase.species
-        drawspc(spc,"species")
+        drawspc(spc, path)
     end
 end
 export drawspecies
@@ -70,13 +70,13 @@ all PyPlot colorscheme names are valid inputs for colorscheme
 function getfluxdiagram(bsol,t;centralspecieslist=Array{String,1}(),superimpose=false,
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
     maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
-    colorscheme="viridis")
+    colorscheme="viridis",output="all",speciesdirectory="./species")
 
     fd = makefluxdiagrams(bsol,[t]; centralspecieslist=centralspecieslist,superimpose=superimpose,
         maximumnodecount=maximumnodecount, maximumedgecount=maximumedgecount, concentrationtol=concentrationtol,
         speciesratetolerance=speciesratetolerance,maximumnodepenwidth=maximumnodepenwidth,
         maximumedgepenwidth=maximumedgepenwidth,radius=radius,centralreactioncount=centralreactioncount,
-        outputdirectory=outputdirectory,colorscheme=colorscheme)
+        outputdirectory=outputdirectory,colorscheme=colorscheme,output=output,speciesdirectory=speciesdirectory)
 
     return getdiagram(fd,1)
 end
@@ -90,7 +90,7 @@ all PyPlot colorscheme names are valid inputs for colorscheme
 function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpose=false,
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
     maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
-    colorscheme="viridis")
+    colorscheme="viridis",output="all",speciesdirectory= "./species" )
 
     specieslist = bsol.domain.phase.species
     speciesnamelist = getfield.(specieslist,:name)
@@ -326,9 +326,15 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         end
 
         graph.set_label(label)
-        graph.write_dot(joinpath(outputdirectory,"flux_diagram_$t.dot"))
-        graph.write_png(joinpath(outputdirectory,"flux_diagram_$t.png"))
-        graph.write_svg(joinpath(outputdirectory,"flux_diagram_$t.svg"))
+
+        if output == "all"
+            graph.write_dot(joinpath(outputdirectory,"flux_diagram_$t.dot"))
+            graph.write_png(joinpath(outputdirectory,"flux_diagram_$t.png"))
+            graph.write_svg(joinpath(outputdirectory,"flux_diagram_$t.svg"))
+        elseif output == "png"
+            graph.write_png(joinpath(outputdirectory,"flux_diagram_$t.png"))
+        end
+        
     end
     return FluxDiagram(ts,outputdirectory)
 end
