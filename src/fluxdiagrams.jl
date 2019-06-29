@@ -2,6 +2,7 @@ using PyCall
 using SparseArrays
 using Images
 using Colors
+using Printf
 import Base: length
 
 struct FluxDiagram{T<:Real}
@@ -320,8 +321,8 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         if ts[t] == 0.0
             label = "t = 0 s"
         else
-            tval = log10(ts[t])
-            label = "t = 10^$tval s"
+            tval = @sprintf("%.3E", ts[t])
+            label = "t = $tval s"
         end
 
         graph.set_label(label)
