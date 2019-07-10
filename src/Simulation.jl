@@ -160,7 +160,7 @@ function calcropthermo(bsol::Y,t::Z1;spcinvolved::Z2,rxninvolved::Z3) where {Y<:
     T = getT(bsol,t)
     P = getP(bsol,t)
     V = getV(bsol,t)
-    ns = bsol.sol(t)
+    ns = bsol.sol(t)[1:end-1]
     cs = ns./V
     N = sum(ns)
     C = N/V
