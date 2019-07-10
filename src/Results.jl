@@ -18,7 +18,7 @@ using DataFrames
         for (ind, name) in enumerate(splist)
             spind = spcindex(bsol,name)
             for i = 1:length(ts)
-                xs[i,ind] = bsol.sol(ts[i])[spind]/bsol.N(ts[i])
+                @inbounds @fastmath xs[i,ind] = bsol.sol(ts[i])[spind]/bsol.N(ts[i])
             end
         end
     end
@@ -46,7 +46,7 @@ export writeconc
             content = hcat(content,ropspsum,ropsp)
             spheader = vcat(string(name,"_total"), [string(name,"_rxn#",string(i)) for i in rxnind])
         else
-            ropmax = vec(maximum(abs.(ropsp),dims=1))
+            @inbounds ropmax = vec(maximum(abs.(ropsp),dims=1))
             sortind = sortperm(ropmax,rev=true)[1:minimum([Nmax,length(rxnind)])]
             content = hcat(content,ropspsum,ropsp[:,sortind])
             spheader = vcat(string(name,"_total"), [string(name,"_rxn#",string(i)) for i in rxnind[sortind]])
