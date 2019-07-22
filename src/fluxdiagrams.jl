@@ -209,6 +209,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     if !isdir(speciesdirectory)
         mkpath(speciesdirectory)
     end
+    speciesdirectory = abspath(speciesdirectory)
 
     for index in nodes
         species = specieslist[index]
@@ -336,7 +337,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         elseif output == "png"
             graph.write_png(joinpath(outputdirectory,"flux_diagram_$t.png"))
         end
-        
+
     end
     return FluxDiagram(ts,outputdirectory)
 end
