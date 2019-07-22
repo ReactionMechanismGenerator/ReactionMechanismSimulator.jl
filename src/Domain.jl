@@ -701,22 +701,22 @@ end
     C = N/V
     Gs = zeros(length(d.phase.species))
     Hs = zeros(length(d.phase.species))
-    Cpave = 0.0
+    Cvave = 0.0
     @simd for i = 1:length(d.phase.species)
         @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
         @fastmath @inbounds Hs[i] = hdivRT*R*T
         @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
-        @fastmath @inbounds Cpave += cpdivR*ns[i]
+        @fastmath @inbounds Cvave += cpdivR*ns[i]
     end
-    @fastmath Cpave *= R/N
-    # @fastmath Cvave -= R
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
     if d.phase.diffusionlimited
         diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)
     else
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=d.P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
-    return ns,cs,T,d.P,V,C,N,0.0,kfs,krevs,Hs,[],Gs,diffs,Cpave
+    return ns,cs,T,d.P,V,C,N,0.0,kfs,krevs,Hs,[],Gs,diffs,Cvave
 end
 
 @inline function calcthermo(d::ParametrizedVDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
