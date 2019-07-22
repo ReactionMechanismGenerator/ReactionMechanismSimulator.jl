@@ -138,19 +138,13 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
 end
 export getkfkrev
 
-@inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5) where {U<:AbstractPhase,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
-    len = length(phase.reactions)
-    kf = zeros(typeof(N),len)
-    krev = zeros(typeof(N),len)
-    @simd for i = 1:len
-       @fastmath @inbounds kf[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V)
+@inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5, rxninvolved::Q4=[]) where {U<:AbstractPhase,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray,Q4<:AbstractArray}
+    if length(rxninvolved) == 0
+        len = length(phase.reactions)
+        rxninvolved = 1:len
+    else
+        len = length(rxninvolved)
     end
-    return kf,krev
-end
-export getkfkrevs
-# For ROP purpose
-@inline function getropkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,rxninvolved::Q4) where {U<:AbstractPhase,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray,Q4<:AbstractArray}
-    len = length(rxninvolved)
     kf = zeros(typeof(N),len)
     krev = zeros(typeof(N),len)
     @simd for i = 1:len
@@ -158,4 +152,4 @@ export getkfkrevs
     end
     return kf,krev
 end
-export getropkfkrevs
+export getkfkrevs
