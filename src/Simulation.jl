@@ -176,7 +176,7 @@ function calcropthermo(bsol::Y,t::Z1;spcinvolved::Z2,rxninvolved::Z3) where {Y<:
     else
         diffs = Array{Float64,1}()
     end
-    kfs,krevs = getropkfkrevs(phase=bsol.domain.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V,rxninvolved=rxninvolved)
+    kfs,krevs = getkfkrevs(phase=bsol.domain.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V,rxninvolved=rxninvolved)
     return cs,kfs,krevs
 end
 export getropthermo
