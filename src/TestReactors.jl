@@ -175,5 +175,72 @@ dgdk = ratederivative(domain;cs=cs,V=V,T=domain.T,kfs=kfs,krevs=krevs,Us=Array{F
 
 dgdkdif = (dgdk-rmgdgdk)./rmgdgdk
 @test all((dgdkdif .< 1e-4) .| isnan.(dgdkdif))
+
+#Test constantV reactor also with minimal.inp mechanism
+phaseDict = readinput("../src/testing/minimal.inp") #load mechanism dictionary
+spcs = phaseDict["phase"]["Species"]; #mechanism dictionaries index:  phaseDict[phasename]["Species" or "Reactions"]
+rxns = phaseDict["phase"]["Reactions"];
+ig = IdealGas(spcs,rxns,name="phase")
+
+initialconds = Dict(["T"=>1000.0,"P"=>1.0e5,"Ar"=>0.9,"ethane"=>0.1]) #Set simulation Initial Temp and Pressure
+domain,y0 = ConstantVDomain(phase=ig,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
+react = Reactor(domain,y0,(0.0,10.0)) #Create the reactor object
+sol = solve(react.ode,DifferentialEquations.CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
+y = sol(2.00000000)
+N = sum(y[1:end-1]) #exclude T
+
+spcnames = getfield.(ig.species,:name);
+ethaneind = findfirst(isequal("ethane"),spcnames);
+h2ind = findfirst(isequal("H2"),spcnames);
+c2h4ind = findfirst(isequal("C=C"),spcnames);
+
+@test y[ethaneind]/N ≈ 0.08554144 rtol=5e-3 #from RMG simulator
+@test y[h2ind]/N ≈ 0.01313078 rtol=5e-3
+@test y[c2h4ind]/N ≈ 0.01307791 rtol=5e-3
+end;
+
+# Use minimal example to test
+phaseDict = readinput("../src/testing/minimal.inp") #load mechanism dictionary
+spcs = phaseDict["phase"]["Species"]; #mechanism dictionaries index:  phaseDict[phasename]["Species" or "Reactions"]
+rxns = phaseDict["phase"]["Reactions"];
+ig = IdealGas(spcs,rxns,name="phase")
+
+spcnames = getfield.(ig.species,:name);
+ethaneind = findfirst(isequal("ethane"),spcnames);
+h2ind = findfirst(isequal("H2"),spcnames);
+c2h4ind = findfirst(isequal("C=C"),spcnames);
+
+#Constant P adiabatic Ideal Gas
+@testset "Test constant Pressure adiabatic reactor simulation" begin
+#uses minimal.yml mechanism
+initialconds = Dict(["T"=>1000.0,"P"=>1.0e5,"Ar"=>0.9,"ethane"=>0.1]) #Set simulation Initial Temp and Pressure
+domain,y0 = ConstantPDomain(phase=ig,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
+react = Reactor(domain,y0,(0.0,10.0)) #Create the reactor object
+sol = solve(react.ode,DifferentialEquations.CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
+y = sol(2.00000000)
+N = sum(y[1:end-1]) #exclude T
+
+@test y[ethaneind]/N ≈ 0.083118 rtol=4e-3 #from RMG simulator
+@test y[h2ind]/N ≈ 0.015334 rtol=4e-3
+@test y[c2h4ind]/N ≈ 0.015254 rtol=4e-3
+end;
+
+#Parametrized P adiabatic Ideal Gas
+@testset "Test parameterized pressure adiabatic reactor simulation" begin
+#uses minima.yml mechanism
+#Read the pressure profile from file
+presprof = CSV.read("../src/testing/pressure_profile.csv";skipto=2,header=["Time","Pressure"])
+P0 = Array(presprof.Pressure)
+ts = Array(presprof.Time)
+initialconds = Dict(["T"=>1000.0,"P"=>P0, "ts"=>ts, "V"=>1e-6,"Ar"=>0.9,"ethane"=>0.1])
+domain,y0 = ParametrizedPDomain(phase=ig,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
+react = Reactor(domain,y0,(0.0,0.01)) #Create the reactor object
+sol = solve(react.ode,DifferentialEquations.CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
+y = sol(0.005)
+N = sum(y[1:end-1]) #exclude T
+
+@test y[ethaneind]/N ≈ 0.09948671 rtol=4e-3 #from RMG simulator
+@test y[h2ind]/N ≈ 0.0007812914 rtol=2e-2
+@test y[c2h4ind]/N ≈ 0.0007827869 rtol=2e-2
 end;
 end;
