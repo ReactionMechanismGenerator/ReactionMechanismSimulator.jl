@@ -12,7 +12,7 @@ using DataFrames
     end
     if length(splist) == 0
         xs = transpose(hcat(molefractions.(bsol,ts)...))
-        header = vcat(["Time [s]", "P [Pa]", "V [m^3]", "T [K]"], bsol.names)
+        splist = bsol.names
     else
         xs = zeros(length(ts),length(splist))
         for (ind, name) in enumerate(splist)
