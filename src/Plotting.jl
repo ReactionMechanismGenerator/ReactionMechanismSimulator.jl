@@ -113,6 +113,9 @@ associated with each reaction
 N reactions are included all of which must have absolute value greater than abs(maximum prod or loss rate)*tol
 """
 function plotrops(bsol::Y,name::X,t::Z;N=0,tol=0.01) where {Y<:Simulation, X<:AbstractString, Z<:Real}
+    if !(name in getfield.(bsol.domain.phase.species,:name))
+        error("Species $name not in domain")
+    end
     rop = rops(bsol,name,t)
     inds = rop.nzind[reverse(sortperm(abs.(rop.nzval)))]
     if N == 0
@@ -142,6 +145,9 @@ reactions with maximum (over time) production value greater than max production*
 maximum (over time) loss value greater than maximum loss*tol are included
 """
 function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05) where {Y<:Simulation, X<:AbstractString}
+    if !(name in getfield.(bsol.domain.phase.species,:name))
+        error("Species $name not in domain")
+    end
     if length(rxnrates) == 0 || length(ts) == 0
         rxnrates = rates(bsol)
         ts = bsol.sol.t
