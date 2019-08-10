@@ -6,13 +6,13 @@ using N logarithmically spaced time points
 only plots species who have mole fractions > tol at some point
 in the simulation
 """
-function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01) where {Q<:Simulation, V<:Real, Z<:Real, Z2<:Real, Z3<:Real}
+function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01,exclude::M=Array{String,1}()) where {Q<:Simulation, V<:Real, Z<:Real, Z2<:Real, Z3<:Real, M<:AbstractArray{String,1}}
     ts = exp.(range(log(t0),length=N,stop=log(tf)))
     xs = hcat(molefractions.(bsol,ts)...)
     maxes = maximum(xs,dims=2)
     spnames = []
     for i = 1:length(maxes)
-        if maxes[i] > tol
+        if maxes[i] > tol && !(bsol.domain.phase.species[i].name in exclude)
             plot(ts,xs[i,:])
             push!(spnames,bsol.domain.phase.species[i].name)
         end
@@ -27,12 +27,12 @@ Plot the mole fractions of the simulation bsol at the time points solved for
 only plots species who have mole fractions > tol at some point
 in the simulation
 """
-function plotmolefractions(bsol::Q; tol::V=0.01) where {Q<:Simulation, V<:Real}
+function plotmolefractions(bsol::Q; tol::V=0.01, exclude::M=Array{String,1}()) where {Q<:Simulation, V<:Real, M<:AbstractArray{String,1}}
     xs = molefractions(bsol)
     maxes = maximum(xs,dims=2)
     spnames = []
     for i = 1:length(maxes)
-        if maxes[i] > tol
+        if maxes[i] > tol && !(bsol.domain.phase.species[i].name in exclude)
             plot(bsol.sol.t,xs[i,:])
             push!(spnames,bsol.domain.phase.species[i].name)
         end
