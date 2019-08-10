@@ -8,12 +8,12 @@ julia:
 before_install:
   - cd ..
   # Install miniconda
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget https://repo.anaconda.com/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH=$HOME/miniconda/bin:$PATH
   #create julia conda enviornment
-  - conda create -n conda_jl --yes python conda
+  - conda create -n conda_jl --yes python=2.7 conda
   - source activate conda_jl
   #install used packages
   - conda install -c rmg --yes rmg
