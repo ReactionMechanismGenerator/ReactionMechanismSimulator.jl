@@ -6,13 +6,13 @@ using N logarithmically spaced time points
 only plots species who have mole fractions > tol at some point
 in the simulation
 """
-function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01) where {Q<:Simulation, V<:Real, Z<:Real, Z2<:Real, Z3<:Real}
+function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01,exclude::M=Array{String,1}()) where {Q<:Simulation, V<:Real, Z<:Real, Z2<:Real, Z3<:Real, M<:AbstractArray{String,1}}
     ts = exp.(range(log(t0),length=N,stop=log(tf)))
     xs = hcat(molefractions.(bsol,ts)...)
     maxes = maximum(xs,dims=2)
     spnames = []
     for i = 1:length(maxes)
-        if maxes[i] > tol
+        if maxes[i] > tol && !(bsol.domain.phase.species[i].name in exclude)
             plot(ts,xs[i,:])
             push!(spnames,bsol.domain.phase.species[i].name)
         end
@@ -27,12 +27,12 @@ Plot the mole fractions of the simulation bsol at the time points solved for
 only plots species who have mole fractions > tol at some point
 in the simulation
 """
-function plotmolefractions(bsol::Q; tol::V=0.01) where {Q<:Simulation, V<:Real}
+function plotmolefractions(bsol::Q; tol::V=0.01, exclude::M=Array{String,1}()) where {Q<:Simulation, V<:Real, M<:AbstractArray{String,1}}
     xs = molefractions(bsol)
     maxes = maximum(xs,dims=2)
     spnames = []
     for i = 1:length(maxes)
-        if maxes[i] > tol
+        if maxes[i] > tol && !(bsol.domain.phase.species[i].name in exclude)
             plot(bsol.sol.t,xs[i,:])
             push!(spnames,bsol.domain.phase.species[i].name)
         end
@@ -113,6 +113,9 @@ associated with each reaction
 N reactions are included all of which must have absolute value greater than abs(maximum prod or loss rate)*tol
 """
 function plotrops(bsol::Y,name::X,t::Z;N=0,tol=0.01) where {Y<:Simulation, X<:AbstractString, Z<:Real}
+    if !(name in getfield.(bsol.domain.phase.species,:name))
+        error("Species $name not in domain")
+    end
     rop = rops(bsol,name,t)
     inds = rop.nzind[reverse(sortperm(abs.(rop.nzval)))]
     if N == 0
@@ -142,6 +145,9 @@ reactions with maximum (over time) production value greater than max production*
 maximum (over time) loss value greater than maximum loss*tol are included
 """
 function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05) where {Y<:Simulation, X<:AbstractString}
+    if !(name in getfield.(bsol.domain.phase.species,:name))
+        error("Species $name not in domain")
+    end
     if length(rxnrates) == 0 || length(ts) == 0
         rxnrates = rates(bsol)
         ts = bsol.sol.t

@@ -8,12 +8,12 @@ julia:
 before_install:
   - cd ..
   # Install miniconda
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget https://repo.anaconda.com/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH=$HOME/miniconda/bin:$PATH
   #create julia conda enviornment
-  - conda create -n conda_jl --yes python conda
+  - conda create -n conda_jl --yes python=2.7 conda
   - source activate conda_jl
   #install used packages
   - conda install -c rmg --yes rmg
@@ -23,23 +23,23 @@ before_install:
   - conda update --yes conda
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'using Pkg; Pkg.clone("https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git");'
-  - julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator"); Pkg.test("ReactionMechanismSimulator"; coverage=true);'
+  - travis_wait julia -e 'using Pkg; Pkg.clone("https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git");'
+  - travis_wait julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator"); Pkg.test("ReactionMechanismSimulator"; coverage=true);'
 after_success: 
   - julia -e 'cd(Pkg.dir("ReactionMechanismSimulator")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
 branches:
   only:
     - master
-jobs:
-  include:
-    - stage: "Documentation"
-      julia: 1.0
-      os: linux
-      script:
-        - julia --project=docs/ -e 'using Pkg; Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
-        - julia -e 'using Pkg; Pkg.add("Documenter"); Pkg.build("Documenter");'
-        - julia -e 'using Pkg; Pkg.clone("https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git");'
-        - julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator");'
-        - cd ReactionMechanismSimulator.jl
-        - julia --project=docs/ docs/make.jl
-      after_success: skip
+# jobs:
+#   include:
+#     - stage: "Documentation"
+#       julia: 1.0
+#       os: linux
+#       script:
+#         - julia --project=docs/ -e 'using Pkg; Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
+#         - julia -e 'using Pkg; Pkg.add("Documenter"); Pkg.build("Documenter");'
+#         - julia -e 'using Pkg; Pkg.clone("https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git");'
+#         - julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator");'
+#         - cd ReactionMechanismSimulator.jl
+#         - travis_wait julia --project=docs/ docs/make.jl
+#       after_success: skip
