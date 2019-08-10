@@ -41,5 +41,5 @@ jobs:
         - julia -e 'using Pkg; Pkg.clone("https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git");'
         - julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator");'
         - cd ReactionMechanismSimulator.jl
-        - julia --project=docs/ docs/make.jl
+        - travis_wait julia --project=docs/ docs/make.jl
       after_success: skip
