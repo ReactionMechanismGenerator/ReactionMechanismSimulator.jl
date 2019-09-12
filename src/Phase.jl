@@ -72,13 +72,32 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
 end
 export IdealDiluteSolution
 
-@with_kw struct HomogeneousCatalyst{Q<:AbstractReaction} <: AbstractPhase
+@with_kw struct IdealSurface{W<:Tuple,W2} <: IdealPhase
     name::String = ""
     species::Array{Species,1}
-    reactions::Array{Q,1}
+    reactions::Array{ElementaryReaction,1}
+    sitedensity::Float64
+    stoichmatrix::W2
+    Nrp::Array{Float64,1}
+    veckinetics::W
+    veckineticsinds::Array{Int64,1}
+    vecthermo::NASAvec
+    otherreactions::Array{ElementaryReaction,1}
     spcdict::Dict{String,Int64}
+    diffusionlimited::Bool = false
 end
-export HomogeneousCatalyst
+function IdealSurface(species,reactions,sitedensity; name="",diffusionlimited=false)
+    @assert diffusionlimited==false "diffusionlimited=true not supported for IdealSurface"
+    vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
+    rxns = vcat(reactions[vecinds],reactions[otherrxninds])
+    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
+        productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+    therm = getvecthermo(species)
+    M,Nrp = getstoichmatrix(species,rxns)
+    return IdealSurface(species=species,reactions=rxns,sitedensity=sitedensity,name=name,
+        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple,veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,diffusionlimited=diffusionlimited)
+end
+export IdealSurface
 
 """
 construct the stochiometric matrix for the reactions and the reaction molecule # change
