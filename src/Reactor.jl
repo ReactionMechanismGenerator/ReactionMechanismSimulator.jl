@@ -11,7 +11,7 @@ struct Reactor{D<:AbstractDomain} <: AbstractReactor
 end
 
 function Reactor(domain::T,y0::Array{W,1},tspan::Tuple) where {T<:AbstractDomain,W<:Real}
-    dydt(y::Array{T,1},p::Nothing,t::Q) where {T<:Real,Q<:Real} = dydtreactor!(y,t,domain)
+    dydt(y::Array{T,1},p::V,t::Q) where {T<:Real,Q<:Real,V} = dydtreactor!(y,t,domain)
     ode = ODEProblem(dydt,y0,tspan)
     return Reactor(domain,ode)
 end
