@@ -44,7 +44,11 @@ function drawspc(spc::Species,path::String=".")
     if spc.inchi != ""
         mol = molecule.Molecule().fromInChI(spc.inchi)
     elseif spc.smiles != ""
-        mol = molecule.Molecule().fromSMILES(spc.smiles)
+        if occursin(r"R", spc.smiles) || occursin(r"L", spc.smiles)
+            mol = fragment.Fragment().from_SMILES_like_string(spc.smiles)
+        else
+            mol = molecule.Molecule().fromSMILES(spc.smiles)
+        end
     else
         throw(error("no smiles or inchi for molecule $name"))
     end
