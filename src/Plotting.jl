@@ -6,12 +6,12 @@ using N logarithmically spaced time points
 only plots species who have mole fractions > tol at some point
 in the simulation
 """
-function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01) where {Q<:Simulation, V<:Real, Z<:Real, Z2<:Real, Z3<:Real}
+function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01, number::Z4=10) where {Q<:Simulation, V<:Real, Z<:Real, Z2<:Real, Z3<:Real, Z4<:Int64}
     ts = exp.(range(log(t0),length=N,stop=log(tf)))
     xs = hcat(molefractions.(bsol,ts)...)
     maxes = maximum(xs,dims=2)
     spnames = []
-    for i = 1:length(maxes)
+    for i in collect(1:number)
         if (maxes[i] > tol)
             if !(split(lowercase(bsol.names[i]),"(")[1] in ["ar","he","ne","n2"])
                 plot(ts,xs[i,:])
