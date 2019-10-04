@@ -1,8 +1,8 @@
 function convertchemkin2yml(chemkinpath;spcdictpath="",output="chem.rms")
     if spcdictpath != ""
-        spcs,rxns = chemkin.loadChemkinFile(chemkinpath,dictionaryPath=spcdictpath)
+        spcs,rxns = chemkin.load_chemkin_file(chemkinpath,dictionaryPath=spcdictpath)
     else
-        spcs,rxns = chemkin.loadChemkinFile(chemkinpath)
+        spcs,rxns = chemkin.load_chemkin_file(chemkinpath)
     end
     writeyml(spcs,rxns;path=output)
 end
@@ -50,7 +50,6 @@ function obj2dict(obj,spcs;label="solvent")
             end
         end
         D["thermo"] = obj2dict(obj.thermo,spcs)
-
     elseif pybuiltin("isinstance")(obj,nasa.NASA)
         D["polys"] = [obj2dict(k,spcs) for k in obj.polynomials]
         D["type"] = "NASA"
@@ -83,17 +82,17 @@ function obj2dict(obj,spcs;label="solvent")
     elseif pybuiltin("isinstance")(obj,falloff.ThirdBody)
         D["type"] = "ThirdBody"
         D["arr"] = obj2dict(obj.arrheniusLow,spcs)
-        D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.getEffectiveColliderEfficiencies(spcs)) if val != 1])
+        D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
     elseif pybuiltin("isinstance")(obj,falloff.Lindemann)
         D["type"] = "Lindemann"
         D["arrhigh"] = obj2dict(obj.arrheniusHigh,spcs)
         D["arrlow"] = obj2dict(obj.arrheniusLow,spcs)
-        D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.getEffectiveColliderEfficiencies(spcs)) if val != 1])
+        D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
     elseif pybuiltin("isinstance")(obj,falloff.Troe)
         D["type"] = "Troe"
         D["arrhigh"] = obj2dict(obj.arrheniusHigh,spcs)
         D["arrlow"] = obj2dict(obj.arrheniusLow,spcs)
-        D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.getEffectiveColliderEfficiencies(spcs)) if val != 1])
+        D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
         D["a"] = obj.alpha
         D["T1"] = obj.T1.value_si
         if !isa(obj.T2,Nothing)
