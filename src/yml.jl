@@ -9,7 +9,7 @@ end
 
 function writeyml(spcs,rxns;path="chem.rms")
     D = getmechdict(spcs,rxns)
-    yaml.dump(D,stream=pybuiltin("file")(path,"w"))
+    yaml.dump(D,stream=pybuiltin("open")(path,"w"))
 end
 
 function getmechdict(spcs,rxns)
