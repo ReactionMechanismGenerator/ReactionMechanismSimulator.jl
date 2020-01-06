@@ -268,14 +268,18 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
 
         slope = -maximumedgepenwidth / log10(speciesratetolerance)
         minspeciesrate = Inf
+        maxspcrate = -Inf
         for index in 1:length(edges)
             reactantindex,productindex = edges[index]
             sprate = abs(speciesrates[reactantindex,productindex,t])
-            if sprate > speciesratetolerance && minspeciesrate > sprate
+            if minspeciesrate > sprate
                 minspeciesrate = sprate
             end
+            if sprate > maxspcrate
+                maxspcrate = sprate
+            end
         end
-
+        
         for index in 1:length(edges)
             reactantindex,productindex = edges[index]
             if reactantindex in nodes && productindex in nodes
@@ -296,7 +300,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
 
                 edge = graph.get_edge(reactant_string,product_string)[1]
 
-                speciesrate = speciesrates[reactantindex,productindex,t] / maxspeciesrate
+                speciesrate = speciesrates[reactantindex,productindex,t] / maxspcrate
                 if speciesrate < 0
                     edge.set_dir("back")
                     speciesrate = -speciesrate
@@ -312,7 +316,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
                 end
 
                 edge.set_penwidth(penwidth)
-                edge.set_color(getcolor(speciesrates[reactantindex,productindex,t],maxspeciesrate,minspeciesrate,colorscheme))
+                edge.set_color(getcolor(speciesrates[reactantindex,productindex,t],maxspcrate,minspeciesrate,colorscheme))
 
             end
         end
