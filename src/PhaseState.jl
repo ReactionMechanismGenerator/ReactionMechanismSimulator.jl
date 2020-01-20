@@ -71,7 +71,7 @@ Equations from Flegg 2016
         @fastmath Dinv = 1.0./diffusivity
         @fastmath Dbar = 1.0./reverse(cumsum(Dinv))
         @fastmath Dhat = diffusivity .+ Dbar
-        @fastmath @inbounds deltaN = sum(Dinv)/sum(sum([[1.0/(diffusivity[i]*diffusivity[m]) for m in 1:N-1 if i>m] for i in 2:N]))
+        @fastmath @inbounds deltaN = sum(Dinv)/sum([sum([1.0/(diffusivity[i]*diffusivity[m]) for m in 1:N-1 if i>m]) for i in 2:N])
         @views @fastmath @inbounds kf = prod(Dhat[2:end].^1.5)*4*Base.pi^(a+1)/gamma(a)*(sum(getfield.(spcs,:radius))/sqrt(deltaN))^(2*a)*Na^(N-1)
     end
     return kf
