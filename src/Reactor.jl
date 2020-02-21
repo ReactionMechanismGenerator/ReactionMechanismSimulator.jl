@@ -1,6 +1,7 @@
 using Parameters
 using DiffEqBase
 using ForwardDiff
+using DiffEqBase
 
 abstract type AbstractReactor end
 export AbstractReactor
@@ -10,9 +11,9 @@ struct Reactor{D<:AbstractDomain} <: AbstractReactor
     ode::ODEProblem
 end
 
-function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[]) where {T<:AbstractDomain,W<:Real,Z}
-    dydt(y::Array{T,1},p::V,t::Q) where {T<:Real,Q<:Real,V} = dydtreactor!(y,t,domain,interfaces)
-    ode = ODEProblem(dydt,y0,tspan)
+function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=DiffEqBase.NullParameters()) where {T<:AbstractDomain,W<:Real,Z,X}
+    dydt(y::Array{T,1},p::V,t::Q) where {T<:Real,Q<:Real,V} = dydtreactor!(y,t,domain,interfaces;p=p)
+    ode = ODEProblem(dydt,y0,tspan,p)
     return Reactor(domain,ode)
 end
 export Reactor
@@ -76,12 +77,12 @@ export getrate
 end
 export addreactionratecontributions!
 
-@inline function dydtreactor!(y::Array{U,1},t::Z,domain::Q,interfaces::B;sensitivity::Bool=true) where {B,Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
+@inline function dydtreactor!(y::Array{U,1},t::Z,domain::Q,interfaces::B;p::RV=nothing,sensitivity::Bool=true) where {RV,B,Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
     dydt = zeros(U,length(y))
     if sensitivity #if sensitivity isn't explicitly set to false set it to domain.sensitivity
         sensitivity = domain.sensitivity
     end
-    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave = calcthermo(domain,y,t)
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave = calcthermo(domain,y,t,p)
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt *= V
     if sensitivity && isa(domain,ConstantVDomain)
