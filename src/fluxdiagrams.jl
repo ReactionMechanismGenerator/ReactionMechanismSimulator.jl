@@ -42,9 +42,9 @@ function drawspc(spc::Species,path::String=".")
         end
     end
     if spc.inchi != ""
-        mol = molecule.Molecule().fromInChI(spc.inchi)
+        mol = molecule.Molecule().from_inchi(spc.inchi)
     elseif spc.smiles != ""
-        mol = molecule.Molecule().fromSMILES(spc.smiles)
+        mol = molecule.Molecule().from_smiles(spc.smiles)
     else
         throw(error("no smiles or inchi for molecule $name"))
     end
