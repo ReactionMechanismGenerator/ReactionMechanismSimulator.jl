@@ -160,6 +160,73 @@ function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1
 end
 export ConstantVDomain
 
+@with_kw struct ConstantPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+    phase::N
+    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
+    indexes::Q #assumed to be in ascending order
+    constantspeciesinds::Array{S,1}
+    P::W
+    rxnarray::Array{UInt16,2}
+    jacobian::Array{W,2}
+    sensitivity::Bool = false
+    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
+    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+end
+function ConstantPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {E,X,X2,Z<:IdealGas,Q<:AbstractInterface}
+
+    #set conditions and initialconditions
+    T = 0.0
+    P = 0.0
+    V = 0.0
+    ns = zeros(length(phase.species))
+    spnames = [x.name for x in phase.species]
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "P"
+            P = val
+        elseif key == "V"
+            V = val
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"
+            ns[ind] = val
+        end
+    end
+    @assert P != 0.0 || (T != 0.0 && V != 0.0)
+    N = sum(ns)
+    if P == 0.0
+        P = N*R*T/V
+    elseif T == 0.0
+        T = P*V/(R*N)
+    elseif V == 0.0
+        V = N*R*T/P
+    else
+        throw(error("ConstantPDomain overspecified with T,P and V"))
+    end
+    if sensitivity
+        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
+    else
+        y0 = vcat(ns,T)
+    end
+    if length(constantspecies) > 0
+        spcnames = getfield.(phase.species,:name)
+        constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    if sparse
+        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+    else
+        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+    end
+    rxnarray = getreactionindices(phase)
+    return ConstantPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    P,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+end
+export ConstantPDomain
+
 @with_kw struct ParametrizedTPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
@@ -320,6 +387,84 @@ function ParametrizedVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterfa
     Vfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ParametrizedVDomain
+
+@with_kw struct ParametrizedPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+    phase::N
+    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
+    indexes::Q #assumed to be in ascending order
+    constantspeciesinds::Array{S,1}
+    P::Function
+    rxnarray::Array{UInt16,2}
+    jacobian::Array{W,2}
+    sensitivity::Bool = false
+    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
+    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+end
+function ParametrizedPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {X,X2,E<:Real,Z<:IdealGas,Q<:AbstractInterface}
+
+    #set conditions and initialconditions
+    T = 0.0
+    P = 0.0
+    V = 0.0
+    ts = Array{Float64,1}()
+    ns = zeros(length(phase.species))
+    spnames = [x.name for x in phase.species]
+    @assert "P" in keys(initialconds)
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "P"
+            P = val
+        elseif key == "V"
+            V = val
+        elseif key == "ts"
+            ts = val
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"
+            ns[ind] = val
+        end
+    end
+    @assert isa(P,Function) || isa(P,AbstractArray)
+    if isa(P,AbstractArray)
+        q = Spline1D(ts,P;k=3,s=1e-11)
+        Pfcn = f(x::Float64) = q(x)
+    elseif isa(P,Function)
+        Pfcn = P
+    else
+        throw(error("ParametrizedPDomain must take \"P\" as a function or if an array of times for \"ts\" is supplied as an array of volumes"))
+    end
+    N = sum(ns)
+    if T == 0.0
+        T = Pfcn(0.0)*V/(R*N)
+    elseif V == 0.0
+        V = N*R*T/Pfcn(0.0)
+    else
+        ns *= (Pfcn(0.0)*V/(R*T))/sum(ns) #automatically scale down moles if volume specified
+    end
+    if sensitivity
+        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
+    else
+        y0 = vcat(ns,T)
+    end
+    if length(constantspecies) > 0
+        spcnames = getfield.(phase.species,:name)
+        constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    if sparse
+        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+    else
+        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+    end
+    rxnarray = getreactionindices(phase)
+    return ParametrizedPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+end
+export ParametrizedPDomain
+
 @with_kw struct ConstantTVDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
@@ -543,6 +688,37 @@ end
     return ns,cs,T,P,d.V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs,Cvave
 end
 
+@inline function calcthermo(d::ConstantPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    V = N*R*T/d.P
+    cs = ns./V
+    C = N/V
+    Gs = zeros(length(d.phase.species))
+    Hs = zeros(length(d.phase.species))
+    Cvave = 0.0
+    @simd for i = 1:length(d.phase.species)
+        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
+        @fastmath @inbounds Hs[i] = hdivRT*R*T
+        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
+        @fastmath @inbounds Cvave += cpdivR*ns[i]
+    end
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=d.P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return ns,cs,T,d.P,V,C,N,0.0,kfs,krevs,Hs,[],Gs,diffs,Cvave
+end
+
 @inline function calcthermo(d::ParametrizedVDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
     if t != d.t[1]
         d.t[1] = t
@@ -573,6 +749,38 @@ end
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
     return ns,cs,T,P,V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs,Cvave
+end
+
+@inline function calcthermo(d::ParametrizedPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    P = d.P(t)
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    V = N*R*T/P
+    cs = ns./V
+    C = N/V
+    Gs = zeros(length(d.phase.species))
+    Hs = zeros(length(d.phase.species))
+    Cvave = 0.0
+    @simd for i = 1:length(d.phase.species)
+        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
+        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
+        @fastmath @inbounds Hs[i] = hdivRT*R*T
+        @fastmath @inbounds Cvave += cpdivR*ns[i]
+    end
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,Hs,[],Gs,diffs,Cvave
 end
 
 @inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q) where {W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
@@ -648,22 +856,37 @@ end
 end
 export calcthermo
 
-@inline function calcdomainderivatives!(d::Q,dydt::Array{Z7,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z8) where {Q<:AbstractDomain,Z10,Z9,Z8<:Real,Z7<:Real,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+@inline function calcdomainderivatives!(d::Q,dydt::Array{Z7,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z8) where {Q<:AbstractDomain,Z11,Z10,Z9,Z8<:Real,Z7<:Real,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
 end
 
-@inline function calcdomainderivatives!(d::ConstantVDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+@inline function calcdomainderivatives!(d::ConstantVDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
     @views @fastmath @inbounds dydt[d.indexes[3]] = -dot(Us,dydt[d.indexes[1]:d.indexes[2]])/(N*Cvave) #divide by V to cancel ωV to ω
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
 end
 
-@inline function calcdomainderivatives!(d::ParametrizedVDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
-    @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Us,dydt[d.indexes[1]:d.indexes[2]])-P*Calculus.derivative(d.V,t))/(N*Cvave) #divide by V to cancel ωV to ω
+@inline function calcdomainderivatives!(d::ConstantPDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+    @fastmath Cpave = Cvave+R
+    @views @fastmath @inbounds dydt[d.indexes[3]] = -dot(Hs,dydt[d.indexes[1]:d.indexes[2]])/(N*Cpave) #divide by V to cancel ωV to ω
+    for ind in d.constantspeciesinds #make dydt zero for constant species
+        @inbounds dydt[ind] = 0.0
+    end
+end
 
+@inline function calcdomainderivatives!(d::ParametrizedVDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+    @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Us,dydt[d.indexes[1]:d.indexes[2]])-P*Calculus.derivative(d.V,t))/(N*Cvave) #divide by V to cancel ωV to ω
+    for ind in d.constantspeciesinds #make dydt zero for constant species
+        @inbounds dydt[ind] = 0.0
+    end
+end
+
+@inline function calcdomainderivatives!(d::ParametrizedPDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+    @fastmath Cpave = Cvave+R
+    @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Hs,dydt[d.indexes[1]:d.indexes[2]])+V*Calculus.derivative(d.P,t))/(N*Cpave) #divide by V to cancel ωV to ω
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
