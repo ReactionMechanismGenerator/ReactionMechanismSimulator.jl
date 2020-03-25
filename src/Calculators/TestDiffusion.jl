@@ -5,7 +5,7 @@ using Unitful
 #EmptyDiffusivity
 @testset "Test empty diffusivity function" begin
 dif = EmptyDiffusivity()
-@test_throws ErrorException dif(T=400.0)
+@test_throws MethodError dif(T=400.0)
 end;
 
 #ConstantDiffusivity
