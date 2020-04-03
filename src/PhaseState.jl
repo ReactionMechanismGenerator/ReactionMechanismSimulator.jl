@@ -40,6 +40,7 @@ function makespcsvector(phase,spcdict)
             y0[ind] = val
         end
     end
+    return y0
 end
 
 export makespcsvector
