@@ -216,3 +216,45 @@ function rates(bsol::Q;ts::X=Array{Float64,1}()) where {Q<:Simulation,X<:Abstrac
 end
 
 export rates
+
+"""
+calculate the forward rates of all reactions at time t
+"""
+function forwardrates(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
+    cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
+    return [getforwardrate(rxn,cs,kfs,krevs) for rxn in bsol.domain.phase.reactions]
+end
+
+"""
+calculate the forward rates of all reactions at given times ts
+defaults to using bsol.sol.t if ts is not supplied
+"""
+function forwardrates(bsol::Q;ts::X=Array{Float64,1}()) where {Q<:Simulation,X<:AbstractArray}
+    if length(ts) == 0
+        ts = bsol.sol.t
+    end
+    return hcat([forwardrates(bsol,t) for t in ts]...)
+end
+
+export forwardrates
+
+"""
+calculate the reverse rates of all reactions at time t
+"""
+function reverserates(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
+    cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
+    return [getreverserate(rxn,cs,kfs,krevs) for rxn in bsol.domain.phase.reactions]
+end
+
+"""
+calculate the reverse rates of all reactions at given times ts
+defaults to using bsol.sol.t if ts is not supplied
+"""
+function reverserates(bsol::Q;ts::X=Array{Float64,1}()) where {Q<:Simulation,X<:AbstractArray}
+    if length(ts) == 0
+        ts = bsol.sol.t
+    end
+    return hcat([reverserates(bsol,t) for t in ts]...)
+end
+
+export reverserates
