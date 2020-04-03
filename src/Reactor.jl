@@ -41,6 +41,34 @@ export Reactor
 end
 export getrate
 
+@inline function getforwardrate(rxn::T,cs::Array{W,1},kfs::Array{Q,1},krevs::Array{Q,1}) where {T<:AbstractReaction,Q,W<:Real}
+    Nreact = length(rxn.reactantinds)
+    R = 0.0
+    if Nreact == 1
+        @fastmath @inbounds R += kfs[rxn.index]*cs[rxn.reactantinds[1]]
+    elseif Nreact == 2
+        @fastmath @inbounds R += kfs[rxn.index]*cs[rxn.reactantinds[1]]*cs[rxn.reactantinds[2]]
+    elseif Nreact == 3
+        @fastmath @inbounds R += kfs[rxn.index]*cs[rxn.reactantinds[1]]*cs[rxn.reactantinds[2]]*cs[rxn.reactantinds[3]]
+    end
+    return R
+end
+export getforwardrate
+
+@inline function getreverserate(rxn::T,cs::Array{W,1},kfs::Array{Q,1},krevs::Array{Q,1}) where {T<:AbstractReaction,Q,W<:Real}
+    Nprod = length(rxn.productinds)
+    R = 0.0
+    if Nprod == 1
+        @fastmath @inbounds R -= krevs[rxn.index]*cs[rxn.productinds[1]]
+    elseif Nprod == 2
+        @fastmath @inbounds R -= krevs[rxn.index]*cs[rxn.productinds[1]]*cs[rxn.productinds[2]]
+    elseif Nprod == 3
+        @fastmath @inbounds R -= krevs[rxn.index]*cs[rxn.productinds[1]]*cs[rxn.productinds[2]]*cs[rxn.productinds[3]]
+    end
+    return R
+end
+export getreverserate
+
 @inline function addreactionratecontributions!(dydt::Array{Q,1},rarray::Array{UInt16,2},cs::Array{W,1},kfs::Array{Z,1},krevs::Array{Z,1}) where {Q<:Real,Z<:Real,T<:Integer,W<:Real}
     @inbounds @simd for i = 1:size(rarray)[2]
         if @inbounds rarray[2,i] == 0
