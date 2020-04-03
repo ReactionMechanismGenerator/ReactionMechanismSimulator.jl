@@ -19,25 +19,28 @@ export EmptyInterface
 end
 export IdealGasCatalystInterface
 
-struct Inlet{Q<:Real,V<:AbstractArray,U<:Real,X<:Real} <: AbstractBoundaryInterface
-    F::V
+struct Inlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real} <: AbstractBoundaryInterface
+    domain::S
+    y::V
+    F::Function
     T::U
     P::X
-    dUdt::Q
+    H::Q
 end
 
-function Inlet(phase::V,conddict::Dict{String,X},F::B) where {V<:AbstractPhase,X<:Real,B<:Real}
-    y = makespcsvector(phase,conddict)
+function Inlet(domain::V,conddict::Dict{String,X},F::Function) where {V,X<:Real,B<:Real}
+    y = makespcsvector(domain.phase,conddict)
     T = conddict["T"]
     P = conddict["P"]
-    Fout = F.*y./sum(y)
-    dUdt = dot(getEnthalpy.(getfield.(ph.species,:thermo),T),Fout)
-    return Inlet(Fout,T,P,dUdt)
+    yout = y./sum(y)
+    H = dot(getEnthalpy.(getfield.(domain.phase.species,:thermo),T),yout)
+    return Inlet(domain,yout,F,T,P,H)
 end
 
 export Inlet
 
-struct Outlet{V<:Real} <: AbstractBoundaryInterface
-    F::V
+struct Outlet{V} <: AbstractBoundaryInterface
+    domain::V
+    F::Function
 end
 export Outlet
