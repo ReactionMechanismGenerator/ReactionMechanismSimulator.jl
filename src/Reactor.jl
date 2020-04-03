@@ -10,8 +10,8 @@ struct Reactor{D<:AbstractDomain} <: AbstractReactor
     ode::ODEProblem
 end
 
-function Reactor(domain::T,y0::Array{W,1},tspan::Tuple) where {T<:AbstractDomain,W<:Real}
-    dydt(y::Array{T,1},p::V,t::Q) where {T<:Real,Q<:Real,V} = dydtreactor!(y,t,domain)
+function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[]) where {T<:AbstractDomain,W<:Real,Z}
+    dydt(y::Array{T,1},p::V,t::Q) where {T<:Real,Q<:Real,V} = dydtreactor!(y,t,domain,interfaces)
     ode = ODEProblem(dydt,y0,tspan)
     return Reactor(domain,ode)
 end
@@ -76,7 +76,7 @@ export getrate
 end
 export addreactionratecontributions!
 
-@inline function dydtreactor!(y::Array{U,1},t::Z,domain::Q;sensitivity::Bool=true) where {Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
+@inline function dydtreactor!(y::Array{U,1},t::Z,domain::Q,interfaces::B;sensitivity::Bool=true) where {B,Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
     dydt = zeros(U,length(y))
     if sensitivity #if sensitivity isn't explicitly set to false set it to domain.sensitivity
         sensitivity = domain.sensitivity
@@ -89,7 +89,7 @@ export addreactionratecontributions!
     else
         wV = Array{U,1}()
     end
-    calcdomainderivatives!(domain,dydt;t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
+    calcdomainderivatives!(domain,dydt,interfaces;t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
     if sensitivity
         Nspcs = length(cs)
         Nrxns = length(domain.phase.reactions)

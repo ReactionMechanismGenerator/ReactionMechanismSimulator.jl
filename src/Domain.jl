@@ -15,7 +15,6 @@ export AbstractVariableKDomain
 
 @with_kw struct ConstantTPDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
-    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     T::W
@@ -32,7 +31,7 @@ export AbstractVariableKDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,X2},constantspecies::Array{X3,1}=Array{String,1}(),
+function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::Array{X3,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,E2<:AbstractPhase,Q<:AbstractInterface,W<:Real,X,X2,X3}
     #set conditions and initialconditions
     T = 0.0
@@ -88,14 +87,13 @@ function ConstantTPDomain(;phase::E2,interfaces::Array{Q,1}=Array{EmptyInterface
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     rxnarray = getreactionindices(phase)
-    return ConstantTPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+    return ConstantTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
         T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantTPDomain
 
 @with_kw struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
-    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     V::W
@@ -105,7 +103,7 @@ export ConstantTPDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
+function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {E,X,X2,Z<:IdealGas,Q<:AbstractInterface}
 
     #set conditions and initialconditions
@@ -155,14 +153,13 @@ function ConstantVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1
         jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
     end
     rxnarray = getreactionindices(phase)
-    return ConstantVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    return ConstantVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
     V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantVDomain
 
 @with_kw struct ConstantPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
-    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     P::W
@@ -172,7 +169,7 @@ export ConstantVDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ConstantPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
+function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {E,X,X2,Z<:IdealGas,Q<:AbstractInterface}
 
     #set conditions and initialconditions
@@ -222,14 +219,13 @@ function ConstantPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1
         jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
     end
     rxnarray = getreactionindices(phase)
-    return ConstantPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    return ConstantPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
     P,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantPDomain
 
 @with_kw struct ParametrizedTPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
-    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     T::Function
@@ -240,7 +236,7 @@ export ConstantPDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ParametrizedTPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
+function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,Z<:IdealGas,Q<:AbstractInterface}
 
     #set conditions and initialconditions
@@ -306,14 +302,13 @@ function ParametrizedTPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterf
         jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedTPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+    return ParametrizedTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
     Tfcn,Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ParametrizedTPDomain
 
 @with_kw struct ParametrizedVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
-    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     V::Function
@@ -323,7 +318,7 @@ export ParametrizedTPDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ParametrizedVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
+function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,E<:Real,Z<:IdealGas,Q<:AbstractInterface}
 
     #set conditions and initialconditions
@@ -383,14 +378,13 @@ function ParametrizedVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterfa
         jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    return ParametrizedVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
     Vfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ParametrizedVDomain
 
 @with_kw struct ParametrizedPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
-    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     P::Function
@@ -400,7 +394,7 @@ export ParametrizedVDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ParametrizedPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
+function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,E<:Real,Z<:IdealGas,Q<:AbstractInterface}
 
     #set conditions and initialconditions
@@ -460,14 +454,13 @@ function ParametrizedPDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterfa
         jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedPDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    return ParametrizedPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
     Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ParametrizedPDomain
 
 @with_kw struct ConstantTVDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
-    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     T::W
@@ -484,7 +477,7 @@ export ParametrizedPDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
+function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse=false,sensitivity=false) where {E,X,X2, Z<:AbstractPhase,Q<:AbstractInterface,W<:Real}
     #set conditions and initialconditions
     T = 0.0
@@ -541,14 +534,13 @@ function ConstantTVDomain(;phase::Z,interfaces::Array{Q,1}=Array{EmptyInterface,
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     rxnarray = getreactionindices(phase)
-    return ConstantTVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+    return ConstantTVDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
         T,V,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ConstantTVDomain
 
 @with_kw struct ParametrizedTConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
-    interfaces::Array{AbstractInterface,1} = Array{AbstractInterface,1}()
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     T::Function
@@ -559,7 +551,7 @@ export ConstantTVDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
 end
-function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,interfaces::Array{Q,1}=Array{EmptyInterface,1}(),initialconds::Dict{X,X3},constantspecies::Array{X2,1}=Array{String,1}(),
+function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::Dict{X,X3},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,X3,Q<:AbstractInterface}
     #set conditions and initialconditions
     T = 0.0
@@ -616,7 +608,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,interfaces::Ar
         jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedTConstantVDomain(phase,interfaces,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+    return ParametrizedTConstantVDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
     Tfcn,V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
 end
 export ParametrizedTConstantVDomain
@@ -856,20 +848,20 @@ end
 end
 export calcthermo
 
-@inline function calcdomainderivatives!(d::Q,dydt::Array{Z7,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z8) where {Q<:AbstractDomain,Z11,Z10,Z9,Z8<:Real,Z7<:Real,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+@inline function calcdomainderivatives!(d::Q,dydt::Array{Z7,1},interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z8) where {Q<:AbstractDomain,Z12,Z11,Z10,Z9,Z8<:Real,Z7<:Real,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
 end
 
-@inline function calcdomainderivatives!(d::ConstantVDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+@inline function calcdomainderivatives!(d::ConstantVDomain{W,Y},dydt::Array{K,1},interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z12,Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
     @views @fastmath @inbounds dydt[d.indexes[3]] = -dot(Us,dydt[d.indexes[1]:d.indexes[2]])/(N*Cvave) #divide by V to cancel ωV to ω
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
 end
 
-@inline function calcdomainderivatives!(d::ConstantPDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+@inline function calcdomainderivatives!(d::ConstantPDomain{W,Y},dydt::Array{K,1},interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z12,Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
     @fastmath Cpave = Cvave+R
     @views @fastmath @inbounds dydt[d.indexes[3]] = -dot(Hs,dydt[d.indexes[1]:d.indexes[2]])/(N*Cpave) #divide by V to cancel ωV to ω
     for ind in d.constantspeciesinds #make dydt zero for constant species
@@ -877,14 +869,14 @@ end
     end
 end
 
-@inline function calcdomainderivatives!(d::ParametrizedVDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+@inline function calcdomainderivatives!(d::ParametrizedVDomain{W,Y},dydt::Array{K,1},interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real,Z12}
     @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Us,dydt[d.indexes[1]:d.indexes[2]])-P*Calculus.derivative(d.V,t))/(N*Cvave) #divide by V to cancel ωV to ω
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
 end
 
-@inline function calcdomainderivatives!(d::ParametrizedPDomain{W,Y},dydt::Array{K,1};t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real}
+@inline function calcdomainderivatives!(d::ParametrizedPDomain{W,Y},dydt::Array{K,1},interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Array{Z5,1},N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7<:Real,K<:Real,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5<:Real,Z12}
     @fastmath Cpave = Cvave+R
     @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Hs,dydt[d.indexes[1]:d.indexes[2]])+V*Calculus.derivative(d.P,t))/(N*Cpave) #divide by V to cancel ωV to ω
     for ind in d.constantspeciesinds #make dydt zero for constant species
