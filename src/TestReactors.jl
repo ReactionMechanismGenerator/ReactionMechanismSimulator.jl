@@ -1,5 +1,6 @@
 using Test
-using DifferentialEquations
+using DiffEqBase
+using Sundials
 
 @testset "Test Reactors" begin
 @testset "Test liquid phase reactor simulation" begin
@@ -13,7 +14,7 @@ initialconds = Dict(["T"=>450.0,"P"=>1e5,"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,
 domain,y0 = ConstantTVDomain(phase=liq,initialconds=initialconds,constantspecies=["oxygen"]) #Define the domain (encodes how system thermodynamic properties calculated)
 react = Reactor(domain,y0,(0.0,140000.01)) #Create the reactor object
 
-sol = solve(react.ode,DifferentialEquations.CVODE_BDF(),abstol=1e-20,reltol=1e-8); #solve the ode associated with the reactor
+sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-8); #solve the ode associated with the reactor
 
 spcnames = getfield.(liq.species,:name)
 octaneind = findfirst(isequal("octane"),spcnames)
@@ -34,7 +35,7 @@ initialconds = Dict(["T"=>1000.0,"P"=>1e5,"H2"=>0.67,"O2"=>0.33]) #Set simulatio
 domain,y0 = ConstantTPDomain(phase=ig,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
 
 react = Reactor(domain,y0,(0.0,150.11094)) #Create the reactor object
-sol = solve(react.ode,DifferentialEquations.CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
+sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
 
 spcnames = getfield.(ig.species,:name)
 h2ind = findfirst(isequal("H2"),spcnames)
@@ -54,7 +55,7 @@ initialconds = Dict(["T"=>1000.0,"P"=>10.0e5,"H2"=>0.67,"O2"=>0.33]) #Set simula
 domain,y0 = ConstantVDomain(phase=ig,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
 
 react = Reactor(domain,y0,(0.0,0.101)) #Create the reactor object
-sol = solve(react.ode,DifferentialEquations.CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
+sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
 
 ts = exp.(range(log(1e-15),length=10000,stop=log(0.1)))
 IDT = ts[argmax(diff([sol(t)[end] for t in ts]))] #Ignition Delay Time based on argmax(dTdt(t))

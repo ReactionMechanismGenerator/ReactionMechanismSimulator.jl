@@ -2,11 +2,6 @@ using Test
 using Unitful
 
 @testset "Test diffusivity" begin
-#EmptyDiffusivity
-@testset "Test empty diffusivity function" begin
-dif = EmptyDiffusivity()
-@test_throws MethodError dif(T=400.0)
-end;
 
 #ConstantDiffusivity
 @testset "Test constant diffusivity" begin
