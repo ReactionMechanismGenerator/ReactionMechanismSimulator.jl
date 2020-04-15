@@ -1,5 +1,5 @@
-using DifferentialEquations
-import DifferentialEquations.DiffEqBase: AbstractODESolution, HermiteInterpolation,AbstractDiffEqInterpolation
+using DiffEqBase
+import DiffEqBase: AbstractODESolution, HermiteInterpolation,AbstractDiffEqInterpolation
 
 abstract type AbstractSimulation end
 export AbstractSimulation

@@ -1,5 +1,5 @@
 using Parameters
-using DifferentialEquations
+using DiffEqBase
 using ForwardDiff
 
 abstract type AbstractReactor end
