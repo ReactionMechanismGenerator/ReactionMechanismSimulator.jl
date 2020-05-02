@@ -358,9 +358,10 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         end
 
         graph.set_label(label)
-        graph.write_dot(joinpath(outputdirectory,"flux_diagram_$t.dot"))
-        graph.write_png(joinpath(outputdirectory,"flux_diagram_$t.png"))
-        graph.write_svg(joinpath(outputdirectory,"flux_diagram_$t.svg"))
+        filename = "flux_diagram_$(ts[t])s_radius_$radius"
+        graph.write_dot(joinpath(outputdirectory, string(filename, ".dot")))
+        graph.write_png(joinpath(outputdirectory, string(filename, ".png")))
+        graph.write_svg(joinpath(outputdirectory, string(filename, ".svg")))
     end
     return FluxDiagram(ts,outputdirectory)
 end
