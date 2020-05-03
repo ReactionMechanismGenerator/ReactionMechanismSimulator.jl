@@ -187,3 +187,41 @@ function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1
 end
 
 export plotrops
+
+"""
+make a line graph of the production/loss for the given species
+associated with each reaction across a time domain
+reactions with maximum (over time) production value greater than max production*tol or
+maximum (over time) loss value greater than maximum loss*tol are included
+"""
+function plotloss(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05) where {Y<:Simulation, X<:AbstractString}
+    if !(name in getfield.(bsol.domain.phase.species,:name))
+        error("Species $name not in domain")
+    end
+    if length(rxnrates) == 0 || length(ts) == 0
+        rxnrates = rates(bsol)
+        ts = bsol.sol.t
+    end
+    ind = spcindex(bsol,name)
+
+    cs = [count(isequal(ind),bsol.domain.phase.reactions[i].productinds)-count(isequal(ind),bsol.domain.phase.reactions[i].reactantinds) for i in 1:length(bsol.domain.phase.reactions)]
+    @views minrates = minimum(cs.*rxnrates,dims=2)[:,1]
+    minthresh = minimum(minrates)*tol
+    minperm = sortperm(minrates)
+
+    for i in 1:length(minperm)
+        ind = minperm[i]
+        if minrates[ind] <= minthresh
+            push!(leg,getrxnstr(bsol.domain.phase.reactions[ind]))
+            plot(ts,rxnrates[ind,:]*cs[ind])
+        else
+            break
+        end
+    end
+    legend(leg,loc="upper left", bbox_to_anchor=(1,1))
+    ylabel("Flux in mol/s")
+    xlabel("Time in sec")
+end
+
+export plotrops
+
