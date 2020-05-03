@@ -208,7 +208,7 @@ function plotloss(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1
     @views minrates = minimum(cs.*rxnrates,dims=2)[:,1]
     minthresh = minimum(minrates)*tol
     minperm = sortperm(minrates)
-
+    leg = []
     for i in 1:length(minperm)
         ind = minperm[i]
         if minrates[ind] <= minthresh
