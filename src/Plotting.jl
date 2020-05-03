@@ -223,5 +223,5 @@ function plotloss(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1
     xlabel("Time in sec")
 end
 
-export plotrops
+export plotloss
 
