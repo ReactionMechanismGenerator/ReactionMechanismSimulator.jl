@@ -295,8 +295,8 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         end
 
         slope = -maximumedgepenwidth / log10(speciesratetolerance)
-        minspeciesrate = Inf
         maxspcrate = -Inf
+        minspeciesrate = Inf
         for index in 1:length(edges)
             reactantindex,productindex = edges[index]
             sprate = abs(speciesrates[reactantindex,productindex,t])
@@ -307,6 +307,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
                 maxspcrate = sprate
             end
         end
+        minspeciesrate = max(minspeciesrate,maxspcrate*speciesratetolerance)
         
         for index in 1:length(edges)
             reactantindex,productindex = edges[index]
