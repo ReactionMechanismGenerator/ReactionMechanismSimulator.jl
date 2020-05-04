@@ -69,13 +69,13 @@ all PyPlot colorscheme names are valid inputs for colorscheme
 function getfluxdiagram(bsol,t;centralspecieslist=Array{String,1}(),superimpose=false,
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
     maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
-    colorscheme="viridis")
+    colorscheme="viridis",removeunconnectednodes=true)
 
     fd = makefluxdiagrams(bsol,[t]; centralspecieslist=centralspecieslist,superimpose=superimpose,
         maximumnodecount=maximumnodecount, maximumedgecount=maximumedgecount, concentrationtol=concentrationtol,
         speciesratetolerance=speciesratetolerance,maximumnodepenwidth=maximumnodepenwidth,
         maximumedgepenwidth=maximumedgepenwidth,radius=radius,centralreactioncount=centralreactioncount,
-        outputdirectory=outputdirectory,colorscheme=colorscheme)
+        outputdirectory=outputdirectory,colorscheme=colorscheme,removeunconnectednodes=removeunconnectednodes)
 
     return getdiagram(fd,1)
 end
@@ -89,7 +89,7 @@ all PyPlot colorscheme names are valid inputs for colorscheme
 function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpose=false,
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
     maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
-    colorscheme="viridis")
+    colorscheme="viridis",removeunconnectednodes=false)
 
     specieslist = bsol.domain.phase.species
     speciesnamelist = getfield.(specieslist,:name)
@@ -202,7 +202,35 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
             end
         end
     end
-
+    
+    
+    
+    if removeunconnectednodes
+        if length(ts) > 1
+            error("cannot use removeunconnectednodes for length(ts)>1")
+        end
+        minspeciesrate = Inf
+        maxspcrate = -Inf
+        for index in 1:length(edges)
+            reactantindex,productindex = edges[index]
+            sprate = abs(speciesrates[reactantindex,productindex,1])
+            if sprate > maxspcrate
+                maxspcrate = sprate
+            end
+        end
+        connectedinds = []
+        for edge in edges
+            reactantindex,productindex = edge
+            speciesrate = speciesrates[reactantindex,productindex,1] / maxspcrate
+            for ind in edge
+                if abs(speciesrate) > speciesratetolerance && !(ind in connectedinds)
+                    push!(connectedinds,ind)
+                end
+            end
+        end
+        filter!(x->(x in connectedinds),nodes)
+    end
+    
     graph = pydot.Dot("flux_diagram",graph_type="digraph",overlap="false")
     graph.set_rankdir("LR")
     graph.set_fontname("sans")
