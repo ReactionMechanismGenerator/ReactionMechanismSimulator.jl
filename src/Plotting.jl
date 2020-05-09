@@ -6,7 +6,7 @@ using N logarithmically spaced time points
 only plots species who have mole fractions > tol at some point
 in the simulation
 """
-function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01,exclude::M=Array{String,1}()) where {Q<:Simulation, V<:Real, Z<:Real, Z2<:Real, Z3<:Real, M<:AbstractArray{String,1}}
+function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01,exclude::M=Array{String,1}(), outputdirectory="plotmolefractions") where {Q<:Simulation, V<:Real, Z<:Real, Z2<:Real, Z3<:Real, M<:AbstractArray{String,1}}
     ts = exp.(range(log(t0),length=N,stop=log(tf)))
     xs = hcat(molefractions.(bsol,ts)...)
     maxes = maximum(xs,dims=2)
@@ -20,6 +20,20 @@ function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01,e
     legend(spnames)
     xlabel("Time in sec")
     ylabel("Mole Fraction")
+
+    if !isdir(outputdirectory)
+        mkdir(outputdirectory)
+    end
+    copy_num = 0;
+    filename = "molefractions_$(t0)s_to_$(tf)s_tol_$(tol)_copy$copy_num";
+    file = string(filename, ".png")
+    while isfile(joinpath(outputdirectory, file))
+        copy_num = copy_num + 1;
+        filename = "molefractions_$(t0)s_to_$(tf)s_tol_$(tol)_copy$copy_num";
+        file = string(filename, ".png")
+    end
+    savefig(joinpath(outputdirectory, file))
+    savefig(joinpath(outputdirectory, string(filename, ".pdf")))  
 end
 
 """
@@ -27,7 +41,7 @@ Plot the mole fractions of the simulation bsol at the time points solved for
 only plots species who have mole fractions > tol at some point
 in the simulation
 """
-function plotmolefractions(bsol::Q; tol::V=0.01, exclude::M=Array{String,1}()) where {Q<:Simulation, V<:Real, M<:AbstractArray{String,1}}
+function plotmolefractions(bsol::Q; tol::V=0.01, exclude::M=Array{String,1}(), outputdirectory="plotmolefractions") where {Q<:Simulation, V<:Real, M<:AbstractArray{String,1}}
     xs = molefractions(bsol)
     maxes = maximum(xs,dims=2)
     spnames = []
@@ -40,22 +54,52 @@ function plotmolefractions(bsol::Q; tol::V=0.01, exclude::M=Array{String,1}()) w
     legend(spnames)
     xlabel("Time in sec")
     ylabel("Mole Fraction")
+
+    if !isdir(outputdirectory)
+        mkdir(outputdirectory)
+    end
+    copy_num = 0;
+    filename = "molefractions_tol_$(tol)_copy$copy_num";
+    file = string(filename, ".png")
+    while isfile(joinpath(outputdirectory, file))
+        copy_num = copy_num + 1;
+        filename = "molefractions_tol_$(tol)_copy$copy_num";
+        file = string(filename, ".png")
+    end
+    savefig(joinpath(outputdirectory, file))
+    savefig(joinpath(outputdirectory, string(filename, ".pdf")))
 end
 
 """
 Plot the molefractions of the species with names in spcnames over
 the bsol time interval
 """
-function plotmolefractions(bsol::Q,spcnames::V) where {Q<:Simulation,V<:AbstractArray}
+function plotmolefractions(bsol::Q,spcnames::V, outputdirectory="plotmolefractions") where {Q<:Simulation,V<:AbstractArray}
     for name in spcnames
         plot(bsol.sol.t,[molefractions(bsol,name,t) for t in bsol.sol.t])
     end
     legend(spcnames)
+    xlabel("Time in sec")
+    ylabel("Mole Fraction")
+
+    if !isdir(outputdirectory)
+        mkdir(outputdirectory)
+    end
+    copy_num = 0;
+    filename = "molefractions_species_copy$copy_num";
+    file = string(filename, ".png")
+    while isfile(joinpath(outputdirectory, file))
+        copy_num = copy_num + 1;
+        filename = "molefractions_species_copy$copy_num";
+        file = string(filename, ".png")
+    end
+    savefig(joinpath(outputdirectory, file))
+    savefig(joinpath(outputdirectory, string(filename, ".pdf")))
 end
 
 export plotmolefractions
 
-function plotmaxthermosensitivity(bsol, spcname; N=0, tol= 1e-2)
+function plotmaxthermosensitivity(bsol, spcname; N=0, tol= 1e-2, outputdirectory="plotmaxthermosensitivity")
     spnames = getfield.(bsol.domain.phase.species,:name)
     values = Array{Float64,1}()
     outnames = Array{String,1}()
@@ -78,10 +122,24 @@ function plotmaxthermosensitivity(bsol, spcname; N=0, tol= 1e-2)
     barh(xs,values[inds].*4184.0)
     yticks(xs,outnames[inds])
     xlabel("dLn([$spcname])/d(G_i) mol/kcal")
+
+    if !isdir(outputdirectory)
+        mkdir(outputdirectory)
+    end
+    copy_num = 0;
+    filename = "maxthermosensitivity_$(spcname)_tol_$(tol)_N_$(N)_copy$copy_num";
+    file = string(filename, ".png")
+    while isfile(joinpath(outputdirectory, file))
+        copy_num = copy_num + 1;
+        filename = "maxthermosensitivity_$(spcname)_tol_$(tol)_N_$(N)_copy$copy_num";
+        file = string(filename, ".png")
+    end
+    savefig(joinpath(outputdirectory, file))
+    savefig(joinpath(outputdirectory, string(filename, ".pdf")))
 end
 export plotmaxthermosensitivity
 
-function plotmaxratesensitivity(bsol, spcname; N=0, tol= 1e-2)
+function plotmaxratesensitivity(bsol, spcname; N=0, tol= 1e-2, outputdirectory="plotmaxratesensitivity")
     Nrxns = length(bsol.domain.phase.reactions)
     values = Array{Float64,1}()
     outinds = Array{Int64,1}()
@@ -104,6 +162,20 @@ function plotmaxratesensitivity(bsol, spcname; N=0, tol= 1e-2)
     barh(xs,values[inds])
     yticks(xs,getrxnstr.(bsol.domain.phase.reactions[outinds[inds]]))
     xlabel("dLn([$spcname])/d(Ln(k_i))")
+
+    if !isdir(outputdirectory)
+        mkdir(outputdirectory)
+    end
+    copy_num = 0;
+    filename = "maxratesensitivity_$(spcname)_tol_$(tol)_N_$(N)_copy$copy_num";
+    file = string(filename, ".png")
+    while isfile(joinpath(outputdirectory, file))
+        copy_num = copy_num + 1;
+        filename = "maxratesensitivity_$(spcname)_tol_$(tol)_N_$(N)_copy$copy_num";
+        file = string(filename, ".png")
+    end
+    savefig(joinpath(outputdirectory, file))
+    savefig(joinpath(outputdirectory, string(filename, ".pdf")))
 end
 export plotmaxratesensitivity
 
@@ -112,7 +184,7 @@ make a bar graph of the production/loss for the given species
 associated with each reaction
 N reactions are included all of which must have absolute value greater than abs(maximum prod or loss rate)*tol
 """
-function plotrops(bsol::Y,name::X,t::Z;N=0,tol=0.01) where {Y<:Simulation, X<:AbstractString, Z<:Real}
+function plotrops(bsol::Y,name::X,t::Z;N=0,tol=0.01, outputdirectory="plotrops") where {Y<:Simulation, X<:AbstractString, Z<:Real}
     if !(name in getfield.(bsol.domain.phase.species,:name))
         error("Species $name not in domain")
     end
@@ -135,6 +207,20 @@ function plotrops(bsol::Y,name::X,t::Z;N=0,tol=0.01) where {Y<:Simulation, X<:Ab
     barh(xs,reverse(rop[inds]))
     yticks(xs,reverse(getrxnstr.(bsol.domain.phase.reactions[inds])))
     xlabel("Production/Loss Rate mol/(m^3*s)")
+
+    if !isdir(outputdirectory)
+        mkdir(outputdirectory)
+    end
+    copy_num = 0;
+    filename = "rops_spc_$(name)_$(t)s_tol_$(tol)_N$(N)_copy$copy_num";
+    file = string(filename, ".png")
+    while isfile(joinpath(outputdirectory, file))
+        copy_num = copy_num + 1;
+        filename = "rops_spc_$(name)_$(t)s_tol_$(tol)_N$(N)_copy$copy_num";
+        file = string(filename, ".png")
+    end
+    savefig(joinpath(outputdirectory, file))
+    savefig(joinpath(outputdirectory, string(filename, ".pdf")))
     return
 end
 
@@ -144,7 +230,7 @@ associated with each reaction across a time domain
 reactions with maximum (over time) production value greater than max production*tol or
 maximum (over time) loss value greater than maximum loss*tol are included
 """
-function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05) where {Y<:Simulation, X<:AbstractString}
+function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05, outputdirectory="plotrops") where {Y<:Simulation, X<:AbstractString}
     if !(name in getfield.(bsol.domain.phase.species,:name))
         error("Species $name not in domain")
     end
@@ -184,6 +270,20 @@ function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1
     legend(leg,loc="upper left", bbox_to_anchor=(1,1))
     ylabel("Flux in mol/s")
     xlabel("Time in sec")
+
+    if !isdir(outputdirectory)
+        mkdir(outputdirectory)
+    end
+    copy_num = 0;
+    filename = "rops_tf_$(ts)s_tol_$(tol)_copy$copy_num";
+    file = string(filename, ".png")
+    while isfile(joinpath(outputdirectory, file))
+        copy_num = copy_num + 1;
+        filename = "rops_tf_$(ts)s_tol_$(tol)_copy$copy_num";
+        file = string(filename, ".png")
+    end
+    savefig(joinpath(outputdirectory, file))
+    savefig(joinpath(outputdirectory, string(filename, ".pdf")))
 end
 
 export plotrops
