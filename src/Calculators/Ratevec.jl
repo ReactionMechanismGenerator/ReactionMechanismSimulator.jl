@@ -96,3 +96,87 @@ export getredpress
     end
     return @fastmath 10.0.^k
 end
+
+@with_kw struct Troevec{P<:AbstractArray,Q<:AbstractArray,F<:AbstractArray,L<:AbstractArray,N<:Integer,K<:AbstractFloat,R<:AbstractRateUncertainty} <: AbstractFalloffRate
+    arrhigh::Arrheniusvec
+    arrlow::Arrheniusvec
+    a::P
+    T3::Q
+    T1::F
+    T2::L
+    efficiencies::Array{Dict{N,K},1}
+    unc::R = EmptyRateUncertainty()
+end
+
+function Troevec(troes::T) where {T<:AbstractArray}
+    
+    Ahigh = zeros(length(troes))
+    nhigh = zeros(length(troes))
+    Ehigh = zeros(length(troes))
+    Alow = zeros(length(troes))
+    nlow = zeros(length(troes))
+    Elow = zeros(length(troes))
+    a = zeros(length(troes))
+    T3 = zeros(length(troes))
+    T1 = zeros(length(troes))
+    T2 = zeros(length(troes))
+    efficiencies = [Dict{Int64,Float64}() for x in troes]
+    for (i,falloff) in enumerate(troes)
+        if isa(falloff, ThirdBody)
+            Alow[i] = falloff.arr.A
+            nlow[i] = falloff.arr.n
+            Elow[i] = falloff.arr.Ea
+            Ahigh[i] = 1e20  #very high limited by energy transfer process
+            T3[i] = Inf
+            T1[i] = Inf
+            if length(efficiencies) > 0
+                efficiencies[i] = falloff.efficiencies
+            end
+        elseif isa(falloff,Lindemann)
+            Alow[i] = falloff.arrlow.A
+            nlow[i] = falloff.arrlow.n
+            Elow[i] = falloff.arrlow.Ea
+            Ahigh[i] = falloff.arrhigh.A
+            nhigh[i] = falloff.arrhigh.n
+            Ehigh[i] = falloff.arrhigh.Ea
+            T3[i] = Inf
+            T1[i] = Inf
+            if length(efficiencies) > 0
+                efficiencies[i] = falloff.efficiencies
+            end
+        elseif isa(falloff,Troe)
+            Alow[i] = falloff.arrlow.A
+            nlow[i] = falloff.arrlow.n
+            Elow[i] = falloff.arrlow.Ea
+            Ahigh[i] = falloff.arrhigh.A
+            nhigh[i] = falloff.arrhigh.n
+            Ehigh[i] = falloff.arrhigh.Ea
+            a[i] = falloff.a
+            T3[i] = falloff.T3
+            T1[i] = falloff.T1
+            T2[i] = falloff.T2
+            if length(efficiencies) > 0
+                efficiencies[i] = falloff.efficiencies
+            end
+        else
+            val = typeof(falloff)
+            error("could not process type $val in Troevec creation")
+        end
+    end
+    return Troevec(arrhigh=Arrheniusvec(Ahigh,nhigh,Ehigh),arrlow=Arrheniusvec(Alow,nlow,Elow),
+        a=a,T3=T3,T1=T1,T2=T2,efficiencies=efficiencies)
+end
+export Troevec
+    
+@inline function (tr::Troevec)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q<:Real,R<:Real,S<:Real}
+    k0 = tr.arrlow(T=T)
+    kinf = tr.arrhigh(T=T)
+    @fastmath Pr = k0.*C./kinf
+    @fastmath log10Pr = log10.(Pr)
+    @fastmath log10Fcent = log10.((1.0.-tr.a).*exp.(-T./tr.T3).+tr.a.*exp.(-T./tr.T1).+exp.(-tr.T2./T))
+    d = 0.14
+    @fastmath n = 0.75.-1.27.*log10Fcent
+    @fastmath c = -0.4.-0.67.*log10Fcent
+    F = 10.0.^((.!isinf.(tr.T1)) .* @fastmath (log10Fcent./(1.0.+((log10Pr.+c)./(n.-d.*(log10Pr))).^2)))
+    return @fastmath ((k0.*C)./(1.0.+Pr)).*F
+end
