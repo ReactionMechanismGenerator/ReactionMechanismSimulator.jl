@@ -41,6 +41,75 @@ export IdealDiluteSolution
 end
 export HomogeneousCatalyst
 
+"""
+Split the reactions into groups with the same kinetics
+"""
+function splitreactionsbykinetics(rxns)
+    tps = []
+    rxnlists = []
+    for (i,rxn) in enumerate(rxns)
+        typ = getkineticstype(rxn.kinetics)
+        tind = findfirst(x->x==typ,tps)
+        if tind == nothing
+            push!(rxnlists,[])
+            push!(tps,typ)
+            push!(rxnlists[end],rxn)
+        else
+            push!(rxnlists[tind],rxn)
+        end
+    end
+    return (tps,rxnlists)
+end
+export splitreactionsbykinetics
+
+"""
+create vectorized kinetics calculators for the reactions
+"""
+function getveckinetics(rxns)
+    tps,rxnlists = splitreactionsbykinetics(rxns)
+    posinds = Array{Int64,1}()
+    fs = []
+    otherrxns = Array{ElementaryReaction,1}()
+    vecinds = Array{Int64,1}()
+    otherrxninds = Array{Int64,1}()
+    for (i,tp) in enumerate(tps)
+        if typeof(tp)<:Tuple
+            typ = tp[1]
+        else
+            typ = tp
+        end
+        rinds = [findfirst(isequal(rxn),rxns) for rxn in rxnlists[i]]
+        fcn = Symbol(typ * "vec")
+        if !(fcn in allowedfcnlist) || occursin("Troe",typ) #no vectorized kinetics or for the moment stuff with efficiencies
+            append!(otherrxns,rxnlists[i])
+            append!(otherrxninds,rinds)
+        else
+            append!(vecinds,rinds)
+            fcn = eval(fcn)
+            x = fcn([x.kinetics for x in rxnlists[i]])
+            push!(fs,x)
+            if posinds == Array{Int64,1}()
+                push!(posinds,length(rinds))
+            else 
+                push!(posinds,length(rinds)+posinds[end])
+            end
+        end
+    end
+    vectuple = tuple(fs...)
+    return (vectuple,vecinds,otherrxns,otherrxninds,posinds)
+end
+export getveckinetics
+
+"""
+create vectorized thermo calculator for species
+"""
+function getvecthermo(spcs)
+    thermo = [sp.thermo for sp in spcs]
+    typeassert.(thermo,NASA)
+    return NASAvec([sp.thermo for sp in spcs])
+end
+export getvecthermo
+
 length(p::T) where {T<:AbstractPhase} = 1
 export length
 
