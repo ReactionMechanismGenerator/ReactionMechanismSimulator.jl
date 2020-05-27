@@ -658,12 +658,10 @@ end
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     Cvave = 0.0
-    @simd for i = 1:length(d.phase.species)
-        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
-        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
-        @fastmath @inbounds Us[i] = (hdivRT-1.0)*R*T
-        @fastmath @inbounds Cvave += cpdivR*ns[i]
-    end
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Us = (hdivRT.-1.0)*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
@@ -688,13 +686,10 @@ end
     C = N/V
     Gs = zeros(length(d.phase.species))
     Hs = zeros(length(d.phase.species))
-    Cvave = 0.0
-    @simd for i = 1:length(d.phase.species)
-        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
-        @fastmath @inbounds Hs[i] = hdivRT*R*T
-        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
-        @fastmath @inbounds Cvave += cpdivR*ns[i]
-    end
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Hs = hdivRT.*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
@@ -720,13 +715,10 @@ end
     P = C*R*T
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
-    Cvave = 0.0
-    @simd for i = 1:length(d.phase.species)
-        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
-        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
-        @fastmath @inbounds Us[i] = (hdivRT-1.0)*R*T
-        @fastmath @inbounds Cvave += cpdivR*ns[i]
-    end
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Us = (hdivRT.-1.0)*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
@@ -752,13 +744,10 @@ end
     C = N/V
     Gs = zeros(length(d.phase.species))
     Hs = zeros(length(d.phase.species))
-    Cvave = 0.0
-    @simd for i = 1:length(d.phase.species)
-        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
-        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
-        @fastmath @inbounds Hs[i] = hdivRT*R*T
-        @fastmath @inbounds Cvave += cpdivR*ns[i]
-    end
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Hs = hdivRT.*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
@@ -784,10 +773,8 @@ end
     P = C*R*T
     Gs = zeros(length(d.phase.species))
     mu = d.phase.solvent.mu(T)
-    for i = 1:length(d.phase.species)
-        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
-        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
-    end
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
     if d.phase.diffusionlimited
         diffs = [x(T=T,mu=mu,P=P) for x in getfield.(d.phase.species,:diffusion)]
     else
@@ -813,11 +800,9 @@ end
     P = C*R*T
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
-    Cvave = 0.0
-    @simd for i = 1:length(d.phase.species)
-        @inbounds cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.species[i].thermo,T)
-        @fastmath @inbounds Gs[i] = (hdivRT-sdivR)*R*T
-    end
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
