@@ -179,4 +179,26 @@ dgdkdif = (dgdk-rmgdgdk)./rmgdgdk
 #rmg rows don't match rms rows temporarily remove until we can test numerically inside rms
 #@test all((dgdkdif .< 1e-4) .| isnan.(dgdkdif) .& (abs.(rmgdgdk) .>1e-8)) 
 #end;
+
+#Constant P adiabatic Ideal Gas
+#uses ethane.rms mechanism
+@testset "Constant pressure adiabatic reactor simulation" begin
+
+phaseDict = readinput("../src/testing/ethane.rms")
+spcs = phaseDict["phase"]["Species"]
+rxns = phaseDict["phase"]["Reactions"]
+ig = IdealGas(spcs,rxns,name="phase")
+
+initialconds = Dict(["T"=>1000.0,"P"=>2.0e5,"ethane"=>1.0,"Ar"=>1.0,"O2"=>3.5]) #Set simulation Initial Temp and Pressure
+domain,y0 = ConstantPDomain(phase=ig,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
+
+react = Reactor(domain,y0,(0.0,1.0)) #Create the reactor object
+sol = solve(react.ode,CVODE_BDF(),abstol=1e-16,reltol=1e-6); #solve the ode associated with the reactor
+
+ts = exp.(range(log(1e-15),length=10000,stop=log(0.2)))
+IDT = ts[argmax(diff([sol(t)[end] for t in ts]))] #Ignition Delay Time based on argmax(dTdt(t))
+
+@test IDT ≈ 0.07324954954380769 rtol=1e-5
+end;
+
 end;
