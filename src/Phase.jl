@@ -1,6 +1,8 @@
 using Parameters
 import Base: length
 
+using SparseArrays
+
 abstract type AbstractPhase end
 export AbstractPhase
 
@@ -40,6 +42,24 @@ export IdealDiluteSolution
     spcdict::Dict{String,Int64}
 end
 export HomogeneousCatalyst
+
+"""
+construct the stochiometric matrix for the reactions and the reaction molecule # change
+"""
+function getstoichmatrix(spcs,rxns)
+    M = spzeros(length(rxns),length(spcs))
+    Nrp = zeros(length(rxns))
+    for (i,rxn) in enumerate(rxns)
+        Nrp[i] = Float64(length(rxn.productinds) - length(rxn.reactantinds))
+        for ind in rxn.reactantinds
+            M[i,ind] += 1.0
+        end
+        for ind in rxn.productinds
+            M[i,ind] -= 1.0
+        end
+    end
+    return M,Nrp
+end
 
 """
 Split the reactions into groups with the same kinetics
