@@ -180,3 +180,36 @@ export Troevec
     F = 10.0.^((.!isinf.(tr.T1)) .* @fastmath (log10Fcent./(1.0.+((log10Pr.+c)./(n.-d.*(log10Pr))).^2)))
     return @fastmath ((k0.*C)./(1.0.+Pr)).*F
 end
+
+@with_kw struct PdepArrheniusvec{T<:Real,Q<:AbstractRateUncertainty,Z<:Arrheniusvec} <: AbstractRate
+    Ps::Array{T,1}
+    arrvecs::Array{Z,1}
+    unc::Q = EmptyRateUncertainty()
+end
+
+function PdepArrheniusvec(pdeparrs::T) where {T<:AbstractArray}
+    arrs = Array{Arrhenius,1}()
+    Ps = pdeparrs[1].Ps
+    arrs = [Array{Arrhenius,1}() for i = 1:length(Ps)]
+    for ind in 1:length(pdeparrs)
+        for i =1:length(Ps)
+            push!(arrs[i],pdeparrs[ind].arrs[i])
+        end  
+    end
+    return PdepArrheniusvec(;Ps=Ps,arrvecs=Arrheniusvec.(arrs))
+end
+export PdepArrheniusvec
+
+@inline function (parr::PdepArrheniusvec)(;T::Q=nothing,P::V=nothing,C::S=0.0) where {Q<:Real,V<:Real,S<:Real}
+    inds = getBoundingIndsSorted(P,parr.Ps)::Tuple{Int64,Int64}
+    if inds[2] == -1
+        return @inbounds parr.arrvecs[inds[1]](T=T)
+    else
+        @inbounds highk = parr.arrvecs[inds[2]](T=T)
+        @inbounds lowk = parr.arrvecs[inds[1]](T=T)
+        @inbounds Plow = parr.Ps[inds[1]]
+        @inbounds Phigh = parr.Ps[inds[2]]
+        return @inbounds @fastmath lowk.*10.0.^(log10.(P./Plow)/log10.(Phigh./Plow)*log10.(highk./lowk))
+    end
+end
+export PdepArrheniusvec
