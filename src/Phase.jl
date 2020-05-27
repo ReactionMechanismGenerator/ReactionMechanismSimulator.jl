@@ -12,27 +12,64 @@ export IdealPhase
 struct EmptyPhase <: AbstractPhase end
 export EmptyPhase
 
-@with_kw struct IdealGas{Q<:AbstractReaction} <: IdealPhase
+include("Calculators/Ratevec.jl")
+include("Calculators/Thermovec.jl")
+include("Reaction.jl")
+
+@with_kw struct IdealGas{W<:Tuple,W2} <: IdealPhase
     name::String = ""
     species::Array{Species,1}
-    reactions::Array{Q,1}
+    reactions::Array{ElementaryReaction,1}
     spcdict::Dict{String,Int64}
+    stoichmatrix::W2
+    Nrp::Array{Float64,1}
+    veckinetics::W
+    veckineticsinds::Array{Int64,1}
+    vecthermo::NASAvec
+    otherreactions::Array{ElementaryReaction,1}
     diffusionlimited::Bool = false
 end
 IdealGas(species,reactions; name="",diffusionlimited=false) = IdealGas(species=species,reactions=reactions,name=name,
 diffusionlimited=diffusionlimited,spcdict=Dict([sp.name=>sp.index for sp in species]))
+
+function IdealGas(species,reactions; name="",diffusionlimited=false)
+    vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
+    rxns = vcat(reactions[vecinds],reactions[otherrxninds])
+    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
+        productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+    therm = getvecthermo(species)
+    M,Nrp = getstoichmatrix(species,rxns)
+    return IdealGas(species=species,reactions=rxns,name=name,
+        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple, veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns,diffusionlimited=diffusionlimited,)
+end
 export IdealGas
 
-@with_kw struct IdealDiluteSolution{Q<:AbstractReaction} <: IdealPhase
+@with_kw struct IdealDiluteSolution{W<:Tuple,W2} <: IdealPhase
     name::String = ""
     species::Array{Species,1}
-    reactions::Array{Q,1}
+    reactions::Array{ElementaryReaction,1}
     solvent::Solvent
+    stoichmatrix::W2
+    Nrp::Array{Float64,1}
+    veckinetics::W
+    veckineticsinds::Array{Int64,1}
+    vecthermo::NASAvec
+    otherreactions::Array{ElementaryReaction,1}
     spcdict::Dict{String,Int64}
     diffusionlimited::Bool = true
 end
 IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited=true) = IdealDiluteSolution(species=species,reactions=reactions,
 solvent=solvent,name=name,diffusionlimited=diffusionlimited,spcdict=Dict([sp.name=>sp.index for sp in species]))
+function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited=true)
+    vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
+    rxns = vcat(reactions[vecinds],reactions[otherrxninds])
+    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
+        productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+    therm = getvecthermo(species)
+    M,Nrp = getstoichmatrix(species,rxns)
+    return IdealDiluteSolution(species=species,reactions=rxns,solvent=solvent,name=name,
+        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple,veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,diffusionlimited=diffusionlimited)
+end
 export IdealDiluteSolution
 
 @with_kw struct HomogeneousCatalyst{Q<:AbstractReaction} <: AbstractPhase
