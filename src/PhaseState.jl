@@ -53,6 +53,24 @@ export makespcsvector
 end
 export getkf
 
+@inline function getkfs(ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
+    kfs = zeros(length(ph.reactions))
+    i = 1
+    oldind = 1
+    ind = 0
+    while i <= length(ph.veckineticsinds) #vectorized kinetics
+        @inbounds ind = ph.veckineticsinds[i]
+        @inbounds kfs[oldind:ind] = ph.veckinetics[i](;T=T,P=P,C=C)
+        oldind = ind+1
+        i += 1
+    end
+    @simd for i in ind+1:length(ph.reactions)
+        @inbounds kfs[i] = getkf(ph.reactions[i],ph,T,P,C,ns,V)
+    end
+    return kfs
+end
+export getkfs
+
 """
 Calculates the diffusion limited rate coefficient
 for 1 spc returns Inf
@@ -101,6 +119,11 @@ export getDiffusiveRate
 end
 export getKc
 
+@inline function getKcs(ph::U,T::Z,Gs::Array{Q,1}) where {U<:AbstractPhase,Q,Z<:Real}
+    return @fastmath @inbounds exp.(ph.stoichmatrix*(Gs./(R*T)) .+ ph.Nrp.*log(1.0e5/(R*T)));
+end
+export getKcs
+
 """
 Calculates the forward and reverse rate coefficients for a given reaction, phase and state
 Maintains diffusion limitations if the phase has diffusionlimited=true
@@ -140,11 +163,16 @@ end
 export getkfkrev
 
 @inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5) where {U<:AbstractPhase,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
-    len = length(phase.reactions)
-    kf = zeros(typeof(N),len)
-    krev = zeros(typeof(N),len)
-    @simd for i = 1:len
-       @fastmath @inbounds kf[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V)
+    if !phase.diffusionlimited
+        kf = getkfs(phase,T,P,C,ns,V)
+        krev = @fastmath kf./getKcs(phase,T,Gs)
+    else
+        len = length(phase.reactions)
+        kf = zeros(typeof(N),len)
+        krev = zeros(typeof(N),len)
+        @simd for i = 1:len
+           @fastmath @inbounds kf[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V)
+        end
     end
     return kf,krev
 end
