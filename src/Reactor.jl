@@ -12,7 +12,7 @@ struct Reactor{D<:AbstractDomain} <: AbstractReactor
 end
 
 function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=DiffEqBase.NullParameters()) where {T<:AbstractDomain,W<:Real,Z,X}
-    dydt(y::Array{T,1},p::V,t::Q) where {T<:Real,Q<:Real,V} = dydtreactor!(y,t,domain,interfaces;p=p)
+    dydt(y::Array{T,1},p::V,t::Q) where {T<:Real,Q<:Real,V} = dydtreactor!(y,t,domain,interfaces,p=p)
     ode = ODEProblem(dydt,y0,tspan,p)
     return Reactor(domain,ode)
 end
