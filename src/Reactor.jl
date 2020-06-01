@@ -77,8 +77,12 @@ export getrate
 end
 export addreactionratecontributions!
 
-@inline function dydtreactor!(y::Array{U,1},t::Z,domain::Q,interfaces::B;p::RV=nothing,sensitivity::Bool=true) where {RV,B,Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
-    dydt = zeros(U,length(y))
+@inline function dydtreactor!(y::Array{U,1},t::Z,domain::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RV,B,Z<:Real,U<:Real,J<:Integer,Q<:AbstractDomain}
+    if RV <: AbstractArray && RV.parameters[1] != Float64
+        dydt = zeros(RV.parameters[1],length(y))
+    else
+        dydt = zeros(U,length(y))
+    end
     if sensitivity #if sensitivity isn't explicitly set to false set it to domain.sensitivity
         sensitivity = domain.sensitivity
     end
