@@ -42,7 +42,7 @@ export Reactor
 end
 export getrate
 
-@inline function addreactionratecontributions!(dydt::Array{Q,1},rarray::Array{UInt16,2},cs::Array{W,1},kfs::Array{Z,1},krevs::Array{Z,1}) where {Q<:Real,Z<:Real,T<:Integer,W<:Real}
+@inline function addreactionratecontributions!(dydt::Q,rarray::Array{UInt16,2},cs::W,kfs::Z,krevs::Y) where {Q,Z,Y,T,W}
     @inbounds @simd for i = 1:size(rarray)[2]
         if @inbounds rarray[2,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
