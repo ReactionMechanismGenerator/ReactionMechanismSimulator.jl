@@ -128,8 +128,14 @@ export getKcs
 Calculates the forward and reverse rate coefficients for a given reaction, phase and state
 Maintains diffusion limitations if the phase has diffusionlimited=true
 """
-@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5) where {U<:AbstractPhase,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
-    kf = getkf(rxn,ph,T,P,C,ns,V)
+@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5;kf::W6=-1.0,f::W7=-1.0) where {U<:AbstractPhase,W6,W7,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
+    if signbit(kf) 
+        if signbit(f)
+            kf = getkf(rxn,ph,T,P,C,ns,V)
+        else
+            kf = getkf(rxn,ph,T,P,C,ns,V)*f
+        end
+    end
     Kc = getKc(rxn,ph,T,Gs)
     @fastmath krev = kf/Kc
     if ph.diffusionlimited
@@ -158,7 +164,7 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
             end
         end
     end
-    return (kf,krev)::Tuple{W3,W3}
+    return (kf,krev)
 end
 export getkfkrev
 
