@@ -3,6 +3,8 @@ using LinearAlgebra
 using StaticArrays
 using Calculus
 using SmoothingSplines
+using DiffEqBase
+using ForwardDiff
 
 abstract type AbstractDomain end
 export AbstractDomain
