@@ -76,7 +76,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
         mu = 0.0
     end
     if phase.diffusionlimited
-        diffs = getfield.(phase.species,:diffusion)(T=T,mu=mu,P=P)
+        diffs = getfield.(phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
     else
         diffs = Array{typeof(T),1}()
     end
@@ -148,6 +148,7 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         y0 = vcat(ns,T)
     end
+    p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
         constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
@@ -161,7 +162,7 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     end
     rxnarray = getreactionindices(phase)
     return ConstantVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+    V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
 end
 export ConstantVDomain
 
@@ -214,6 +215,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         y0 = vcat(ns,T)
     end
+    p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
         constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
@@ -227,7 +229,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     end
     rxnarray = getreactionindices(phase)
     return ConstantPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    P,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+    P,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
 end
 export ConstantPDomain
 
@@ -296,7 +298,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
     end
 
     y0[phase.species[1].index:phase.species[end].index] = ns
-
+    p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
         constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
@@ -310,7 +312,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-    Tfcn,Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+    Tfcn,Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
 end
 export ParametrizedTPDomain
 
@@ -373,6 +375,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         y0 = vcat(ns,T)
     end
+    p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
         constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
@@ -386,7 +389,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    Vfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+    Vfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
 end
 export ParametrizedVDomain
 
@@ -449,6 +452,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         y0 = vcat(ns,T)
     end
+    p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
         constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
@@ -462,7 +466,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+    Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
 end
 export ParametrizedPDomain
 
@@ -535,6 +539,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
     P = 1.0e9  #essentiallly assuming this is a liquid
     C = N/V
     kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    p = vcat(Gs,kfs)
     if sparse
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     else
@@ -542,7 +547,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
     end
     rxnarray = getreactionindices(phase)
     return ConstantTVDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-        T,V,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+        T,V,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
 end
 export ConstantTVDomain
 
@@ -603,6 +608,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
         y0 = zeros(length(phase.species))
     end
     y0[phase.species[1].index:phase.species[end].index] = ns
+    p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
         constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
@@ -616,7 +622,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedTConstantVDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-    Tfcn,V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+    Tfcn,V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
 end
 export ParametrizedTConstantVDomain
 
