@@ -85,7 +85,7 @@ end
 export getredpress
 
 @inline function (ch::Chebyshevvec)(;T::N,P::Q=0.0,C::B=0.0) where {N<:Real,B<:Real,Q<:Real}
-    k = zeros(size(ch.coefs)[1])
+    k = zeros(N,size(ch.coefs)[1])
     Tred = getredtemp(ch,T)
     Pred = getredpress(ch,P)
     klen,Tlen,Plen = size(ch.coefs)
