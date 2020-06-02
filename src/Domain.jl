@@ -880,7 +880,7 @@ end
     return ns,cs,T,P,V,C,N,0.0,kfs,krevs,[],[],Gs,diffs,0.0
 end
 
-@inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q) where {W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
+@inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2<:DiffEqBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
     if t != d.t[1]
         d.t[1] = t
         d.jacuptodate[1] = false
@@ -890,7 +890,60 @@ end
     cs = ns./d.V
     C = N/d.V
     P = 1.0e9
-    return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,[],[],[],[],0.0
+    return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./d.V
+    C = N/d.V
+    P = 1.0e9
+    @views nothermochg = d.Gs == p[1:length(d.phase.species)]
+    if nothermochg
+        return ns,cs,d.T,P,d.V,C,N,d.mu,p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)],d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
+    else
+        d.kfs = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
+        d.Gs = p[1:length(d.phase.species)]
+        d.krevs = getkfkrevs(;phase=d.phase,T=d.T,P=d.P,C=C,N=N,ns=ns,Gs=d.Gs,diffs=d.diffusivity,V=V,kfs=d.kfs)[2]
+        return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
+    end
+end
+
+@inline function calcthermo(d::ConstantTVDomain{W,Y},y::Array{W2,1},t::Q,p::Q2=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real} #autodiff y
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./d.V
+    C = N/d.V
+    P = 1.0e9
+    Gs = p[1:length(d.phase.species)]
+    kfs = convert(typeof(y),p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)])
+    krevs = convert(typeof(y),getkfkrevs(;phase=d.phase,T=d.T,P=d.P,C=C,N=N,ns=ns,Gs=Gs,diffs=d.diffusivity,V=V,kfs=d.kfs)[2])
+    return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real} #autodiff p
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./d.V
+    C = N/d.V
+    P = 1.0e9
+    Gs = p[1:length(d.phase.species)]
+    kfs = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
+    krevs = getkfkrevs(;phase=d.phase,T=d.T,P=d.P,C=C,N=N,ns=ns,Gs=Gs,diffs=d.diffusivity,V=V,kfs=d.kfs)[2]
+    return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
 end
 export calcthermo
 
