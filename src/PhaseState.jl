@@ -54,7 +54,7 @@ end
 export getkf
 
 @inline function getkfs(ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
-    kfs = zeros(length(ph.reactions))
+    kfs = zeros(Q.parameters[1],length(ph.reactions))
     i = 1
     oldind = 1
     ind = 0
