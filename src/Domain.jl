@@ -15,7 +15,7 @@ export AbstractConstantKDomain
 abstract type AbstractVariableKDomain <: AbstractDomain end
 export AbstractVariableKDomain
 
-@with_kw struct ConstantTPDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
+@with_kw mutable struct ConstantTPDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
@@ -83,6 +83,11 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
     C = P/(R*T)
     V = N*R*T/P
     kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    kfsp = deepcopy(kfs)
+    for ind in efficiencyinds
+        kfsp[ind] = 1.0
+    end
+    p = vcat(deepcopy(Gs),kfsp)
     if sparse
         jacobian=spzeros(typeof(T),length(phase.species),length(phase.species))
     else
@@ -90,7 +95,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
     end
     rxnarray = getreactionindices(phase)
     return ConstantTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-        T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0
+        T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
 end
 export ConstantTPDomain
 
