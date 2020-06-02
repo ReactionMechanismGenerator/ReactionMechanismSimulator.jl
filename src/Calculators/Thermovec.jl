@@ -73,7 +73,7 @@ end
 end
 export selectPoly
 
-@inline function calcHSCpdless(poly::NASApolynomialvec,T::Float64)
+@inline function calcHSCpdless(poly::NASApolynomialvec,T::X) where {X<:Real}
     if size(poly.coefs)[1] != 7
         Tpoly0 = T
         Tpoly1 = T*T
@@ -118,7 +118,7 @@ export selectPoly
     return (cpdivR,hdivRT,sdivR)
 end
 
-@inline function calcHSCpdless(nasavec::NASAvec,T::Float64)
+@inline function calcHSCpdless(nasavec::NASAvec,T::X) where {X<:Real}
     poly = selectPoly(nasavec,T)
     return calcHSCpdless(poly,T)
 end

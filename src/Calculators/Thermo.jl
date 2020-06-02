@@ -14,7 +14,7 @@ end
 end
 export NASApolynomial
 
-@inline function calcHSCpdless(poly::NASApolynomial,T::Float64)
+@inline function calcHSCpdless(poly::NASApolynomial,T::X) where {X<:Real}
     if length(poly.coefs) != 7
         Tpoly0 = T
         Tpoly1 = T*T
