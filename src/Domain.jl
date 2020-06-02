@@ -709,9 +709,8 @@ end
     end
     return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
 end
-end
 
-@inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+@inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
     if t != d.t[1]
         d.t[1] = t
         d.jacuptodate[1] = false
@@ -732,15 +731,75 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=d.V)
-    return ns,cs,T,P,d.V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs,Cvave
+    return ns,cs,T,P,d.V,C,N,0.0,kfs,krevs,Array{Float64,1}(),Us,Gs,diffs,Cvave
 end
 
-@inline function calcthermo(d::ConstantPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+@inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    cs = ns./d.V
+    C = N/d.V
+    P = C*R*T
+    Gs = zeros(length(d.phase.species))
+    Us = zeros(length(d.phase.species))
+    Cvave = 0.0
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @views @fastmath hdivRT .+= p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Us = (hdivRT.-1.0)*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=d.V)
+    return @views @fastmath ns,cs,T,P,d.V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Us,Gs,diffs,Cvave
+end
+
+@inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q,p::Array{W2,1}=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    cs = ns./d.V
+    C = N/d.V
+    P = C*R*T
+    Gs = zeros(length(d.phase.species))
+    Us = zeros(length(d.phase.species))
+    Cvave = 0.0
+    cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT = hdivRT1 .+ p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Us = (hdivRT.-1.0)*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=d.V)
+    return @views @fastmath ns,cs,T,P,d.V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Us,Gs,diffs,Cvave
+end
+
+@inline function calcthermo(d::ConstantPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
     if t != d.t[1]
         d.t[1] = t
         d.jacuptodate[1] = false
@@ -760,15 +819,77 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=d.P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
-    return ns,cs,T,d.P,V,C,N,0.0,kfs,krevs,Hs,[],Gs,diffs,Cvave
+    return ns,cs,T,d.P,V,C,N,0.0,kfs,krevs,Hs,Array{Float64,1}(),Gs,diffs,Cvave
 end
 
-@inline function calcthermo(d::ParametrizedVDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+@inline function calcthermo(d::ConstantPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    V = N*R*T/d.P
+    cs = ns./V
+    C = N/V
+    Gs = zeros(length(d.phase.species))
+    Hs = zeros(length(d.phase.species))
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT .+= p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Hs = hdivRT.*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=d.P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    if p != DiffEqBase.NullParameters()
+        return @views @fastmath ns,cs,T,d.P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Hs,Array{Float64,1}(),Gs,diffs,Cvave
+    else
+        return ns,cs,T,d.P,V,C,N,0.0,kfs,krevs,Hs,Array{Float64,1}(),Gs,diffs,Cvave
+    end
+end
+
+@inline function calcthermo(d::ConstantPDomain{W,Y},y::J,t::Q,p::Array{W2,1}=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    V = N*R*T/d.P
+    cs = ns./V
+    C = N/V
+    Gs = zeros(length(d.phase.species))
+    Hs = zeros(length(d.phase.species))
+    cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT = hdivRT1 .+ p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Hs = hdivRT.*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=d.P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return @views @fastmath ns,cs,T,d.P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Hs,Array{Float64,1}(),Gs,diffs,Cvave
+end
+
+@inline function calcthermo(d::ParametrizedVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
     if t != d.t[1]
         d.t[1] = t
         d.jacuptodate[1] = false
@@ -789,15 +910,75 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
-    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,[],Us,Gs,diffs,Cvave
+    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,Array{Float64,1}(),Us,Gs,diffs,Cvave
 end
 
-@inline function calcthermo(d::ParametrizedPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+@inline function calcthermo(d::ParametrizedVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    V = d.V(t)
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    cs = ns./V
+    C = N/V
+    P = C*R*T
+    Gs = zeros(length(d.phase.species))
+    Us = zeros(length(d.phase.species))
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT .+= p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Us = (hdivRT.-1.0)*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Us,Gs,diffs,Cvave
+end
+
+@inline function calcthermo(d::ParametrizedVDomain{W,Y},y::J,t::Q,p::Array{W2,1}=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    V = d.V(t)
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    cs = ns./V
+    C = N/V
+    P = C*R*T
+    Gs = zeros(length(d.phase.species))
+    Us = zeros(length(d.phase.species))
+    cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT = hdivRT1 .+ p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Us = (hdivRT.-1.0)*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Us,Gs,diffs,Cvave
+end
+
+@inline function calcthermo(d::ParametrizedPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
     if t != d.t[1]
         d.t[1] = t
         d.jacuptodate[1] = false
@@ -818,15 +999,74 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
-    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,Hs,[],Gs,diffs,Cvave
+    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,Hs,Array{Float64,1}(),Gs,diffs,Cvave
 end
 
-@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q) where {W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
+@inline function calcthermo(d::ParametrizedPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    P = d.P(t)
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    V = N*R*T/P
+    cs = ns./V
+    C = N/V
+    Gs = zeros(length(d.phase.species))
+    Hs = zeros(length(d.phase.species))
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT .+= p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Hs = hdivRT.*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Hs,Array{Float64,1}(),Gs,diffs,Cvave
+end
+@inline function calcthermo(d::ParametrizedPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    P = d.P(t)
+    ns = y[d.indexes[1]:d.indexes[2]]
+    T = y[d.indexes[3]]
+    N = sum(ns)
+    V = N*R*T/P
+    cs = ns./V
+    C = N/V
+    Gs = zeros(length(d.phase.species))
+    Hs = zeros(length(d.phase.species))
+    cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT = hdivRT1 .+ p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Hs = hdivRT.*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Hs,Array{Float64,1}(),Gs,diffs,Cvave
+end
+
+@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
     if t != d.t[1]
         d.t[1] = t
         d.jacuptodate[1] = false
@@ -843,15 +1083,67 @@ end
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
     @fastmath Gs = (hdivRT.-sdivR)*(R*T)
     if d.phase.diffusionlimited
-        diffs = [x(T=T,mu=mu,P=P) for x in getfield.(d.phase.species,:diffusion)]
+        diffs = [x(T=T,mu=mu,P=P) for x in getfield.(d.phase.species,:diffusion)]::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
-    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,[],[],Gs,diffs,0.0
+    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
 end
 
-@inline function calcthermo(d::ParametrizedTPDomain{W,Y},y::J,t::Q) where {W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    V = d.V
+    T = d.T(t)
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./V
+    C = N/V
+    P = C*R*T
+    Gs = zeros(length(d.phase.species))
+    mu = d.phase.solvent.mu(T)
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT .+= p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    if d.phase.diffusionlimited
+        diffs = [x(T=T,mu=mu,P=P) for x in getfield.(d.phase.species,:diffusion)]::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
+end
+
+@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q,p::Array{W2,1}=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    V = d.V
+    T = d.T(t)
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./V
+    C = N/V
+    P = C*R*T
+    Gs = zeros(length(d.phase.species))
+    mu = d.phase.solvent.mu(T)
+    cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT = hdivRT1 .+ p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    if d.phase.diffusionlimited
+        diffs = [x(T=T,mu=mu,P=P) for x in getfield.(d.phase.species,:diffusion)]::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
+end
+
+@inline function calcthermo(d::ParametrizedTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
     if t != d.t[1]
         d.t[1] = t
         d.jacuptodate[1] = false
@@ -873,12 +1165,74 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
-    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,[],[],Gs,diffs,0.0
+    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
+end
+
+@inline function calcthermo(d::ParametrizedTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    T = d.T(t)
+    @assert T < 10000.0
+    P = d.P(t)
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    V = N*T*R/P
+    cs = ns./V
+    C = N/V
+    P = C*R*T
+    Gs = zeros(length(d.phase.species))
+    Us = zeros(length(d.phase.species))
+    cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT .+= p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
+end
+
+@inline function calcthermo(d::ParametrizedTPDomain{W,Y},y::J,t::Q,p::Array{W2,1}=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    T = d.T(t)
+    @assert T < 10000.0
+    P = d.P(t)
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    V = N*T*R/P
+    cs = ns./V
+    C = N/V
+    P = C*R*T
+    Gs = zeros(length(d.phase.species))
+    Us = zeros(length(d.phase.species))
+    cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
+    @fastmath @views hdivRT = hdivRT1 .+ p[1:length(d.phase.species)]./(R*T)
+    @fastmath Gs = (hdivRT.-sdivR)*(R*T)
+    @fastmath Cvave = dot(cpdivR,ns)
+    @fastmath Cvave *= R/N
+    @fastmath Cvave -= R
+    if d.phase.diffusionlimited
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+    else
+        diffs = Array{Float64,1}()
+    end
+    kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
+    return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2<:DiffEqBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
