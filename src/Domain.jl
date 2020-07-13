@@ -5,6 +5,8 @@ using Calculus
 using SmoothingSplines
 using DiffEqBase
 using ForwardDiff
+using Tracker
+using ReverseDiff
 
 abstract type AbstractDomain end
 export AbstractDomain
@@ -710,7 +712,7 @@ end
     return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
 end
 
-@inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:ReverseDiff.TrackedArray,W<:IdealGas,Y<:Integer,J<:ReverseDiff.TrackedArray,Q} #Tracker
+@inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J,Q} #Tracker/reversediff
     if t != d.t[1]
         d.t[1] = t
         d.jacuptodate[1] = false
@@ -720,17 +722,10 @@ end
     V = N*d.T*R/d.P
     cs = ns./V
     C = N/V
-    fs = ones(length(d.phase.reactions))
-    fsrev = ones(length(d.phase.reactions))
-    kfs = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
     Gs = p[1:length(d.phase.species)]
+    kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V)[1]*p[length(d.phase.species)+ind] : p[length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
     krevs = getkfkrevs(;phase=d.phase,T=d.T,P=d.P,C=C,N=N,ns=ns,Gs=Gs,diffs=d.diffusivity,V=V,kfs=kfs)[2]
-    for ind in d.efficiencyinds #efficiency related rates may have changed
-        kf,krev = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V)
-        fs[ind] = kf/kfs[ind]
-        fsrev[ind] = krev/krevs[ind]
-    end
-    return ns,cs,d.T,d.P,V,C,N,d.mu,kfs.*fs,krevs.*fsrev,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
+    return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
 end
 
 @inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
