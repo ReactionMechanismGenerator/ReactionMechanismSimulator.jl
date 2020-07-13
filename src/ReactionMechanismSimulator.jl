@@ -17,7 +17,7 @@ module ReactionMechanismSimulator
     const os = PyNULL()
     function __init__()
         copy!(Chem,pyimport_conda("rdkit.Chem","rdkit","rmg"))
-        copy!(molecule,pyimport_conda("rmgpy.molecule","rmgpy","rmg"))
+        copy!(molecule,pyimport_conda("rmgpy.molecule","rmg","rmg"))
         copy!(pydot,pyimport_conda("pydot","pydot","rmg"))
         copy!(chemkin,pyimport_conda("rmgpy.chemkin","rmg","rmg"))
         copy!(species,pyimport_conda("rmgpy.species","rmg","rmg"))
