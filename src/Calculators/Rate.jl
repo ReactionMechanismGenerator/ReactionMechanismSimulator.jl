@@ -13,8 +13,8 @@ export AbstractFalloffRate
         Ea::Q
         unc::P = EmptyRateUncertainty()
 end
-@inline (arr::Arrhenius)(;T::Q,P::N=0.0,C::S=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))::Q
-@inline (arr::Arrhenius)(T::Q;P::N=0.0,C::S=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))::Q
+@inline (arr::Arrhenius)(;T::Q,P::N=0.0,C::S=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))
+@inline (arr::Arrhenius)(T::Q;P::N=0.0,C::S=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))
 export Arrhenius
 
 @with_kw struct PdepArrhenius{T<:Real,Q<:AbstractRateUncertainty,Z<:AbstractRate} <: AbstractRate
@@ -28,10 +28,10 @@ PdepArrhenius(Ps::Array{Q,1},arrs::Array{Z,1}) where {Q<:Real,Z<:AbstractRate} =
     inds = getBoundingIndsSorted(P,parr.Ps)::Tuple{Int64,Int64}
 
     if inds[2] == -1
-        return @inbounds parr.arrs[inds[1]](T=T)::Q
+        return @inbounds parr.arrs[inds[1]](T=T)
     else
-        @inbounds highk = parr.arrs[inds[2]](T=T)::Q
-        @inbounds lowk = parr.arrs[inds[1]](T=T)::Q
+        @inbounds highk = parr.arrs[inds[2]](T=T)
+        @inbounds lowk = parr.arrs[inds[1]](T=T)
         @inbounds Plow = parr.Ps[inds[1]]
         @inbounds Phigh = parr.Ps[inds[2]]
         return @inbounds @fastmath lowk*10^(log10(P/Plow)/log10(Phigh/Plow)*log10(highk/lowk))
@@ -44,10 +44,10 @@ export PdepArrhenius
     unc::Q = EmptyRateUncertainty()
 end
 
-@inline function (marr::MultiArrhenius)(;T::Q=nothing,P::R=0.0,C::S=0.0) where {Q<:Real,R<:Real,S<:Real}
+@inline function (marr::MultiArrhenius)(;T::Q,P::R=0.0,C::S=0.0) where {Q<:Real,R<:Real,S<:Real}
     out = 0.0
     for arr in marr.arrs
-        @fastmath out += arr(T)::Q
+        @fastmath out += arr(T)
     end
     return out
 end
@@ -58,10 +58,10 @@ export MultiArrhenius
     unc::Q = EmptyRateUncertainty()
 end
 
-@inline function (parr::MultiPdepArrhenius)(;T::Q=nothing,P::R=0.0,C::S=0.0) where {Q<:Real,R<:Real,S<:Real}
+@inline function (parr::MultiPdepArrhenius)(;T::Q,P::R=0.0,C::S=0.0) where {Q<:Real,R<:Real,S<:Real}
     out = 0.0
     for pdar in parr.parrs
-        @fastmath out += pdar(T=T,P=P)::Q
+        @fastmath out += pdar(T=T,P=P)
     end
     return out
 end
@@ -73,7 +73,7 @@ export MultiPdepArrhenius
     unc::Q = EmptyRateUncertainty()
 end
 
-(tbarr::ThirdBody)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q<:Real,R<:Real,S<:Real} = C*(tbarr.arr(T)::Q)
+(tbarr::ThirdBody)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q<:Real,R<:Real,S<:Real} = C*(tbarr.arr(T))
 export ThirdBody
 
 @with_kw struct Lindemann{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractFalloffRate
@@ -84,8 +84,8 @@ export ThirdBody
 end
 
 @inline function (lnd::Lindemann)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q<:Real,R<:Real,S<:Real}
-    k0 = lnd.arrlow(T=T)::Q
-    kinf = lnd.arrhigh(T=T)::Q
+    k0 = lnd.arrlow(T=T)
+    kinf = lnd.arrhigh(T=T)
     @fastmath Pr = k0*C/kinf
     return @fastmath kinf*Pr/(1.0+Pr)
 end
@@ -102,9 +102,9 @@ export Lindemann
     unc::R = EmptyRateUncertainty()
 end
 
-@inline function (tr::Troe)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q<:Real,R<:Real,S<:Real}
-    k0 = tr.arrlow(T=T)::Q
-    kinf = tr.arrhigh(T=T)::Q
+@inline function (tr::Troe)(;T::Q,P::R=0.0,C::S=nothing) where {Q<:Real,R<:Real,S<:Real}
+    k0 = tr.arrlow(T=T)
+    kinf = tr.arrhigh(T=T)
     @fastmath Pr = k0*C/kinf
 
     if tr.T1 == 0.0 && tr.T3 == 0.0
@@ -119,7 +119,7 @@ end
         @fastmath c = -0.4-0.67*log10(Fcent)
         @fastmath F = 10^(log10(Fcent)/(1+((log10(Pr)+c)/(n-d*(log10(Pr))))^2))
     end
-    return @fastmath kinf*(Pr/(1+Pr))*F::S
+    return @fastmath kinf*(Pr/(1+Pr))*F
 end
 export Troe
 
