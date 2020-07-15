@@ -97,7 +97,7 @@ Equations from Flegg 2016
 end
 export getDiffusiveRate
 
-@inline function getKc(rxn::ElementaryReaction,ph::U,T::Z,Gs::Array{Q,1}) where {U<:AbstractPhase,Q,Z<:Real}
+@inline function getKc(rxn::ElementaryReaction,ph::U,T::Z,Gs::Q) where {U<:AbstractPhase,Q,Z<:Real}
     Nreact = length(rxn.reactantinds)
     Nprod = length(rxn.productinds)
     dGrxn = 0.0
@@ -119,7 +119,7 @@ export getDiffusiveRate
 end
 export getKc
 
-@inline function getKcs(ph::U,T::Z,Gs::Array{Q,1}) where {U<:AbstractPhase,Q,Z<:Real}
+@inline function getKcs(ph::U,T::Z,Gs::Q) where {U<:AbstractPhase,Q,Z<:Real}
     return @fastmath @inbounds exp.(ph.stoichmatrix*(Gs./(R*T)) .+ ph.Nrp.*log(1.0e5/(R*T)));
 end
 export getKcs
@@ -179,7 +179,7 @@ export getkfkrev
         kfs = zeros(typeof(N),len)
         krev = zeros(typeof(N),len)
         @simd for i = 1:len
-           @fastmath @inbounds kf[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V;kf=kfs[i])
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V;kf=kfs[i])
         end
     else
         len = length(phase.reactions)
