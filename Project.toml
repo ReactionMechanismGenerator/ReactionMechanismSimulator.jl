@@ -27,6 +27,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
+julia = "^1.0.0"
 CSV = "^0.7.3"
 Calculus = "^0.5.1"
 Colors = "^0.12.3"
