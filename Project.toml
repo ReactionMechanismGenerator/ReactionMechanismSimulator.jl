@@ -1,5 +1,5 @@
 name = "ReactionMechanismSimulator"
-uuid = "311e5216-15cf-11e9-05d7-a146a2b8c9cd"
+uuid = "c2d78dd2-25c4-5b79-bebc-be6c69dd440f"
 authors = ["Matt Johnson <mjohnson541@gmail.com>"]
 version = "0.2.0"
 
