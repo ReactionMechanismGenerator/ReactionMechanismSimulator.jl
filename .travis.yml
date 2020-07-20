@@ -13,17 +13,13 @@ before_install:
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH=$HOME/miniconda/bin:$PATH
   #create julia conda enviornment
-  - conda create -n conda_jl --yes python=2.7 conda
+  - conda create -n conda_jl --yes python=3.7 conda
   - source activate conda_jl
-  #install used packages
   - conda install -c rmg --yes rmg
-  - conda install -c rmg --yes rdkit
-  - conda install --yes pydot
-  - conda install --yes yaml
   - conda update --yes conda
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - travis_wait julia -e 'using Pkg; Pkg.clone("https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl.git");'
+  - travis_wait julia -e 'using Pkg; Pkg.add(PackageSpec(path="ReactionMechanismSimulator.jl"));'
   - travis_wait julia -e 'using Pkg; Pkg.build("ReactionMechanismSimulator"); Pkg.test("ReactionMechanismSimulator"; coverage=true);'
 after_success: 
   - julia -e 'cd(Pkg.dir("ReactionMechanismSimulator")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
