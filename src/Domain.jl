@@ -1,8 +1,8 @@
 using Parameters
 using LinearAlgebra
 using StaticArrays
-using Dierckx
 using Calculus
+using SmoothingSplines
 
 abstract type AbstractDomain end
 export AbstractDomain
@@ -263,16 +263,14 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
     end
     @assert V != 0.0 || (T != 0.0 && P != 0.0)
     if isa(T,AbstractArray)
-        q = Spline1D(ts,T;k=3,s=1e-11)
-        Tfcn(x::Float64) = q(x)
+        Tfcn = getspline(ts,T)
     elseif isa(T,Function)
         Tfcn = T
     else
         throw(error("ParametrizedTPDomain must take \"T\" as a function or if an array of times for \"ts\" is supplied as an array of volumes"))
     end
     if isa(P,AbstractArray)
-        v = Spline1D(ts,P;k=3,s=1e-11)
-        Pfcn(x::Float64) = v(x)
+        Pfcn = getspline(ts,P)
     elseif isa(P,Function)
         Pfcn = P
     else
@@ -346,8 +344,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     end
     @assert isa(V,Function) || isa(V,AbstractArray)
     if isa(V,AbstractArray)
-        q = Spline1D(ts,V;k=3,s=1e-11)
-        Vfcn = f(x::Float64) = q(x)
+        Vfcn = getspline(ts,V)
     elseif isa(V,Function)
         Vfcn = V
     else
@@ -422,8 +419,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     end
     @assert isa(P,Function) || isa(P,AbstractArray)
     if isa(P,AbstractArray)
-        q = Spline1D(ts,P;k=3,s=1e-11)
-        Pfcn = f(x::Float64) = q(x)
+        Pfcn = getspline(ts,P)
     elseif isa(P,Function)
         Pfcn = P
     else
@@ -577,8 +573,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
         end
     end
     if isa(T,AbstractArray)
-        q = Spline1D(ts,T;k=3,s=1e-11)
-        Tfcn = f(x::Float64) = q(x)
+        Tfcn = getspline(ts,T)
     elseif isa(T,Function)
         Tfcn = T
     else
@@ -943,3 +938,12 @@ function getreactionindices(ig::Q) where {Q<:AbstractPhase}
     return arr
 end
 export getreactionindices
+
+"""
+fit a cubic spline to data and return a function evaluating that spline
+"""
+function getspline(xs,vals;s=1e-10)
+    smspl = fit(SmoothingSpline,xs,vals,s)
+    F(x::T) where {T} = predict(smspl,x)
+    return F
+end
