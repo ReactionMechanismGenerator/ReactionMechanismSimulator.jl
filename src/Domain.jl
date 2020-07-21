@@ -27,7 +27,7 @@ export AbstractVariableKDomain
     krevs::Array{W,1}
     efficiencyinds::Array{I,1}
     Gs::Array{W,1}
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     mu::W = 0.0
     diffusivity::Array{W,1} = Array{Float64,1}()
     jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
@@ -102,7 +102,7 @@ export ConstantTPDomain
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     V::W
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
@@ -165,7 +165,7 @@ export ConstantVDomain
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     P::W
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
@@ -229,7 +229,7 @@ export ConstantPDomain
     constantspeciesinds::Array{S,1}
     T::Function
     P::Function
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
@@ -303,7 +303,7 @@ export ParametrizedTPDomain
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     V::Function
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
@@ -375,7 +375,7 @@ export ParametrizedVDomain
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     P::Function
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
@@ -452,7 +452,7 @@ export ParametrizedPDomain
     krevs::Array{W,1}
     efficiencyinds::Array{I,1}
     Gs::Array{W,1}
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     mu::W = 0.0
     diffusivity::Array{W,1} = Array{Float64,1}()
     jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
@@ -525,7 +525,7 @@ export ConstantTVDomain
     constantspeciesinds::Array{S,1}
     T::Function
     V::W
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
@@ -1373,7 +1373,7 @@ end
 export calcdomainderivatives!
 
 function getreactionindices(ig::Q) where {Q<:AbstractPhase}
-    arr = zeros(UInt16,(6,length(ig.reactions)))
+    arr = zeros(Int64,(6,length(ig.reactions)))
     for (i,rxn) in enumerate(ig.reactions)
         arr[1:length(rxn.reactantinds),i] = rxn.reactantinds
         arr[4:length(rxn.productinds)+3,i] = rxn.productinds
