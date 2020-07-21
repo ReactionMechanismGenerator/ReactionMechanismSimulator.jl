@@ -40,11 +40,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
     #set conditions and initialconditions
     T = 0.0
     P = 0.0
-    if sensitivity
-        y0 = zeros(length(phase.species)*(1+length(phase.species)+length(phase.reactions)))
-    else
-        y0 = zeros(length(phase.species))
-    end
+    y0 = zeros(length(phase.species))
     spnames = [x.name for x in phase.species]
     for (key,val) in initialconds
         if key == "T"
@@ -145,11 +141,7 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         throw(error("ConstantVDomain overspecified with T,P and V"))
     end
-    if sensitivity
-        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
-    else
-        y0 = vcat(ns,T)
-    end
+    y0 = vcat(ns,T)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -212,11 +204,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         throw(error("ConstantPDomain overspecified with T,P and V"))
     end
-    if sensitivity
-        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
-    else
-        y0 = vcat(ns,T)
-    end
+    y0 = vcat(ns,T)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -290,13 +278,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
 
     N = sum(ns)
     V = N*R*Tfcn(0.0)/Pfcn(0.0)
-
-    if sensitivity
-        y0 = zeros(length(phase.species)*(length(phase.species)+1+length(phase.reactions)))
-    else
-        y0 = zeros(length(phase.species))
-    end
-
+    y0 = zeros(length(phase.species))
     y0[phase.species[1].index:phase.species[end].index] = ns
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
@@ -369,11 +351,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         ns *= (P*Vfcn(0.0)/(R*T))/sum(ns) #automatically scale down moles if pressure specified
     end
-    if sensitivity
-        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
-    else
-        y0 = vcat(ns,T)
-    end
+    y0 = vcat(ns,T)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -445,11 +423,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         ns *= (Pfcn(0.0)*V/(R*T))/sum(ns) #automatically scale down moles if volume specified
     end
-    if sensitivity
-        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
-    else
-        y0 = vcat(ns,T)
-    end
+    y0 = vcat(ns,T)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -492,11 +466,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
     T = 0.0
     V = 0.0
     P = 1.0e9
-    if sensitivity
-        y0 = zeros(length(phase.species)*(length(phase.species)+1+length(phase.reactions)))
-    else
-        y0 = zeros(length(phase.species))
-    end
+    y0 = zeros(length(phase.species))
     spnames = [x.name for x in phase.species]
     for (key,val) in initialconds
         if key == "T"
@@ -599,11 +569,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
     else
         throw(error("ParametrizedTConstantVDomain cannot specify P"))
     end
-    if sensitivity
-        y0 = zeros(length(phase.species)*(length(phase.species)+1+length(phase.reactions)))
-    else
-        y0 = zeros(length(phase.species))
-    end
+    y0 = zeros(length(phase.species))
     y0[phase.species[1].index:phase.species[end].index] = ns
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
