@@ -183,6 +183,21 @@ export getredpress
     end
     return @fastmath 10.0^k
 end
-
-
 export Chebyshev
+
+@inline function getkineticstype(kin::B) where {B<:AbstractRate}
+    return string(typeof(kin).name)
+end
+
+@inline function getkineticstype(kin::PdepArrhenius)
+    if occursin("AbstractRate", string(typeof(kin).parameters[3])) || occursin("MultiArrhenius", string(typeof(kin).parameters[3])) #no optimized function so don't put kinetics name first
+        return ("AbstRate",string(typeof(kin).name),trunc.(kin.Ps,digits=3))
+    else #optimized function available so put kinetics name first
+        return (string(typeof(kin).name),trunc.(kin.Ps,digits=3))
+    end
+end
+
+@inline function getkineticstype(kin::Chebyshev)
+    return (string(typeof(kin).name),kin.Tmin,kin.Tmax,kin.Pmin,kin.Pmax,size(kin.coefs)) #different opt functions, but always can do
+end
+export getkineticstype

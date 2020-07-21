@@ -10,6 +10,8 @@ module Calc
     include("Calculators/Diffusion.jl")
     include("Calculators/Rate.jl")
     include("Calculators/Viscosity.jl")
+    include("Calculators/Thermovec.jl")
+    include("Calculators/Ratevec.jl")
 end
 module Spc
     include("Calculators/ThermoUncertainty.jl")
