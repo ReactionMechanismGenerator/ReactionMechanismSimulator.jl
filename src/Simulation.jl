@@ -118,7 +118,6 @@ function rops(bsol::Y,name::X,t::Z) where {Y<:Simulation, X<:AbstractString, Z<:
 end
 export rops
 
-function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L}
 """
 Calculates sensitivities with respect to `target` at the time point at the end of the simulation
 The returned sensitivities are the normalized values
@@ -157,15 +156,16 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
 end
 export getadjointsensitivities
 
+function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain,ParametrizedTConstantVDomain},K<:Real,Q,G,L}
     @assert numerator in bsol.names
     @assert denominator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)
     inddeno = findfirst(isequal(denominator),bsol.names)
     Nvars = bsol.domain.indexes[end]-bsol.domain.indexes[1]+1
     Nrxns = length(bsol.domain.phase.reactions)
-    arr = bsol.sol(t)
-    s = arr[Nvars+Nrxns*Nvars+(inddeno-1)*Nvars+indnum]
-    val = s/arr[indnum] #constant volume
+    x,dp = extract_local_sensitivities(bsol.sol,t)
+    s = dp[inddeno][indnum]
+    val = s/bsol.sol(t)[indnum] #constant volume
     if t == 0
         return 0.0
     else
@@ -173,18 +173,19 @@ export getadjointsensitivities
     end
 end
 
-function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L}
+function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:Union{ConstantTPDomain,ParametrizedTPDomain,ConstantPDomain,ParametrizedPDomain,ParametrizedVDomain},K<:Real,Q,G,L}
     @assert numerator in bsol.names
     @assert denominator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)
     inddeno = findfirst(isequal(denominator),bsol.names)
     Nvars = bsol.domain.indexes[end]-bsol.domain.indexes[1]+1
     Nrxns = length(bsol.domain.phase.reactions)
-    arr = bsol.sol(t)
-    s = arr[Nvars+Nrxns*Nvars+(inddeno-1)*Nvars+indnum]
+    x,dp = extract_local_sensitivities(bsol.sol,t)
+    svals = dp[inddeno]
+    s = svals[indnum]
     V = getV(bsol,t)
-    c = arr[indnum]/V
-    val =  (s-c*sum(arr[Nvars+Nrxns*Nvars+(inddeno-1)*Nvars+1:Nvars+Nrxns*Nvars+inddeno*Nvars])*R*bsol.domain.T/bsol.domain.P)/(c*V) #known T and P
+    c = bsol.sol(t)[indnum]/V
+    val =  (s-c*sum(svals)*R*bsol.domain.T/bsol.domain.P)/(c*V) #known T and P
     if t == 0
         return 0.0
     else
@@ -192,19 +193,19 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     end
 end
 
-function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Z<:Integer,Q,G,L}
+function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain,ParametrizedTConstantVDomain},K<:Real,Z<:Integer,Q,G,L}
     @assert numerator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)
     inddeno = denominator
     Nvars = bsol.domain.indexes[end]-bsol.domain.indexes[1]+1
     Nrxns = length(bsol.domain.phase.reactions)
-    arr = bsol.sol(t)
-    s = arr[Nvars+(inddeno-1)*Nvars+indnum]
+    x,dp = extract_local_sensitivities(bsol.sol,t)
+    s = dp[inddeno+length(bsol.domain.phase.species)][indnum]
     T = getT(bsol,t)
     P = getP(bsol,t)
     C = getC(bsol,t)
-    k = bsol.domain.phase.reactions[inddeno].kinetics(T=T,P=P,C=C)
-    val = s*k/arr[indnum] #constant volume
+    k = bsol.domain.p[inddeno+length(bsol.domain.phase.species)]
+    val = s*k/bsol.sol(t)[indnum] #constant volume
     if t == 0
         return 0.0
     else
@@ -212,21 +213,22 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     end
 end
 
-function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:ConstantTPDomain,K<:Real,Z<:Integer,Q,G,L}
+function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::Z, t::K) where {W<:Union{ConstantTPDomain,ParametrizedTPDomain,ConstantPDomain,ParametrizedPDomain,ParametrizedVDomain},K<:Real,Z<:Integer,Q,G,L}
     @assert numerator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)
     inddeno = denominator
     Nvars = bsol.domain.indexes[end]-bsol.domain.indexes[1]+1
     Nrxns = length(bsol.domain.phase.reactions)
-    arr = bsol.sol(t)
-    s = arr[Nvars+(inddeno-1)*Nvars+indnum]
+    x,dp = extract_local_sensitivities(bsol.sol,t)
+    svals = dp[inddeno+length(bsol.domain.phase.species)]
+    s = svals[indnum]
     V = getV(bsol,t)
     T = getT(bsol,t)
     P = getP(bsol,t)
     C = getC(bsol,t)
-    c = arr[indnum]/V
-    k = bsol.domain.phase.reactions[inddeno].kinetics(T=T,P=P,C=C)
-    val = k*(s-c*sum(arr[Nvars+(inddeno-1)*Nvars+1:Nvars+inddeno*Nvars])*R*bsol.domain.T/bsol.domain.P)/(c*V) #known T and P
+    c = bsol.sol(t)[indnum]/V
+    k = bsol.domain.p[inddeno+length(bsol.domain.phase.species)]
+    val = k*(s-c*sum(svals)*R*bsol.domain.T/bsol.domain.P)/(c*V) #known T and P
     if t == 0
         return 0.0
     else
