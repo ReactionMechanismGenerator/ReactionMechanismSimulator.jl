@@ -187,3 +187,68 @@ function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1
 end
 
 export plotrops
+
+function plotthermoadjointsensitivities(bsol::Y,name::X,dps::Z;N=0,tol=0.01) where {Y<:Simulation, X<:AbstractString, Z}
+    t = bsol.sol.t[end]
+    if name in ["T","V"] || name in bsol.names
+        dpvals = dps[1:length(bsol.domain.phase.species)].*4184.0
+    else 
+        error("Name $name not in domain")
+    end
+    inds = reverse(sortperm(abs.(dpvals)))
+    if N == 0
+        N = length(inds)
+    elseif N > length(inds)
+        N = length(inds)
+    end
+    inds = inds[1:N]
+    mval = abs(dpvals[inds[1]])
+    minval = mval*tol
+    k = 1
+    while k < length(inds) && abs(dpvals[inds[k]]) >= minval
+        k += 1
+    end
+    inds = inds[1:k]
+    xs = Array{Float64,1}(1:length(inds))
+    barh(xs,reverse(dpvals[inds]))
+    yticks(xs,reverse(getfield.(bsol.domain.phase.species[inds],:name)))
+    if name in ["T","V"]
+        xlabel("d$name/dG mol/kcal")
+    else
+        xlabel("dLn(N$name)/dG mol/kcal")
+    end
+    return
+end
+export plotthermoadjointsensitivities
+
+function plotrateadjointsensitivities(bsol::Y,name::X,dps::Z;N=0,tol=0.01) where {Y<:Simulation, X<:AbstractString, Z}
+    if !(name in ["T","V"] || name in bsol.names)
+        error("Name $name not in domain")
+    end
+    dpvals = dps[length(bsol.domain.phase.species)+1:end]
+    inds = reverse(sortperm(abs.(dpvals)))
+    if N == 0
+        N = length(inds)
+    elseif N > length(inds)
+        N = length(inds)
+    end
+    inds = inds[1:N]
+    mval = abs(dpvals[inds[1]])
+    minval = mval*tol
+    k = 1
+    while k < length(inds) && abs(dpvals[inds[k]]) >= minval
+        k += 1
+    end
+    inds = inds[1:k]
+    xs = Array{Float64,1}(1:length(inds))
+    barh(xs,reverse(dpvals[inds]))
+    yticks(xs,reverse(getrxnstr.(bsol.domain.phase.reactions[inds])))
+    
+    if name in ["T","V"]
+        xlabel("d$name/dLn(kf)")
+    else
+        xlabel("dLn(N$name)/dLn(kf)")
+    end
+    return
+end
+export plotrateadjointsensitivities
