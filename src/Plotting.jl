@@ -79,7 +79,7 @@ function plotmaxthermoforwardsensitivity(bsol, spcname; N=0, tol= 1e-2)
     yticks(xs,reverse(outnames[inds]))
     xlabel("dLn([$spcname])/d(G_i) mol/kcal")
 end
-export plotmaxthermosensitivity
+export plotmaxthermoforwardsensitivity
 
 function plotmaxrateforwardsensitivity(bsol, spcname; N=0, tol= 1e-2)
     Nrxns = length(bsol.domain.phase.reactions)
@@ -105,7 +105,7 @@ function plotmaxrateforwardsensitivity(bsol, spcname; N=0, tol= 1e-2)
     yticks(xs,reverse(getrxnstr.(bsol.domain.phase.reactions[outinds[inds]])))
     xlabel("dLn([$spcname])/d(Ln(k_i))")
 end
-export plotmaxratesensitivity
+export plotmaxrateforwardsensitivity
 
 """
 make a bar graph of the production/loss for the given species
