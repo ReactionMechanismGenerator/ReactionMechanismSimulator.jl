@@ -55,7 +55,7 @@ end
 
 export plotmolefractions
 
-function plotmaxthermosensitivity(bsol, spcname; N=0, tol= 1e-2)
+function plotmaxthermoforwardsensitivity(bsol, spcname; N=0, tol= 1e-2)
     spnames = getfield.(bsol.domain.phase.species,:name)
     values = Array{Float64,1}()
     outnames = Array{String,1}()
@@ -67,7 +67,7 @@ function plotmaxthermosensitivity(bsol, spcname; N=0, tol= 1e-2)
             push!(outnames,spn)
         end
     end
-    inds = sortperm(abs.(values))
+    inds = reverse(sortperm(abs.(values)))
     if N == 0
         N = length(inds)
     elseif N > length(inds)
@@ -75,13 +75,13 @@ function plotmaxthermosensitivity(bsol, spcname; N=0, tol= 1e-2)
     end
     inds = inds[1:N]
     xs = Array{Float64,1}(1:length(inds))
-    barh(xs,values[inds].*4184.0)
-    yticks(xs,outnames[inds])
+    barh(xs,reverse(values[inds].*4184.0))
+    yticks(xs,reverse(outnames[inds]))
     xlabel("dLn([$spcname])/d(G_i) mol/kcal")
 end
 export plotmaxthermosensitivity
 
-function plotmaxratesensitivity(bsol, spcname; N=0, tol= 1e-2)
+function plotmaxrateforwardsensitivity(bsol, spcname; N=0, tol= 1e-2)
     Nrxns = length(bsol.domain.phase.reactions)
     values = Array{Float64,1}()
     outinds = Array{Int64,1}()
@@ -93,7 +93,7 @@ function plotmaxratesensitivity(bsol, spcname; N=0, tol= 1e-2)
             push!(outinds,i)
         end
     end
-    inds = sortperm(abs.(values))
+    inds = reverse(sortperm(abs.(values)))
     if N == 0
         N = length(inds)
     elseif N > length(inds)
@@ -101,8 +101,8 @@ function plotmaxratesensitivity(bsol, spcname; N=0, tol= 1e-2)
     end
     inds = inds[1:N]
     xs = Array{Float64,1}(1:length(inds))
-    barh(xs,values[inds])
-    yticks(xs,getrxnstr.(bsol.domain.phase.reactions[outinds[inds]]))
+    barh(xs,reverse(values[inds]))
+    yticks(xs,reverse(getrxnstr.(bsol.domain.phase.reactions[outinds[inds]])))
     xlabel("dLn([$spcname])/d(Ln(k_i))")
 end
 export plotmaxratesensitivity
