@@ -1,5 +1,7 @@
 using DiffEqBase
 import DiffEqBase: AbstractODESolution, HermiteInterpolation,AbstractDiffEqInterpolation
+using DiffEqSensitivity
+using ForwardDiff
 
 abstract type AbstractSimulation end
 export AbstractSimulation
@@ -117,6 +119,44 @@ end
 export rops
 
 function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::String, denominator::String, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain},K<:Real,Q,G,L}
+"""
+Calculates sensitivities with respect to `target` at the time point at the end of the simulation
+The returned sensitivities are the normalized values
+
+By default uses the InterpolatingAdjoint algorithm with vector Jacobian products calculated with ReverseDiffVJP(true)
+this assumes no changes in code branching during simulation, if that were to become no longer true, the Tracker 
+based alternative algorithm is slower, but avoids this concern. 
+"""
+function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2}
+    @assert target in bsol.names || target in ["T","V"]
+    if target in ["T","V"]
+        ind = bsol.domain.indexes[end]
+    else
+        ind = findfirst(isequal(target),bsol.names)
+    end
+    function g(y::X,p::Array{Y,1},t::Z) where {Q,V,X,Y<:Float64,Z} 
+        dy = similar(y,length(y))
+        return dydtreactor!(dy,y,t,bsol.domain,[],p=p)[ind]
+    end
+    function g(y::Array{X,1},p::Y,t::Z) where {Q,V,X<:Float64,Y,Z} 
+        dy = similar(p,length(y))
+        return dydtreactor!(dy,y,t,bsol.domain,[],p=p)[ind]
+    end
+    function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z} 
+        dy = similar(y,length(y))
+        return dydtreactor!(dy,y,t,bsol.domain,[],p=p)[ind]
+    end
+    dgdu(out, y, p, t) = ForwardDiff.gradient!(out, y -> g(y, p, t), y)
+    dgdp(out, y, p, t) = ForwardDiff.gradient!(out, p -> g(y, p, t), p)
+    du0,dpadj = adjoint_sensitivities(bsol.sol,solver,g,nothing,(dgdu,dgdp);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
+    dpadj[length(bsol.domain.phase.species)+1:end] .*= bsol.domain.p[length(bsol.domain.phase.species)+1:end]
+    if !(target in ["T","V"])
+        dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
+    end
+    return dpadj
+end
+export getadjointsensitivities
+
     @assert numerator in bsol.names
     @assert denominator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)
