@@ -54,7 +54,7 @@ end
 export getkf
 
 @inline function getkfs(ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
-    kfs = zeros(length(ph.reactions))
+    kfs = zeros(Q.parameters[1],length(ph.reactions))
     i = 1
     oldind = 1
     ind = 0
@@ -97,7 +97,7 @@ Equations from Flegg 2016
 end
 export getDiffusiveRate
 
-@inline function getKc(rxn::ElementaryReaction,ph::U,T::Z,Gs::Array{Q,1}) where {U<:AbstractPhase,Q,Z<:Real}
+@inline function getKc(rxn::ElementaryReaction,ph::U,T::Z,Gs::Q) where {U<:AbstractPhase,Q,Z<:Real}
     Nreact = length(rxn.reactantinds)
     Nprod = length(rxn.productinds)
     dGrxn = 0.0
@@ -119,7 +119,7 @@ export getDiffusiveRate
 end
 export getKc
 
-@inline function getKcs(ph::U,T::Z,Gs::Array{Q,1}) where {U<:AbstractPhase,Q,Z<:Real}
+@inline function getKcs(ph::U,T::Z,Gs::Q) where {U<:AbstractPhase,Q,Z<:Real}
     return @fastmath @inbounds exp.(ph.stoichmatrix*(Gs./(R*T)) .+ ph.Nrp.*log(1.0e5/(R*T)));
 end
 export getKcs
@@ -128,8 +128,14 @@ export getKcs
 Calculates the forward and reverse rate coefficients for a given reaction, phase and state
 Maintains diffusion limitations if the phase has diffusionlimited=true
 """
-@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5) where {U<:AbstractPhase,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
-    kf = getkf(rxn,ph,T,P,C,ns,V)
+@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5;kf::W6=-1.0,f::W7=-1.0) where {U<:AbstractPhase,W6,W7,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
+    if signbit(kf) 
+        if signbit(f)
+            kf = getkf(rxn,ph,T,P,C,ns,V)
+        else
+            kf = getkf(rxn,ph,T,P,C,ns,V)*f
+        end
+    end
     Kc = getKc(rxn,ph,T,Gs)
     @fastmath krev = kf/Kc
     if ph.diffusionlimited
@@ -158,22 +164,31 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
             end
         end
     end
-    return (kf,krev)::Tuple{W3,W3}
+    return (kf,krev)
 end
 export getkfkrev
 
-@inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5) where {U<:AbstractPhase,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
-    if !phase.diffusionlimited
-        kf = getkfs(phase,T,P,C,ns,V)
-        krev = @fastmath kf./getKcs(phase,T,Gs)
-    else
+@inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,kfs::W6=nothing) where {U<:AbstractPhase,W6,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
+    if !phase.diffusionlimited && kfs === nothing
+        kfs = getkfs(phase,T,P,C,ns,V)
+        krev = @fastmath kfs./getKcs(phase,T,Gs)
+    elseif !phase.diffusionlimited && !(kfs === nothing)
+        krev = @fastmath kfs./getKcs(phase,T,Gs)
+    elseif phase.diffusionlimited && !(kfs === nothing)
         len = length(phase.reactions)
-        kf = zeros(typeof(N),len)
+        kfs = zeros(typeof(N),len)
         krev = zeros(typeof(N),len)
         @simd for i = 1:len
-           @fastmath @inbounds kf[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V)
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V;kf=kfs[i])
+        end
+    else
+        len = length(phase.reactions)
+        kfs = zeros(typeof(N),len)
+        krev = zeros(typeof(N),len)
+        @simd for i = 1:len
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V)
         end
     end
-    return kf,krev
+    return kfs,krev
 end
 export getkfkrevs
