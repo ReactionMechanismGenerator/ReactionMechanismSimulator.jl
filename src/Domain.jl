@@ -27,24 +27,21 @@ export AbstractVariableKDomain
     krevs::Array{W,1}
     efficiencyinds::Array{I,1}
     Gs::Array{W,1}
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     mu::W = 0.0
     diffusivity::Array{W,1} = Array{Float64,1}()
     jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    p::Array{W,1}
 end
 function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::Array{X3,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,E2<:AbstractPhase,Q<:AbstractInterface,W<:Real,X,X2,X3}
     #set conditions and initialconditions
     T = 0.0
     P = 0.0
-    if sensitivity
-        y0 = zeros(length(phase.species)*(1+length(phase.species)+length(phase.reactions)))
-    else
-        y0 = zeros(length(phase.species))
-    end
+    y0 = zeros(length(phase.species))
     spnames = [x.name for x in phase.species]
     for (key,val) in initialconds
         if key == "T"
@@ -97,7 +94,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
     end
     rxnarray = getreactionindices(phase)
     return ConstantTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-        T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
+        T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantTPDomain
 
@@ -106,11 +103,12 @@ export ConstantTPDomain
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     V::W
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    p::Array{W,1}
 end
 function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {E,X,X2,Z<:IdealGas,Q<:AbstractInterface}
@@ -145,11 +143,7 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         throw(error("ConstantVDomain overspecified with T,P and V"))
     end
-    if sensitivity
-        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
-    else
-        y0 = vcat(ns,T)
-    end
+    y0 = vcat(ns,T)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -164,7 +158,7 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     end
     rxnarray = getreactionindices(phase)
     return ConstantVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
+    V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantVDomain
 
@@ -173,11 +167,12 @@ export ConstantVDomain
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     P::W
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    p::Array{W,1}
 end
 function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {E,X,X2,Z<:IdealGas,Q<:AbstractInterface}
@@ -212,11 +207,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         throw(error("ConstantPDomain overspecified with T,P and V"))
     end
-    if sensitivity
-        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
-    else
-        y0 = vcat(ns,T)
-    end
+    y0 = vcat(ns,T)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -231,7 +222,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     end
     rxnarray = getreactionindices(phase)
     return ConstantPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    P,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
+    P,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantPDomain
 
@@ -241,11 +232,12 @@ export ConstantPDomain
     constantspeciesinds::Array{S,1}
     T::Function
     P::Function
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    p::Array{W,1}
 end
 function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,Z<:IdealGas,Q<:AbstractInterface}
@@ -290,13 +282,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
 
     N = sum(ns)
     V = N*R*Tfcn(0.0)/Pfcn(0.0)
-
-    if sensitivity
-        y0 = zeros(length(phase.species)*(length(phase.species)+1+length(phase.reactions)))
-    else
-        y0 = zeros(length(phase.species))
-    end
-
+    y0 = zeros(length(phase.species))
     y0[phase.species[1].index:phase.species[end].index] = ns
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
@@ -312,7 +298,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-    Tfcn,Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
+    Tfcn,Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedTPDomain
 
@@ -321,11 +307,12 @@ export ParametrizedTPDomain
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     V::Function
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    p::Array{W,1}
 end
 function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,E<:Real,Z<:IdealGas,Q<:AbstractInterface}
@@ -369,11 +356,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         ns *= (P*Vfcn(0.0)/(R*T))/sum(ns) #automatically scale down moles if pressure specified
     end
-    if sensitivity
-        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
-    else
-        y0 = vcat(ns,T)
-    end
+    y0 = vcat(ns,T)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -388,7 +371,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    Vfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
+    Vfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedVDomain
 
@@ -397,11 +380,12 @@ export ParametrizedVDomain
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     P::Function
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    p::Array{W,1}
 end
 function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,E<:Real,Z<:IdealGas,Q<:AbstractInterface}
@@ -445,11 +429,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         ns *= (Pfcn(0.0)*V/(R*T))/sum(ns) #automatically scale down moles if volume specified
     end
-    if sensitivity
-        y0 = vcat(ns,T,zeros((length(ns)+1)*(length(ns)+length(phase.reactions))))
-    else
-        y0 = vcat(ns,T)
-    end
+    y0 = vcat(ns,T)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -464,7 +444,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
+    Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedPDomain
 
@@ -478,13 +458,14 @@ export ParametrizedPDomain
     krevs::Array{W,1}
     efficiencyinds::Array{I,1}
     Gs::Array{W,1}
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     mu::W = 0.0
     diffusivity::Array{W,1} = Array{Float64,1}()
     jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    p::Array{W,1}
 end
 function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse=false,sensitivity=false) where {E,X,X2, Z<:AbstractPhase,Q<:AbstractInterface,W<:Real}
@@ -492,11 +473,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
     T = 0.0
     V = 0.0
     P = 1.0e9
-    if sensitivity
-        y0 = zeros(length(phase.species)*(length(phase.species)+1+length(phase.reactions)))
-    else
-        y0 = zeros(length(phase.species))
-    end
+    y0 = zeros(length(phase.species))
     spnames = [x.name for x in phase.species]
     for (key,val) in initialconds
         if key == "T"
@@ -545,7 +522,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
     end
     rxnarray = getreactionindices(phase)
     return ConstantTVDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-        T,V,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
+        T,V,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantTVDomain
 
@@ -555,11 +532,12 @@ export ConstantTVDomain
     constantspeciesinds::Array{S,1}
     T::Function
     V::W
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    p::Array{W,1}
 end
 function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::Dict{X,X3},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,X3,Q<:AbstractInterface}
@@ -599,11 +577,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
     else
         throw(error("ParametrizedTConstantVDomain cannot specify P"))
     end
-    if sensitivity
-        y0 = zeros(length(phase.species)*(length(phase.species)+1+length(phase.reactions)))
-    else
-        y0 = zeros(length(phase.species))
-    end
+    y0 = zeros(length(phase.species))
     y0[phase.species[1].index:phase.species[end].index] = ns
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
@@ -619,7 +593,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedTConstantVDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-    Tfcn,V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0)), y0, p
+    Tfcn,V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedTConstantVDomain
 
@@ -1407,7 +1381,7 @@ end
 export calcdomainderivatives!
 
 function getreactionindices(ig::Q) where {Q<:AbstractPhase}
-    arr = zeros(UInt16,(6,length(ig.reactions)))
+    arr = zeros(Int64,(6,length(ig.reactions)))
     for (i,rxn) in enumerate(ig.reactions)
         arr[1:length(rxn.reactantinds),i] = rxn.reactantinds
         arr[4:length(rxn.productinds)+3,i] = rxn.productinds
