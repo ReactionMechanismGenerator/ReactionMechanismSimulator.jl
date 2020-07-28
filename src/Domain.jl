@@ -749,7 +749,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -779,7 +779,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -809,7 +809,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -837,7 +837,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=d.P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -866,7 +866,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=d.P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -899,7 +899,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=d.P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -928,7 +928,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -958,7 +958,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -988,7 +988,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1017,7 +1017,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1047,7 +1047,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1076,7 +1076,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1183,7 +1183,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1214,7 +1214,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1245,7 +1245,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
