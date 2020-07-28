@@ -749,7 +749,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -779,7 +779,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -809,7 +809,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -837,7 +837,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=d.P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -866,7 +866,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=d.P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -899,7 +899,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=d.P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=d.P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -928,7 +928,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -958,7 +958,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -988,7 +988,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1017,7 +1017,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1047,7 +1047,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1076,7 +1076,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1106,7 +1106,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
-    return ns,cs,T,P,V,C,N,0.0,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
+    return ns,cs,T,P,V,C,N,mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
 end
 
 @inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
@@ -1132,7 +1132,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
-    return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
+    return @views @fastmath ns,cs,T,P,V,C,N,mu,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
 end
 
 @inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
@@ -1158,7 +1158,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs,krevs = getkfkrevs(phase=d.phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
-    return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
+    return @views @fastmath ns,cs,T,P,V,C,N,mu,kfs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],krevs.*p[length(d.phase.species)+1:length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0
 end
 
 @inline function calcthermo(d::ParametrizedTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
@@ -1183,7 +1183,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1214,7 +1214,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
@@ -1245,7 +1245,7 @@ end
     @fastmath Cvave *= R/N
     @fastmath Cvave -= R
     if d.phase.diffusionlimited
-        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=mu,P=P)::Array{typeof(T),1}
+        diffs = getfield.(d.phase.species,:diffusion)(T=T,mu=0.0,P=P)::Array{typeof(T),1}
     else
         diffs = Array{Float64,1}()
     end
