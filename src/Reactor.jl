@@ -1,7 +1,6 @@
 using Parameters
 using DiffEqBase
 using ForwardDiff
-using DiffEqBase
 using Sundials
 abstract type AbstractReactor end
 export AbstractReactor
