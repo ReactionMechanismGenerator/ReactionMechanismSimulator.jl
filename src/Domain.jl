@@ -41,7 +41,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
     #set conditions and initialconditions
     T = 0.0
     P = 0.0
-    y0 = zeros(length(phase.species))
+    y0 = zeros(length(phase.species)+1)
     spnames = [x.name for x in phase.species]
     for (key,val) in initialconds
         if key == "T"
@@ -58,7 +58,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
 
     @assert T != 0.0
     @assert P != 0.0
-    ns = y0
+    ns = y0[1:end-1]
     N = sum(ns)
 
     if length(constantspecies) > 0
@@ -81,6 +81,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
     end
     C = P/(R*T)
     V = N*R*T/P
+    y0[end] = V
     kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
     kfsp = deepcopy(kfs)
     for ind in efficiencyinds
@@ -93,7 +94,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     rxnarray = getreactionindices(phase)
-    return ConstantTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+    return ConstantTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
         T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantTPDomain
