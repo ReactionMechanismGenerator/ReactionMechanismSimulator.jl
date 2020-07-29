@@ -283,8 +283,9 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
 
     N = sum(ns)
     V = N*R*Tfcn(0.0)/Pfcn(0.0)
-    y0 = zeros(length(phase.species))
+    y0 = zeros(length(phase.species)+1)
     y0[phase.species[1].index:phase.species[end].index] = ns
+    y0[phase.species[end].index+1] = V
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -298,7 +299,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
         jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+    return ParametrizedTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end]+1),constspcinds,
     Tfcn,Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedTPDomain
