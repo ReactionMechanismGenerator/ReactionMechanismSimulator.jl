@@ -597,6 +597,76 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
 end
 export ParametrizedTConstantVDomain
 
+@with_kw struct ConstantTADomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
+    phase::N
+    indexes::Q #assumed to be in ascending order
+    constantspeciesinds::Array{S,1}
+    T::W
+    A::W
+    kfs::Array{W,1}
+    krevs::Array{W,1}
+    efficiencyinds::Array{I,1}
+    Gs::Array{W,1}
+    rxnarray::Array{UInt16,2}
+    mu::W = 0.0
+    diffusivity::Array{W,1} = Array{Float64,1}()
+    jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
+    sensitivity::Bool = false
+    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
+    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    p::Array{W,1}
+end
+function ConstantTADomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::Array{X3,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false,stationary::Bool=false) where {E<:Real,E2<:AbstractPhase,W<:Real,X,X2,X3}
+    #set conditions and initialconditions
+    T = 0.0
+    A = 0.0
+    y0 = zeros(length(phase.species))
+    spnames = [x.name for x in phase.species]
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "A"
+            A = val
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"
+            y0[ind] = val
+        end
+    end
+
+    @assert A != 0.0
+    @assert T != 0.0
+    ns = y0
+    N = sum(ns)
+
+    if length(constantspecies) > 0
+        spcnames = getfield.(phase.species,:name)
+        constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
+    Gs = calcgibbs(phase,T)
+    if :solvent in fieldnames(typeof(phase)) && typeof(phase.solvent) != EmptySolvent
+        mu = phase.solvent.mu(T)
+    else
+        mu = 0.0
+    end
+    C = phase.sitedensity
+    kfs,krevs = getkfkrevs(phase=phase,T=T,P=0.0,C=C,N=N,ns=ns,Gs=Gs,diffs=[],V=A)
+    p = vcat(Gs,kfs)
+    if sparse
+        jacobian=spzeros(typeof(T),length(phase.species),length(phase.species))
+    else
+        jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
+    end
+    rxnarray = getreactionindices(phase)
+    return ConstantTADomain(phase,MVector(phase.species[1].index,phase.species[end].index),constspcinds,
+        T,A,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,jacobian,sensitivity,MVector(false),MVector(0.0),stationary), y0, p
+end
+export ConstantTADomain
+
 @inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W3=DiffEqBase.NullParameters()) where {W3<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q} #no parameter input
     if t != d.t[1]
         d.t[1] = t
@@ -1291,6 +1361,73 @@ end
     kfs = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
     krevs = getkfkrevs(;phase=d.phase,T=d.T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=d.diffusivity,V=d.V,kfs=kfs)[2]
     return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
+end
+export calcthermo
+
+@inline function calcthermo(d::ConstantTADomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2<:DiffEqBase.NullParameters,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./d.A
+    C = N/d.A
+    P = 0.0
+    return ns,cs,d.T,P,d.A,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTADomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2<:Array{Float64,1},W<:IdealSurface,Y<:Integer,J<:Array{Float64,1},Q<:Real}
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./d.A
+    C = N/d.A
+    P = 0.0
+    @views nothermochg = d.Gs == p[1:length(d.phase.species)]
+    if nothermochg
+        return ns,cs,d.T,P,d.A,C,N,d.mu,p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)],d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
+    else
+        d.kfs = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
+        d.Gs = p[1:length(d.phase.species)]
+        d.krevs = getkfkrevs(;phase=d.phase,T=d.T,P=P,C=C,N=N,ns=ns,Gs=d.Gs,diffs=d.diffusivity,V=d.V,kfs=d.kfs)[2]
+        return ns,cs,d.T,P,d.A,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
+    end
+end
+
+@inline function calcthermo(d::ConstantTADomain{W,Y},y::Array{W2,1},t::Q,p::Q2=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,Q2,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q<:Real} #autodiff y
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./d.A
+    C = N/d.A
+    P = 0.0
+    Gs = p[1:length(d.phase.species)]
+    kfs = convert(typeof(y),p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)])
+    krevs = convert(typeof(y),getkfkrevs(;phase=d.phase,T=d.T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=d.diffusivity,V=d.V,kfs=kfs)[2])
+    return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTADomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q<:Real} #autodiff p
+    if t != d.t[1]
+        d.t[1] = t
+        d.jacuptodate[1] = false
+    end
+    ns = y[d.indexes[1]:d.indexes[2]]
+    N = sum(ns)
+    cs = ns./d.A
+    C = N/d.A
+    P = 0.0
+    Gs = p[1:length(d.phase.species)]
+    kfs = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
+    krevs = getkfkrevs(;phase=d.phase,T=d.T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=d.diffusivity,V=d.V,kfs=kfs)[2]
+    return ns,cs,d.T,P,d.A,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
 end
 export calcthermo
 

@@ -15,7 +15,7 @@ export calcgibbs
 end
 
 
-@inline function calcenthalpyinternalgibbs(ph::IdealGas,T::W,P::Z,V::Q) where {W,Z,Q<:Real}
+@inline function calcenthalpyinternalgibbs(ph::Union{IdealGas,IdealSurface},T::W,P::Z,V::Q) where {W,Z,Q<:Real}
     Hs = getEnthalpy.(getfield.(ph.species,:thermo),T)
     Us = Hs .- R*T
     Gs = Hs .- T.*getEntropy.(getfield.(ph.species,:thermo),T)
