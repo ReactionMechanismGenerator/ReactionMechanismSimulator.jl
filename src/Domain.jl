@@ -208,7 +208,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         throw(error("ConstantPDomain overspecified with T,P and V"))
     end
-    y0 = vcat(ns,T)
+    y0 = vcat(ns,T,V)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -217,12 +217,12 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
         constspcinds = Array{Int64,1}()
     end
     if sparse
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     else
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     end
     rxnarray = getreactionindices(phase)
-    return ConstantPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    return ConstantPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2),constspcinds,
     P,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantPDomain
