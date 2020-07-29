@@ -43,7 +43,7 @@ h2ind = findfirst(isequal("H2"),spcnames)
 o2ind = findfirst(isequal("O2"),spcnames)
 h2oind = findfirst(isequal("H2O"),spcnames)
 y = sol(20.44002454)
-N = sum(y)
+N = sim.N(20.44002454)
 @test y[h2ind]/N ≈ 0.412883111 rtol=1e-4 #from RMG simulator
 @test y[o2ind]/N ≈ 0.200419093 rtol=1e-4
 @test y[h2oind]/N ≈ 0.386618602 rtol=1e-4
@@ -59,7 +59,9 @@ ind = findfirst(isequal("H2"),sim2.names)
 dpvs = [v[ind] for v in dp]
 dpvs[length(domain.phase.species)+1:end] .*= domain.p[length(domain.phase.species)+1:end]
 dpvs ./= sol2(150.11094)[ind]
-@test all((abs.((dpvs .- dps')./dpvs) .> 1e-2).==false)
+rerr = (dpvs .- dps')./dpvs
+rerr = [isinf(x) ? 0.0 : x for x in rerr]
+@test all((abs.(rerr) .> 1e-2).==false)
 end;
 
 #Constant V adiabatic Ideal Gas
