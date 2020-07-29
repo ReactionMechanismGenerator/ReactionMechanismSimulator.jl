@@ -691,7 +691,7 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*d.T*R/d.P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     @views kfps = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
@@ -726,7 +726,7 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*d.T*R/d.P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     kfs = convert(typeof(y),p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)])
@@ -745,7 +745,7 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*d.T*R/d.P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     kfs = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
@@ -764,7 +764,7 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*d.T*R/d.P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     Gs = p[1:length(d.phase.species)]
@@ -1441,6 +1441,22 @@ export calcthermo
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*inter.F(t)
         elseif isa(inter,Outlet) && d == inter.domain
             dydt[d.indexes[1]:d.indexes[2]] .-= inter.F(t).*ns./N
+        end
+    end
+end
+
+@inline function calcdomainderivatives!(d::Q,dydt::Z7,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Array{Z,1},Hs::Array{Z11,1},V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z8) where {Q<:ConstantTPDomain,Z12,Z11,Z10,Z9,Z8<:Real,Z7,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5}
+    @views @fastmath @inbounds dydt[d.indexes[3]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/P
+    for ind in d.constantspeciesinds #make dydt zero for constant species
+        @inbounds dydt[ind] = 0.0
+    end
+    for inter in interfaces
+        if isa(inter,Inlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*inter.F(t)
+            dydt[d.indexes[3]] += inter.F(t)*R*T/P
+        elseif isa(inter,Outlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .-= inter.F(t).*ns./N
+            dydt[d.indexes[3]] -= inter.F(t)*R*T/P
         end
     end
 end
