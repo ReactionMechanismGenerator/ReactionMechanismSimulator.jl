@@ -431,7 +431,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         ns *= (Pfcn(0.0)*V/(R*T))/sum(ns) #automatically scale down moles if volume specified
     end
-    y0 = vcat(ns,T)
+    y0 = vcat(ns,T,V)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -440,12 +440,12 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
         constspcinds = Array{Int64,1}()
     end
     if sparse
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     else
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    return ParametrizedPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2),constspcinds,
     Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedPDomain
