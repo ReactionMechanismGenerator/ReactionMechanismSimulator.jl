@@ -2,7 +2,9 @@ module ReactionMechanismSimulator
     using PyCall
     if PyCall.pyversion.major != 3 || PyCall.pyversion.minor != 7
         using Conda
+        using Pkg
         Conda.add("python==3.7")
+        Pkg.build("PyCall")
     end
     push!(PyVector(pyimport("sys")["path"]), "")
     const Chem = PyNULL()
