@@ -963,7 +963,7 @@ end
     N = sum(ns)
     cs = ns./V
     C = N/V
-    P = C*R*T
+    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -992,7 +992,7 @@ end
     N = sum(ns)
     cs = ns./V
     C = N/V
-    P = C*R*T
+    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1022,7 +1022,7 @@ end
     N = sum(ns)
     cs = ns./V
     C = N/V
-    P = C*R*T
+    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1503,7 +1503,9 @@ end
 end
 
 @inline function calcdomainderivatives!(d::ParametrizedVDomain{W,Y},dydt::K,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Z,Hs::Z11,V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5,Z12}
-    @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Us,dydt[d.indexes[1]:d.indexes[2]])-P*Calculus.derivative(d.V,t))/(N*Cvave) #divide by V to cancel ωV to ω
+    dVdt = Calculus.derivative(d.V,t)
+    @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Us,dydt[d.indexes[1]:d.indexes[2]])-P*dVdt)/(N*Cvave) #divide by V to cancel ωV to ω
+    @views @fastmath @inbounds dydt[d.indexes[4]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/V + dydt[d.indexes[3]]*P/T - P/V*dVdt
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
@@ -1511,11 +1513,15 @@ end
         if isa(inter,Inlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*flow
-            dydt[d.indexes[3]] += flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            dydt[d.indexes[3]] += dTdt
+            dydt[d.indexes[4]] += flow*R*T/V + dTdt*P/T
         elseif isa(inter,Outlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow*ns./N
-            dydt[d.indexes[3]] -= (P*V/N*flow)/(N*Cvave)
+            dTdt = (P*V/N*flow)/(N*Cvave)
+            dydt[d.indexes[3]] -= dTdt
+            dydt[d.indexes[4]] -= flow*R*T/V + dTdt*P/T
         end
     end
 end
