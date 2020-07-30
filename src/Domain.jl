@@ -870,7 +870,7 @@ end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     N = sum(ns)
-    V = N*R*T/d.P
+    V = y[d.indexes[4]]
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -898,7 +898,7 @@ end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     N = sum(ns)
-    V = N*R*T/d.P
+    V = y[d.indexes[4]]
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -931,7 +931,7 @@ end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     N = sum(ns)
-    V = N*R*T/d.P
+    V = y[d.indexes[4]]
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -1487,6 +1487,7 @@ end
 @inline function calcdomainderivatives!(d::ConstantPDomain{W,Y},dydt::K,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Z,Hs::Z11,V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z7) where {Z12,Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5}
     @fastmath Cpave = Cvave+R
     @views @fastmath @inbounds dydt[d.indexes[3]] = -dot(Hs,dydt[d.indexes[1]:d.indexes[2]])/(N*Cpave) #divide by V to cancel ωV to ω
+    @views @fastmath @inbounds dydt[d.indexes[4]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/P + dydt[d.indexes[3]]*V/T
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
@@ -1494,10 +1495,13 @@ end
         if isa(inter,Inlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*flow
-            dydt[d.indexes[3]] += flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
+            dTdt = flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
+            dydt[d.indexes[3]] += dTdt
+            dydt[d.indexes[4]] += flow*R*T/P + dTdt*V/T 
         elseif isa(inter,Outlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
+            dydt[d.indexes[4]] -= flow*R*T/P
         end
     end
 end
