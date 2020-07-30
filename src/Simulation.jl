@@ -60,8 +60,7 @@ export getT
 getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain,ParametrizedTConstantVDomain},K<:Real,Q,G,L} = bsol.domain.V
 getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ParametrizedVDomain,K<:Real,Q,G,L} = bsol.domain.V(t)
 getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTPDomain,ParametrizedTPDomain},K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[3]]
-getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ParametrizedPDomain,K<:Real,Q,G,L} = bsol.N(t)*getT(bsol,t)*R /bsol.domain.P(t)
-getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantPDomain,K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[4]]
+getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ParametrizedPDomain,ConstantPDomain},K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[4]]
 export getV
 getP(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTPDomain,ConstantPDomain},K<:Real,Q,G,L} = bsol.domain.P
 getP(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTVDomain,ParametrizedTConstantVDomain},K<:Real,Q,G,L} = 1.0e6
