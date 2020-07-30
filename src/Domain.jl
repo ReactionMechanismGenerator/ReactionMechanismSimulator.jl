@@ -481,7 +481,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
         if key == "T"
             T = val
         elseif key == "P"
-            P = val
+            throw(error("ConstantTVDomain cannot specify P"))
         elseif key == "V"
             V = val
         else
