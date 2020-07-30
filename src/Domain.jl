@@ -1217,7 +1217,7 @@ end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*T*R/P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     P = C*R*T
@@ -1247,7 +1247,7 @@ end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*T*R/P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     P = C*R*T
@@ -1278,7 +1278,7 @@ end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*T*R/P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     P = C*R*T
@@ -1503,6 +1503,24 @@ end
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
             dydt[d.indexes[4]] -= flow*R*T/P
+        end
+    end
+end
+
+@inline function calcdomainderivatives!(d::ParametrizedTPDomain{W,Y},dydt::K,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Z,Hs::Z11,V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5,Z12}
+    @views @fastmath @inbounds dydt[d.indexes[3]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/P + Calculus.derivative(d.T,t)*V/T - Calculus.derivative(d.P,t)*V/P
+    for ind in d.constantspeciesinds #make dydt zero for constant species
+        @inbounds dydt[ind] = 0.0
+    end
+    for inter in interfaces
+        if isa(inter,Inlet) && d == inter.domain
+            flow = inter.F(t)
+            dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*flow
+            dydt[d.indexes[3]] += flow*R*T/P
+        elseif isa(inter,Outlet) && d == inter.domain
+            flow = inter.F(t)
+            dydt[d.indexes[1]:d.indexes[2]] .-= flow*ns./N
+            dydt[d.indexes[3]] -= flow*R*T/P
         end
     end
 end
