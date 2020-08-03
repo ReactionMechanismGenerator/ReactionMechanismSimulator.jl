@@ -545,7 +545,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,X3,Q<:AbstractInterface}
     #set conditions and initialconditions
     T = 0.0
-    P = 0.0
+    P = 1.0e8 #essentiallly assuming this is a liquid
     V = 0.0
     ts = Array{Float64,1}()
     ns = zeros(length(phase.species))
@@ -555,7 +555,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
         if key == "T"
             T = val
         elseif key == "P"
-            P = val
+            throw(error("ParametrizedTConstantVDomain cannot specify P"))
         elseif key == "V"
             V = val
         elseif key == "ts"
@@ -574,11 +574,6 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
         throw(error("ParametrizedTConstantVDomain must take \"T\" as a function or if an array of times for \"ts\" is supplied as an array of volumes"))
     end
     N = sum(ns)
-    if P == 0.0
-        P = 1e8
-    else
-        throw(error("ParametrizedTConstantVDomain cannot specify P"))
-    end
     y0 = zeros(length(phase.species))
     y0[phase.species[1].index:phase.species[end].index] = ns
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
