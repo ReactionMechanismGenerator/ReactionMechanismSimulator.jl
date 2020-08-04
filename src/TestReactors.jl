@@ -10,7 +10,7 @@ spcs = phaseDict["phase"]["Species"]; #mechanism dictionaries index:  phaseDict[
 rxns = phaseDict["phase"]["Reactions"];
 solv = phaseDict["Solvents"][1];
 liq = IdealDiluteSolution(spcs,rxns,solv;name="phase",diffusionlimited=true) #Define the phase (how species thermodynamic and kinetic properties calculated)
-initialconds = Dict(["T"=>450.0,"P"=>1e5,"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6]) #Set simulation Initial Temp and Pressure
+initialconds = Dict(["T"=>450.0,"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6]) #Set simulation Initial Temp and Pressure
 domain,y0,p = ConstantTVDomain(phase=liq,initialconds=initialconds,constantspecies=["oxygen"]) #Define the domain (encodes how system thermodynamic properties calculated)
 react = Reactor(domain,y0,(0.0,140000.01);p=p) #Create the reactor object
 

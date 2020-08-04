@@ -144,7 +144,7 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         throw(error("ConstantVDomain overspecified with T,P and V"))
     end
-    y0 = vcat(ns,T)
+    y0 = vcat(ns,T,P)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -153,12 +153,12 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
         constspcinds = Array{Int64,1}()
     end
     if sparse
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     else
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     end
     rxnarray = getreactionindices(phase)
-    return ConstantVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    return ConstantVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2),constspcinds,
     V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantVDomain
@@ -208,7 +208,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         throw(error("ConstantPDomain overspecified with T,P and V"))
     end
-    y0 = vcat(ns,T)
+    y0 = vcat(ns,T,V)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -217,12 +217,12 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
         constspcinds = Array{Int64,1}()
     end
     if sparse
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     else
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     end
     rxnarray = getreactionindices(phase)
-    return ConstantPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    return ConstantPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2),constspcinds,
     P,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantPDomain
@@ -283,8 +283,9 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
 
     N = sum(ns)
     V = N*R*Tfcn(0.0)/Pfcn(0.0)
-    y0 = zeros(length(phase.species))
+    y0 = zeros(length(phase.species)+1)
     y0[phase.species[1].index:phase.species[end].index] = ns
+    y0[phase.species[end].index+1] = V
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -298,7 +299,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
         jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
+    return ParametrizedTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end]+1),constspcinds,
     Tfcn,Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedTPDomain
@@ -357,7 +358,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         ns *= (P*Vfcn(0.0)/(R*T))/sum(ns) #automatically scale down moles if pressure specified
     end
-    y0 = vcat(ns,T)
+    y0 = vcat(ns,T,P)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -366,12 +367,12 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
         constspcinds = Array{Int64,1}()
     end
     if sparse
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     else
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    return ParametrizedVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2),constspcinds,
     Vfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedVDomain
@@ -430,7 +431,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         ns *= (Pfcn(0.0)*V/(R*T))/sum(ns) #automatically scale down moles if volume specified
     end
-    y0 = vcat(ns,T)
+    y0 = vcat(ns,T,V)
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species,:name)
@@ -439,12 +440,12 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
         constspcinds = Array{Int64,1}()
     end
     if sparse
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     else
-        jacobian=zeros(typeof(T),length(phase.species)+1,length(phase.species)+1)
+        jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
+    return ParametrizedPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2),constspcinds,
     Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedPDomain
@@ -480,7 +481,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
         if key == "T"
             T = val
         elseif key == "P"
-            P = val
+            throw(error("ConstantTVDomain cannot specify P"))
         elseif key == "V"
             V = val
         else
@@ -544,7 +545,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,X3,Q<:AbstractInterface}
     #set conditions and initialconditions
     T = 0.0
-    P = 0.0
+    P = 1.0e8 #essentiallly assuming this is a liquid
     V = 0.0
     ts = Array{Float64,1}()
     ns = zeros(length(phase.species))
@@ -554,7 +555,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
         if key == "T"
             T = val
         elseif key == "P"
-            P = val
+            throw(error("ParametrizedTConstantVDomain cannot specify P"))
         elseif key == "V"
             V = val
         elseif key == "ts"
@@ -573,11 +574,6 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
         throw(error("ParametrizedTConstantVDomain must take \"T\" as a function or if an array of times for \"ts\" is supplied as an array of volumes"))
     end
     N = sum(ns)
-    if P == 0.0
-        P = 1e8
-    else
-        throw(error("ParametrizedTConstantVDomain cannot specify P"))
-    end
     y0 = zeros(length(phase.species))
     y0[phase.species[1].index:phase.species[end].index] = ns
     p = vcat(zeros(length(phase.species)),ones(length(phase.reactions)))
@@ -783,7 +779,7 @@ end
     N = sum(ns)
     cs = ns./d.V
     C = N/d.V
-    P = C*R*T
+    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     Cvave = 0.0
@@ -812,7 +808,7 @@ end
     N = sum(ns)
     cs = ns./d.V
     C = N/d.V
-    P = C*R*T
+    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     Cvave = 0.0
@@ -842,7 +838,7 @@ end
     N = sum(ns)
     cs = ns./d.V
     C = N/d.V
-    P = C*R*T
+    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     Cvave = 0.0
@@ -870,7 +866,7 @@ end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     N = sum(ns)
-    V = N*R*T/d.P
+    V = y[d.indexes[4]]
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -898,7 +894,7 @@ end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     N = sum(ns)
-    V = N*R*T/d.P
+    V = y[d.indexes[4]]
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -931,7 +927,7 @@ end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     N = sum(ns)
-    V = N*R*T/d.P
+    V = y[d.indexes[4]]
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -963,7 +959,7 @@ end
     N = sum(ns)
     cs = ns./V
     C = N/V
-    P = C*R*T
+    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -992,7 +988,7 @@ end
     N = sum(ns)
     cs = ns./V
     C = N/V
-    P = C*R*T
+    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1022,7 +1018,7 @@ end
     N = sum(ns)
     cs = ns./V
     C = N/V
-    P = C*R*T
+    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1050,7 +1046,7 @@ end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     N = sum(ns)
-    V = N*R*T/P
+    V = y[d.indexes[4]]
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -1079,7 +1075,7 @@ end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     N = sum(ns)
-    V = N*R*T/P
+    V = y[d.indexes[4]]
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -1108,7 +1104,7 @@ end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     N = sum(ns)
-    V = N*R*T/P
+    V = y[d.indexes[4]]
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -1216,7 +1212,7 @@ end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*T*R/P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     P = C*R*T
@@ -1246,7 +1242,7 @@ end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*T*R/P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     P = C*R*T
@@ -1277,7 +1273,7 @@ end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
-    V = N*T*R/P
+    V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
     P = C*R*T
@@ -1463,6 +1459,7 @@ end
 
 @inline function calcdomainderivatives!(d::ConstantVDomain{W,Y},dydt::K,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Z,Hs::Z11,V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z7) where {Z12,Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5}
     @views @fastmath @inbounds dydt[d.indexes[3]] = -dot(Us,dydt[d.indexes[1]:d.indexes[2]])/(N*Cvave) #divide by V to cancel ωV to ω
+    @views @fastmath @inbounds dydt[d.indexes[4]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/V + P/T*dydt[d.indexes[3]]
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
@@ -1470,11 +1467,15 @@ end
         if isa(inter,Inlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*flow
-            dydt[d.indexes[3]] += flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            dydt[d.indexes[3]] += dTdt
+            dydt[d.indexes[4]] += flow*R*T/V + P/T*dTdt
         elseif isa(inter,Outlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
-            dydt[d.indexes[3]] -= (P*V/N*flow)/(N*Cvave)
+            dTdt = (P*V/N*flow)/(N*Cvave)
+            dydt[d.indexes[3]] -= dTdt
+            dydt[d.indexes[4]] -= flow*R*T/V + P/T*dTdt
         end
     end
 end
@@ -1482,6 +1483,7 @@ end
 @inline function calcdomainderivatives!(d::ConstantPDomain{W,Y},dydt::K,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Z,Hs::Z11,V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z7) where {Z12,Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5}
     @fastmath Cpave = Cvave+R
     @views @fastmath @inbounds dydt[d.indexes[3]] = -dot(Hs,dydt[d.indexes[1]:d.indexes[2]])/(N*Cpave) #divide by V to cancel ωV to ω
+    @views @fastmath @inbounds dydt[d.indexes[4]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/P + dydt[d.indexes[3]]*V/T
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
@@ -1489,16 +1491,39 @@ end
         if isa(inter,Inlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*flow
-            dydt[d.indexes[3]] += flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
+            dTdt = flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
+            dydt[d.indexes[3]] += dTdt
+            dydt[d.indexes[4]] += flow*R*T/P + dTdt*V/T 
         elseif isa(inter,Outlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
+            dydt[d.indexes[4]] -= flow*R*T/P
+        end
+    end
+end
+
+@inline function calcdomainderivatives!(d::ParametrizedTPDomain{W,Y},dydt::K,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Z,Hs::Z11,V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5,Z12}
+    @views @fastmath @inbounds dydt[d.indexes[3]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/P + Calculus.derivative(d.T,t)*V/T - Calculus.derivative(d.P,t)*V/P
+    for ind in d.constantspeciesinds #make dydt zero for constant species
+        @inbounds dydt[ind] = 0.0
+    end
+    for inter in interfaces
+        if isa(inter,Inlet) && d == inter.domain
+            flow = inter.F(t)
+            dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*flow
+            dydt[d.indexes[3]] += flow*R*T/P
+        elseif isa(inter,Outlet) && d == inter.domain
+            flow = inter.F(t)
+            dydt[d.indexes[1]:d.indexes[2]] .-= flow*ns./N
+            dydt[d.indexes[3]] -= flow*R*T/P
         end
     end
 end
 
 @inline function calcdomainderivatives!(d::ParametrizedVDomain{W,Y},dydt::K,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Z,Hs::Z11,V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5,Z12}
-    @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Us,dydt[d.indexes[1]:d.indexes[2]])-P*Calculus.derivative(d.V,t))/(N*Cvave) #divide by V to cancel ωV to ω
+    dVdt = Calculus.derivative(d.V,t)
+    @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Us,dydt[d.indexes[1]:d.indexes[2]])-P*dVdt)/(N*Cvave) #divide by V to cancel ωV to ω
+    @views @fastmath @inbounds dydt[d.indexes[4]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/V + dydt[d.indexes[3]]*P/T - P/V*dVdt
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
@@ -1506,18 +1531,24 @@ end
         if isa(inter,Inlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*flow
-            dydt[d.indexes[3]] += flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            dydt[d.indexes[3]] += dTdt
+            dydt[d.indexes[4]] += flow*R*T/V + dTdt*P/T
         elseif isa(inter,Outlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow*ns./N
-            dydt[d.indexes[3]] -= (P*V/N*flow)/(N*Cvave)
+            dTdt = (P*V/N*flow)/(N*Cvave)
+            dydt[d.indexes[3]] -= dTdt
+            dydt[d.indexes[4]] -= flow*R*T/V + dTdt*P/T
         end
     end
 end
 
 @inline function calcdomainderivatives!(d::ParametrizedPDomain{W,Y},dydt::K,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Z,Hs::Z11,V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5,Z12}
     @fastmath Cpave = Cvave+R
-    @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Hs,dydt[d.indexes[1]:d.indexes[2]])+V*Calculus.derivative(d.P,t))/(N*Cpave) #divide by V to cancel ωV to ω
+    dPdt = Calculus.derivative(d.P,t)
+    @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Hs,dydt[d.indexes[1]:d.indexes[2]])+V*dPdt)/(N*Cpave) #divide by V to cancel ωV to ω
+    @views @fastmath @inbounds dydt[d.indexes[4]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/P + dydt[d.indexes[3]]*V/T - dPdt*V/P 
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
@@ -1525,10 +1556,13 @@ end
         if isa(inter,Inlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*flow
-            dydt[d.indexes[3]] += flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
+            dTdt = flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
+            dydt[d.indexes[3]] += dTdt
+            dydt[d.indexes[4]] += flow*R*T/P + dTdt*V/T
         elseif isa(inter,Outlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
+            dydt[d.indexes[4]] -= flow*R*T/P
         end
     end
 end
