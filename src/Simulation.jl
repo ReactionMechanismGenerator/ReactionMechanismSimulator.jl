@@ -25,6 +25,18 @@ end
 
 export Simulation
 
+struct SystemSimulation{Q<:Tuple{Vararg{AbstractSimulation,N} where N},B<:AbstractODESolution}
+    sol::B
+    sims::Q
+    p::Array{Float64,1}
+end
+
+function SystemSimulation(sol,domains,p)
+    sims = Tuple([Simulation(sol,domain) for domain in domains])
+    return SystemSimulation(sol,sims,p)
+end
+export SystemSimulation
+
 length(p::T) where {T<:AbstractSimulation} = 1
 export length
 
