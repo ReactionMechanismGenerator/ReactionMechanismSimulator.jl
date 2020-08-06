@@ -1217,7 +1217,6 @@ end
     V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
-    P = C*R*T
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1247,7 +1246,6 @@ end
     V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
-    P = C*R*T
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1278,7 +1276,6 @@ end
     V = y[d.indexes[3]]
     cs = ns./V
     C = N/V
-    P = C*R*T
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
