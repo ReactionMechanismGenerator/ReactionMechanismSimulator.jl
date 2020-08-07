@@ -475,7 +475,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
     #set conditions and initialconditions
     T = 0.0
     V = 0.0
-    P = 1.0e9
+    P = 1.0e8
     y0 = zeros(length(phase.species))
     spnames = [x.name for x in phase.species]
     for (key,val) in initialconds
@@ -514,7 +514,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
     else
         diffs = Array{Float64,1}()
     end
-    P = 1.0e9  #essentiallly assuming this is a liquid
+    P = 1.0e8  #essentiallly assuming this is a liquid
     C = N/V
     kfs,krevs = getkfkrevs(phase=phase,T=T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=diffs,V=V)
     kfsnondiff = getkfs(phase,T,P,C,ns,V)
@@ -1138,7 +1138,7 @@ end
     N = sum(ns)
     cs = ns./V
     C = N/V
-    P = C*R*T
+    P = 1.0e8 #liquid phase
     Gs = zeros(length(d.phase.species))
     mu = d.phase.solvent.mu(T)
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1163,7 +1163,7 @@ end
     N = sum(ns)
     cs = ns./V
     C = N/V
-    P = C*R*T
+    P = 1.0e8 #liquid phase
     Gs = zeros(length(d.phase.species))
     mu = d.phase.solvent.mu(T)
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1189,7 +1189,7 @@ end
     N = sum(ns)
     cs = ns./V
     C = N/V
-    P = C*R*T
+    P = 1.0e8 #liquid phase
     Gs = zeros(length(d.phase.species))
     mu = d.phase.solvent.mu(T)
     cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1302,7 +1302,7 @@ end
     N = sum(ns)
     cs = ns./d.V
     C = N/d.V
-    P = 1.0e9
+    P = 1.0e8
     return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0
 end
 
@@ -1315,7 +1315,7 @@ end
     N = sum(ns)
     cs = ns./d.V
     C = N/d.V
-    P = 1.0e9
+    P = 1.0e8
     @views nothermochg = d.Gs == p[1:length(d.phase.species)]
     @views nokfchg = d.kfsnondiff == p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
     if nothermochg && nokfchg
@@ -1341,7 +1341,7 @@ end
     N = sum(ns)
     cs = ns./d.V
     C = N/d.V
-    P = 1.0e9
+    P = 1.0e8
     Gs = p[1:length(d.phase.species)]
     kfsnondiff = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
     kfs,krevs = getkfkrevs(;phase=d.phase,T=d.T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=d.diffusivity,V=d.V,kfs=kfsnondiff)
@@ -1359,7 +1359,7 @@ end
     N = sum(ns)
     cs = ns./d.V
     C = N/d.V
-    P = 1.0e9
+    P = 1.0e8
     Gs = p[1:length(d.phase.species)]
     kfsnondiff = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
     kfs,krevs = getkfkrevs(;phase=d.phase,T=d.T,P=P,C=C,N=N,ns=ns,Gs=Gs,diffs=d.diffusivity,V=d.V,kfs=kfsnondiff)
