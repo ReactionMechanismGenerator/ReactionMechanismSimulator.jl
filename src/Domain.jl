@@ -672,8 +672,8 @@ export ConstantTADomain
         d.jacuptodate[1] = false
     end
     ns = y[d.indexes[1]:d.indexes[2]]
-    N = sum(ns)
-    V = y[d.indexes[3]] 
+    V = y[d.indexes[3]]
+    N = d.P*V/(R*d.T)
     cs = ns./V
     C = N/V
     for ind in d.efficiencyinds #efficiency related rates may have changed
@@ -688,8 +688,8 @@ end
         d.jacuptodate[1] = false
     end
     ns = y[d.indexes[1]:d.indexes[2]]
-    N = sum(ns)
     V = y[d.indexes[3]]
+    N = d.P*V/(R*d.T)
     cs = ns./V
     C = N/V
     @views kfps = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
@@ -723,8 +723,8 @@ end
         d.jacuptodate[1] = false
     end
     ns = y[d.indexes[1]:d.indexes[2]]
-    N = sum(ns)
     V = y[d.indexes[3]]
+    N = d.P*V/(R*d.T)
     cs = ns./V
     C = N/V
     kfs = convert(typeof(y),p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)])
@@ -742,8 +742,8 @@ end
         d.jacuptodate[1] = false
     end
     ns = y[d.indexes[1]:d.indexes[2]]
-    N = sum(ns)
     V = y[d.indexes[3]]
+    N = d.P*V/(R*d.T)
     cs = ns./V
     C = N/V
     kfs = p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)]
@@ -761,8 +761,8 @@ end
         d.jacuptodate[1] = false
     end
     ns = y[d.indexes[1]:d.indexes[2]]
-    N = sum(ns)
     V = y[d.indexes[3]]
+    N = d.P*V/(R*d.T)
     cs = ns./V
     C = N/V
     Gs = p[1:length(d.phase.species)]
@@ -778,10 +778,10 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
+    P = y[d.indexes[4]]
+    N = P*d.V/(R*T)
     cs = ns./d.V
     C = N/d.V
-    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     Cvave = 0.0
@@ -807,10 +807,10 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
+    P = y[d.indexes[4]]
+    N = P*d.V/(R*T)
     cs = ns./d.V
     C = N/d.V
-    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     Cvave = 0.0
@@ -837,10 +837,10 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
+    P = y[d.indexes[4]]
+    N = P*d.V/(R*T)
     cs = ns./d.V
     C = N/d.V
-    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     Cvave = 0.0
@@ -867,8 +867,8 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
     V = y[d.indexes[4]]
+    N = d.P*V/(R*T)
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -895,8 +895,8 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
     V = y[d.indexes[4]]
+    N = d.P*V/(R*T)
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -928,8 +928,8 @@ end
     end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
     V = y[d.indexes[4]]
+    N = d.P*V/(R*T)
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -958,10 +958,10 @@ end
     V = d.V(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
+    P = y[d.indexes[4]]
+    N = P*V/(R*T)
     cs = ns./V
     C = N/V
-    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -987,10 +987,10 @@ end
     V = d.V(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
+    P = y[d.indexes[4]]
+    N = P*V/(R*T)
     cs = ns./V
     C = N/V
-    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1017,10 +1017,10 @@ end
     V = d.V(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
+    P = y[d.indexes[4]]
+    N = P*V/(R*T)
     cs = ns./V
     C = N/V
-    P = y[d.indexes[4]]
     Gs = zeros(length(d.phase.species))
     Us = zeros(length(d.phase.species))
     cpdivR,hdivRT1,sdivR = calcHSCpdless(d.phase.vecthermo,T)
@@ -1047,8 +1047,8 @@ end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
     V = y[d.indexes[4]]
+    N = P*V/(R*T)
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -1076,8 +1076,8 @@ end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
     V = y[d.indexes[4]]
+    N = P*V/(R*T)
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -1105,8 +1105,8 @@ end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
-    N = sum(ns)
     V = y[d.indexes[4]]
+    N = P*V/(R*T)
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -1213,8 +1213,8 @@ end
     @assert T < 10000.0
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
-    N = sum(ns)
     V = y[d.indexes[3]]
+    N = P*V/(R*T)
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -1242,8 +1242,8 @@ end
     @assert T < 10000.0
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
-    N = sum(ns)
     V = y[d.indexes[3]]
+    N = P*V/(R*T)
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
@@ -1272,8 +1272,8 @@ end
     @assert T < 10000.0
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
-    N = sum(ns)
     V = y[d.indexes[3]]
+    N = P*V/(R*T)
     cs = ns./V
     C = N/V
     Gs = zeros(length(d.phase.species))
