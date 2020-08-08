@@ -1,7 +1,7 @@
 using Documenter, ReactionMechanismSimulator
 
 makedocs(
-    format = Documenter.HTML(),
+    format = :html,
     sitename = "ReactionMechanismSimulator.jl",
     modules = [ReactionMechanismSimulator],
     pages = [
