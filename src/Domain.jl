@@ -99,11 +99,12 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
 end
 export ConstantTPDomain
 
-@with_kw struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+@with_kw struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     V::W
+    efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
@@ -152,6 +153,7 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         constspcinds = Array{Int64,1}()
     end
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
     if sparse
         jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     else
@@ -159,15 +161,16 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     end
     rxnarray = getreactionindices(phase)
     return ConstantVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2),constspcinds,
-    V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    V,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantVDomain
 
-@with_kw struct ConstantPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+@with_kw struct ConstantPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     P::W
+    efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
@@ -216,6 +219,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     else
         constspcinds = Array{Int64,1}()
     end
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
     if sparse
         jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     else
@@ -223,16 +227,17 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     end
     rxnarray = getreactionindices(phase)
     return ConstantPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2),constspcinds,
-    P,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    P,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantPDomain
 
-@with_kw struct ParametrizedTPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+@with_kw struct ParametrizedTPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     T::Function
     P::Function
+    efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
@@ -293,6 +298,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
     else
         constspcinds = Array{Int64,1}()
     end
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
     if sparse
         jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
     else
@@ -300,15 +306,16 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedTPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1),constspcinds,
-    Tfcn,Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    Tfcn,Pfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedTPDomain
 
-@with_kw struct ParametrizedVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+@with_kw struct ParametrizedVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     V::Function
+    efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
@@ -366,6 +373,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         constspcinds = Array{Int64,1}()
     end
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
     if sparse
         jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     else
@@ -373,15 +381,16 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedVDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2),constspcinds,
-    Vfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    Vfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedVDomain
 
-@with_kw struct ParametrizedPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+@with_kw struct ParametrizedPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     P::Function
+    efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
@@ -439,6 +448,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     else
         constspcinds = Array{Int64,1}()
     end
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
     if sparse
         jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     else
@@ -446,7 +456,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedPDomain(phase,SVector(phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2),constspcinds,
-    Pfcn,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    Pfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedPDomain
 
@@ -530,12 +540,13 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
 end
 export ConstantTVDomain
 
-@with_kw struct ParametrizedTConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,Q<:AbstractArray} <: AbstractVariableKDomain
+@with_kw struct ParametrizedTConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     constantspeciesinds::Array{S,1}
     T::Function
     V::W
+    efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
     sensitivity::Bool = false
@@ -585,6 +596,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
     else
         constspcinds = Array{Int64,1}()
     end
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
     if sparse
         jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
     else
@@ -592,7 +604,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedTConstantVDomain(phase,SVector(phase.species[1].index,phase.species[end].index),constspcinds,
-    Tfcn,V,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    Tfcn,V,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
 end
 export ParametrizedTConstantVDomain
 
