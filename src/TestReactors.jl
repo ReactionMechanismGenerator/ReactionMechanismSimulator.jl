@@ -3,13 +3,15 @@ using DiffEqBase
 using Sundials
 
 @testset "Test Reactors" begin
-@testset "Test liquid phase reactor simulation" begin
-#Constant T and V Ideal Dilute Liquid
+
 phaseDict = readinput("../src/testing/liquid_phase.rms")
 spcs = phaseDict["phase"]["Species"]; #mechanism dictionaries index:  phaseDict[phasename]["Species" or "Reactions"]
 rxns = phaseDict["phase"]["Reactions"];
 solv = phaseDict["Solvents"][1];
 liq = IdealDiluteSolution(spcs,rxns,solv;name="phase",diffusionlimited=true) #Define the phase (how species thermodynamic and kinetic properties calculated)
+
+@testset "Test liquid phase Constant T Constant V reactor simulation" begin
+#Constant T and V Ideal Dilute Liquid
 initialconds = Dict(["T"=>450.0,"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6]) #Set simulation Initial Temp and Pressure
 domain,y0,p = ConstantTVDomain(phase=liq,initialconds=initialconds,constantspecies=["oxygen"]) #Define the domain (encodes how system thermodynamic properties calculated)
 react = Reactor(domain,y0,(0.0,140000.01);p=p) #Create the reactor object
