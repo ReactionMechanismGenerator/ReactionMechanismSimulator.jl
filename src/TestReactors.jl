@@ -180,3 +180,24 @@ ja=jacobiany(y,p,t,domain,[],nothing);
 j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
 end;
+
+#Parametrized P adiabatic Ideal Gas
+#uses ethane.yml mechanism
+@testset "Parametrized pressure adiabatic reactor jacobian" begin
+initialconds = Dict(["T"=>1000.0,"ts"=>[0.,100.,200.],"P"=>[2.0e5,3.0e5,5.0e5],"H2"=>0.67,"O2"=>0.33])
+domain,y0,p = ParametrizedPDomain(phase=ig,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
+
+react = Reactor(domain,y0,(0.0,0.101),p=p) #Create the reactor object
+sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
+
+#analytic jacobian vs. ForwardDiff jacobian
+t=0.1;
+y = sol(t);
+ja=jacobiany(y,p,t,domain,[],nothing);
+j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+end;
+
+
+
+end;
