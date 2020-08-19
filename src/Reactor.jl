@@ -101,10 +101,19 @@ export addreactionratecontributions!
 end
 export dydtreactor!
 
-function jacobiany!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+function jacobianyforwarddiff!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     f(dy::X,y::Array{T,1}) where {T<:Real,X} = dydtreactor!(dy,y,t,domain,interfaces;p=p,sensitivity=false)
     ForwardDiff.jacobian!(J,f,zeros(size(y)),y)
 end
+export jacobianyforwarddiff!
+
+function jacobianyforwarddiff(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+    J = zeros(length(y),length(y))
+    jacobianyforwarddiff!(J,y,p,t,domain,interfaces,colorvec)
+    return J
+end
+export jacobianyforwarddiff
+
 # function jacobiany!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2<:AbstractArray,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
 #     f(y::Array{T,1}) where {T<:Real} = dydtreactor!(y,t,domain,interfaces;p=p,sensitivity=false)
 #     forwarddiff_color_jacobian!(J,f,y,colorvec=colorvec)
@@ -1022,4 +1031,3 @@ end
 #     end
 #     return jac
 # end
-export jacobiany!
