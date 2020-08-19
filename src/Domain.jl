@@ -1884,6 +1884,26 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
     return jac
 end
 
+function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantTVDomain,ConstantTADomain,ParametrizedTConstantVDomain}}
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave = calcthermo(domain,y,t,p)
+    jacobianynsderiv!(jac,domain,domain.rxnarray,domain.efficiencyinds,cs,kfs,krevs,T,V,C)
+    
+    @simd for ind in domain.constantspeciesinds
+        @inbounds jac[ind,:] .= 0.
+    end
+    
+    @simd for inter in interfaces
+        if isa(inter,Outlet) && domain == inter.domain
+            flow = inter.F(t)
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath jac[i,i] .-= flow/N
+            end
+        end
+    end
+
+    return jac
+end
+
 function getreactionindices(ig::Q) where {Q<:AbstractPhase}
     arr = zeros(Int64,(6,length(ig.reactions)))
     for (i,rxn) in enumerate(ig.reactions)
