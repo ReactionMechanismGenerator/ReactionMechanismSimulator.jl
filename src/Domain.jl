@@ -1603,6 +1603,41 @@ end
     end
 end
 
+@inline function jacobianynsderiv!(jac::S,domain::Union{ConstantTPDomain,ParametrizedTPDomain},rxnarray::Array{Int64,2},efficiencyinds::Array{I,1},cs::Array{Float64,1},kfs::Array{Float64,1},krevs::Array{Float64,1},T::Float64,V::Float64,C::Float64) where {S<:AbstractArray,I<:Integer}
+    @simd for rxnind = 1:size(rxnarray)[2]
+        @inbounds _jacobianynswrtns!(jac,rxnarray,rxnind,cs,kfs[rxnind],krevs[rxnind])
+        @inbounds _jacobianynswrtV!(jac,domain.indexes[3],rxnarray,rxnind,cs,kfs[rxnind],krevs[rxnind])
+        if rxnind in efficiencyinds
+            @inbounds @fastmath Kc = kfs[rxnind]/krevs[rxnind]
+            @inbounds @fastmath Ceff = C + sum(cs[i]*val for (i,val) in domain.phase.reactions[rxnind].kinetics.efficiencies)
+            @inbounds jacobianyefficiencyderiv!(jac,domain,domain.phase.reactions[rxnind].kinetics,domain.phase.reactions[rxnind].kinetics.efficiencies,rxnarray,rxnind,domain.indexes[3],cs,T,V,C,Ceff,Kc)
+        end
+    end
+end
+
+@inline function jacobianynsderiv!(jac::S,domain::Union{ConstantVDomain,ParametrizedVDomain,ConstantTVDomain,ParametrizedTConstantVDomain},rxnarray::Array{Int64,2},efficiencyinds::Array{I,1},cs::Array{Float64,1},kfs::Array{Float64,1},krevs::Array{Float64,1},T::Float64,V::Float64,C::Float64) where {S<:AbstractArray,I<:Integer}
+    @simd for rxnind = 1:size(rxnarray)[2]
+        @inbounds _jacobianynswrtns!(jac,rxnarray,rxnind,cs,kfs[rxnind],krevs[rxnind])
+        if rxnind in efficiencyinds
+            @inbounds @fastmath Kc = kfs[rxnind]/krevs[rxnind]
+            @inbounds @fastmath Ceff = C + sum(cs[i]*val for (i,val) in domain.phase.reactions[rxnind].kinetics.efficiencies)
+            @inbounds jacobianyefficiencyderiv!(jac,domain,domain.phase.reactions[rxnind].kinetics,domain.phase.reactions[rxnind].kinetics.efficiencies,rxnarray,rxnind,0,cs,T,V,C,Ceff,Kc)
+        end
+    end
+end
+
+@inline function jacobianynsderiv!(jac::S,domain::Union{ConstantPDomain,ParametrizedPDomain},rxnarray::Array{Int64,2},efficiencyinds::Array{I,1},cs::Array{Float64,1},kfs::Array{Float64,1},krevs::Array{Float64,1},T::Float64,V::Float64,C::Float64) where {S<:AbstractArray,I<:Integer}
+    @simd for rxnind = 1:size(rxnarray)[2]
+        @inbounds _jacobianynswrtns!(jac,rxnarray,rxnind,cs,kfs[rxnind],krevs[rxnind])
+        @inbounds _jacobianynswrtV!(jac,domain.indexes[4],rxnarray,rxnind,cs,kfs[rxnind],krevs[rxnind])
+        if rxnind in efficiencyinds
+            @inbounds @fastmath Kc = kfs[rxnind]/krevs[rxnind]
+            @inbounds @fastmath Ceff = C + sum(cs[i]*val for (i,val) in domain.phase.reactions[rxnind].kinetics.efficiencies)
+            @inbounds jacobianyefficiencyderiv!(jac,domain,domain.phase.reactions[rxnind].kinetics,domain.phase.reactions[rxnind].kinetics.efficiencies,rxnarray,rxnind,domain.indexes[4],cs,T,V,C,Ceff,Kc)
+        end
+    end
+end
+
 function getreactionindices(ig::Q) where {Q<:AbstractPhase}
     arr = zeros(Int64,(6,length(ig.reactions)))
     for (i,rxn) in enumerate(ig.reactions)
