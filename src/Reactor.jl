@@ -310,6 +310,39 @@ end
     end
 end
 
+@inline function _jacobianynswrtV!(jac::S,Vind::Int64,rxnarray::Array{Int64,2},rxnind::Int64,cs::Array{Float64,1},kf::Float64,krev::Float64) where {S<:AbstractArray}
+    k=kf
+    if rxnarray[2,rxnind]==0
+        nothing
+    elseif rxnarray[3,rxnind]== 0
+        @inbounds @fastmath deriv = -k*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]
+        @inbounds jac[rxnarray[1,rxnind],Vind] -= deriv
+        @inbounds jac[rxnarray[2,rxnind],Vind] -= deriv
+        _spreadreactantpartials!(jac,deriv,rxnarray,rxnind,Vind)
+    else
+        @inbounds @fastmath deriv = -2.0*k*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]
+        @inbounds jac[rxnarray[1,rxnind],Vind] -= deriv
+        @inbounds jac[rxnarray[2,rxnind],Vind] -= deriv
+        @inbounds jac[rxnarray[3,rxnind],Vind] -= deriv
+        _spreadreactantpartials!(jac,deriv,rxnarray,rxnind,Vind)
+    end
+    k=krev
+    if rxnarray[5,rxnind]==0
+        nothing
+    elseif rxnarray[6,rxnind] == 0
+        @inbounds @fastmath deriv = -k*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]
+        @inbounds jac[rxnarray[4,rxnind],Vind] -= deriv
+        @inbounds jac[rxnarray[5,rxnind],Vind] -= deriv
+        _spreadproductpartials!(jac,deriv,rxnarray,rxnind,Vind)
+    else
+        @inbounds @fastmath deriv = -2.0*k*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]
+        @inbounds jac[rxnarray[4,rxnind],Vind] -= deriv
+        @inbounds jac[rxnarray[5,rxnind],Vind] -= deriv
+        @inbounds jac[rxnarray[6,rxnind],Vind] -= deriv
+        _spreadproductpartials!(jac,deriv,rxnarray,rxnind,Vind)
+    end
+end
+
 # function jacobianp!(d::W;cs::Q,V::Y,T::Y2,Us::Z3,Cvave::Z4,N::Z5,kfs::Z,krevs::X,wV::Q2,ratederiv::Q3) where {Q3,W<:Union{ConstantTPDomain,ConstantTVDomain},Z4<:Real,Z5<:Real,Z3<:AbstractArray,Q2<:AbstractArray,Q<:AbstractArray,Y2<:Real,Y<:Real,Z<:AbstractArray,X<:AbstractArray}
 #     Nspcs = length(cs)
 #     rxns = d.phase.reactions
