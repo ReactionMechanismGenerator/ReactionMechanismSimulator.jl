@@ -343,6 +343,46 @@ end
     end
 end
 
+"""
+This function calculates the ns partials in jacobiany involving k derivatives. dkdx is either dkdni and dkdV. x is either ni or V.
+"""
+@inline function _jacobianykderiv!(jac::S,xind::Int64,dkfdx::Float64,dkrevdx::Float64,rxnarray::Array{Int64,2},rxnind::Int64,cs::Array{Float64,1},V::Float64) where {S<:AbstractArray}
+    dkdx = dkfdx
+    if rxnarray[2,rxnind] == 0
+        @inbounds @fastmath deriv = dkdx*cs[rxnarray[1,rxnind]]*V
+        @inbounds jac[rxnarray[1,rxnind],xind] -= deriv
+        _spreadreactantpartials!(jac,deriv,rxnarray,rxnind,xind)
+    elseif rxnarray[3,rxnind] == 0
+        @inbounds @fastmath deriv = dkdx*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*V
+        @inbounds jac[rxnarray[1,rxnind],xind] -= deriv
+        @inbounds jac[rxnarray[2,rxnind],xind] -= deriv
+        _spreadreactantpartials!(jac,deriv,rxnarray,rxnind,xind)
+    else
+        @inbounds @fastmath deriv = dkdx*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]*V
+        @inbounds jac[rxnarray[1,rxnind],xind] -= deriv
+        @inbounds jac[rxnarray[2,rxnind],xind] -= deriv
+        @inbounds jac[rxnarray[3,rxnind],xind] -= deriv
+        _spreadreactantpartials!(jac,deriv,rxnarray,rxnind,xind)
+    end
+    dkdx = dkrevdx
+    if rxnarray[5,rxnind] == 0
+        @inbounds @fastmath deriv = dkdx*cs[rxnarray[4,rxnind]]*V
+        @inbounds jac[rxnarray[4,rxnind],xind] -= deriv
+        _spreadproductpartials!(jac,deriv,rxnarray,rxnind,xind)
+    elseif rxnarray[6,rxnind] == 0
+        @inbounds @fastmath deriv = dkdx*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*V
+        @inbounds jac[rxnarray[4,rxnind],xind] -= deriv
+        @inbounds jac[rxnarray[5,rxnind],xind] -= deriv
+        _spreadproductpartials!(jac,deriv,rxnarray,rxnind,xind)
+    else
+        @inbounds @fastmath deriv = dkdx*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]*V
+        @inbounds jac[rxnarray[4,rxnind],xind] -= deriv
+        @inbounds jac[rxnarray[5,rxnind],xind] -= deriv
+        @inbounds jac[rxnarray[6,rxnind],xind] -= deriv
+        _spreadproductpartials!(jac,deriv,rxnarray,rxnind,xind)
+    end
+end
+
 # function jacobianp!(d::W;cs::Q,V::Y,T::Y2,Us::Z3,Cvave::Z4,N::Z5,kfs::Z,krevs::X,wV::Q2,ratederiv::Q3) where {Q3,W<:Union{ConstantTPDomain,ConstantTVDomain},Z4<:Real,Z5<:Real,Z3<:AbstractArray,Q2<:AbstractArray,Q<:AbstractArray,Y2<:Real,Y<:Real,Z<:AbstractArray,X<:AbstractArray}
 #     Nspcs = length(cs)
 #     rxns = d.phase.reactions
