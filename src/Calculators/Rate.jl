@@ -201,3 +201,35 @@ end
     return (string(typeof(kin).name),kin.Tmin,kin.Tmax,kin.Pmin,kin.Pmax,size(kin.coefs)) #different opt functions, but always can do
 end
 export getkineticstype
+
+@inline function _calcdkdCeff(tbarr::ThirdBody,T::Float64,Ceff::Float64)
+    return @fastmath tbarr.arr(T)
+end
+
+@inline function _calcdkdCeff(lnd::Lindemann,T::Float64,Ceff::Float64)
+    k0 = lnd.arrlow(T=T)
+    kinf = lnd.arrhigh(T=T)
+    @fastmath Pr = k0*Ceff/kinf
+    return @fastmath k0/((1.0+Pr)*(1.0+Pr))
+end
+
+@inline function _calcdkdCeff(tr::Troe,T::Float64,Ceff::Float64)
+    k0 = tr.arrlow(T=T)
+    kinf = tr.arrhigh(T=T)
+    @fastmath Pr = k0*Ceff/kinf
+    if tr.T1 == 0.0 && tr.T3 == 0.0
+        return @fastmath k0/((1.0+Pr)*(1.0+Pr))
+    else
+        @fastmath Fcent = (1-tr.a)*exp(-T/tr.T3)+tr.a*exp(-T/tr.T1)
+        if tr.T2 !== 0.0
+            @fastmath Fcent += exp(-tr.T2/T)
+        end
+        d = 0.14
+        @fastmath n = 0.75-1.27*log10(Fcent)
+        @fastmath c = -0.4-0.67*log10(Fcent)
+        @fastmath x = (log10(Pr)+c)/(n-d*log10(Pr))
+        @fastmath F = 10.0^(log10(Fcent)/(1.0+x*x))
+        @fastmath dFdCeff = -log(10.0)*F*log10(Fcent)/((1.0+x*x)*(1.0+x*x))*2.0*x*log10(ℯ)/Pr*k0/kinf/(n-d*log10(Pr))*(1.0+d*x)
+        return @fastmath k0/((1.0+Pr)*(1.0+Pr))*F + kinf*Pr/(1.0+Pr)*dFdCeff
+    end
+end

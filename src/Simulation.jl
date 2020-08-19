@@ -127,9 +127,9 @@ this assumes no changes in code branching during simulation, if that were to bec
 based alternative algorithm is slower, but avoids this concern. 
 """
 function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2}
-    @assert target in bsol.names || target in ["T","V"]
-    if target in ["T","V"]
-        ind = bsol.domain.indexes[end]
+    @assert target in bsol.names || target in ["T","V","P"]
+    if target in ["T","V","P"]
+        ind = getthermovariableindex(bsol.domain,target)
     else
         ind = findfirst(isequal(target),bsol.names)
     end
@@ -149,7 +149,7 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
     dgdp(out, y, p, t) = ForwardDiff.gradient!(out, p -> g(y, p, t), p)
     du0,dpadj = adjoint_sensitivities(bsol.sol,solver,g,nothing,(dgdu,dgdp);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
     dpadj[length(bsol.domain.phase.species)+1:end] .*= bsol.domain.p[length(bsol.domain.phase.species)+1:end]
-    if !(target in ["T","V"])
+    if !(target in ["T","V","P"])
         dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
     end
     return dpadj
