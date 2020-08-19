@@ -1585,6 +1585,24 @@ end
 end
 export calcdomainderivatives!
 
+@inline function jacobianyefficiencyderiv!(jac::S,domain::Union{ConstantTPDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedPDomain},kinetics::AbstractFalloffRate,efficiencies::Dict{Int64,Float64},rxnarray::Array{Int64,2},rxnind::Int64,Vind::Int64,cs::Array{Float64,1},T::Float64,V::Float64,C::Float64,Ceff::Float64,Kc::Float64) where {S<:AbstractArray}
+    dkdCeff = _calcdkdCeff(kinetics,T,Ceff)
+    for (spcind,efficiencyval) in efficiencies
+        @fastmath dkdni = dkdCeff*(efficiencyval/V)
+        _jacobianykderiv!(jac,spcind,dkdni,dkdni/Kc,rxnarray,rxnind,cs,V)
+    end
+    @fastmath dkdV = dkdCeff*(C-Ceff)/V
+    _jacobianykderiv!(jac,Vind,dkdV,dkdV/Kc,rxnarray,rxnind,cs,V)
+end
+
+@inline function jacobianyefficiencyderiv!(jac::S,domain::Union{ConstantVDomain,ParametrizedVDomain,ConstantTVDomain,ParametrizedTConstantVDomain},kinetics::AbstractFalloffRate,efficiencies::Dict{Int64,Float64},rxnarray::AbstractArray,rxnind::Int64,Vind::Int64,cs::Array{Float64,1},T::Float64,V::Float64,C::Float64,Ceff::Float64,Kc::Float64) where {S<:AbstractArray}
+    dkdCeff = _calcdkdCeff(kinetics,T,Ceff)
+    for (spcind,efficiencyval) in efficiencies
+        @fastmath dkdni = dkdCeff*(efficiencyval/V)
+        _jacobianykderiv!(jac,spcind,dkdni,dkdni/Kc,rxnarray,rxnind,cs,V)
+    end
+end
+
 function getreactionindices(ig::Q) where {Q<:AbstractPhase}
     arr = zeros(Int64,(6,length(ig.reactions)))
     for (i,rxn) in enumerate(ig.reactions)
