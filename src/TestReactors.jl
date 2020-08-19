@@ -73,6 +73,13 @@ N = sim.N(20.44002454)
 @test y[o2ind]/N ≈ 0.200419093 rtol=1e-4
 @test y[h2oind]/N ≈ 0.386618602 rtol=1e-4
 
+#analytic jacobian vs. ForwardDiff jacobian
+t=20.44002454;
+y=sol(t)
+ja=jacobiany(y,p,t,domain,[],nothing);
+j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+
 #sensitivities
 dps = getadjointsensitivities(sim,"H2",CVODE_BDF();sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)),abstol=1e-16,reltol=1e-6)
 react2 = Reactor(domain,y0,(0.0,150.11094);p=p,forwardsensitivities=true)
