@@ -22,6 +22,13 @@ spcnames = getfield.(liq.species,:name)
 octaneind = findfirst(isequal("octane"),spcnames)
 y = sol(32977.61568)
 @test y[octaneind]/sum(y) ≈ 0.461599061 rtol=3e-2 #from RMG simulator I believe the slight difference is due to better calculation of diffusion limits in RMS
+
+#analytic jacobian vs. ForwardDiff jacobian
+t=32977.61568;
+y=sol(t)
+ja=jacobiany(y,p,t,domain,[],nothing);
+j=jacobianyforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
 end;
 
 #Use superminimal example to test
