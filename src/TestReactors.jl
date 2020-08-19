@@ -31,6 +31,22 @@ j=jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
 end;
 
+@testset "Test liquid phase Parametrized T Constant V reactor jacobian" begin
+#Parametrized T constant V Ideal Dilute Liquid
+initialconds = Dict(["ts"=>[0.,600.,1200.],"T"=>[450.0,490.,500.],"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
+domain,y0,p = ParametrizedTConstantVDomain(phase=liq,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
+
+react = Reactor(domain,y0,(0.0,140000.01),p=p) #Create the reactor object
+sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-8); #solve the ode associated with the reactor
+
+#analytic jacobian vs. ForwardDiff jacobian
+t=32977.61568;
+y=sol(t)
+ja=jacobiany(y,p,t,domain,[],nothing);
+j=jacobianyforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+end;
+
 #Use superminimal example to test
 phaseDict = readinput("../src/testing/superminimal.rms") #load mechanism dictionary
 spcs = phaseDict["phase"]["Species"]; #mechanism dictionaries index:  phaseDict[phasename]["Species" or "Reactions"]
