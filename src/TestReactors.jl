@@ -109,6 +109,13 @@ ts = exp.(range(log(1e-15),length=10000,stop=log(0.1)))
 IDT = ts[argmax(diff([sol(t)[end] for t in ts]))] #Ignition Delay Time based on argmax(dTdt(t))
 
 @test IDT ≈ 0.038384723436228063 rtol=1e-5 #from Cantera simulation
+
+#analytic jacobian vs. ForwardDiff jacobian
+t=0.01;
+y = sol(t);
+ja=jacobiany(y,p,t,domain,[],nothing);
+j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
 end;
 
 #Constant P adiabatic Ideal Gas
