@@ -148,6 +148,25 @@ function jacobianp(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing)
 end
 export jacobianp
 
+@inline function _spreadreactantpartials!(jac::S,deriv::Float64,rxnarray::Array{Int64,2},rxnind::Int64,ind::Int64) where {S<:AbstractArray}
+    jac[rxnarray[4,rxnind],ind] += deriv
+    if rxnarray[5,rxnind] !== 0
+        jac[rxnarray[5,rxnind],ind] += deriv
+        if rxnarray[6,rxnind] !== 0
+            jac[rxnarray[6,rxnind],ind] += deriv
+        end
+    end
+end
+@inline function _spreadproductpartials!(jac::S,deriv::Float64,rxnarray::Array{Int64,2},rxnind::Int64,ind::Int64) where {S<:AbstractArray}
+    jac[rxnarray[1,rxnind],ind] += deriv
+    if rxnarray[2,rxnind] !== 0
+        jac[rxnarray[2,rxnind],ind] += deriv
+        if rxnarray[3,rxnind] !== 0
+            jac[rxnarray[3,rxnind],ind] += deriv
+        end
+    end
+end
+
 # function jacobianp!(d::W;cs::Q,V::Y,T::Y2,Us::Z3,Cvave::Z4,N::Z5,kfs::Z,krevs::X,wV::Q2,ratederiv::Q3) where {Q3,W<:Union{ConstantTPDomain,ConstantTVDomain},Z4<:Real,Z5<:Real,Z3<:AbstractArray,Q2<:AbstractArray,Q<:AbstractArray,Y2<:Real,Y<:Real,Z<:AbstractArray,X<:AbstractArray}
 #     Nspcs = length(cs)
 #     rxns = d.phase.reactions
