@@ -17,8 +17,11 @@ function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=Dif
     jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobiany!(J,y,p,t,domain,interfaces,nothing)
     jacyforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,nothing)
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
-    if domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTADomain}
+    
+    if !forwardsensitivities && domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTADomain}
         odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!)
+    elseif forwardsensitivities
+        odefcn = ODEFunction(dydt;paramjac=jacp!)
     else
         odefcn = ODEFunction(dydt;jac=jacyforwarddiff!,paramjac=jacp!)
     end
@@ -94,15 +97,16 @@ function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=[],ps::X=DiffEqBase.N
     end
     
     dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q<:Real,V} = dydtreactor!(dy,y,t,domains,interfaces,p=p)
-    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobiany!(J,y,p,t,domains,interfaces,nothing)
+    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianyforwarddiff!(J,y,p,t,domains,interfaces,nothing)
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J,y,p,t,domains,interfaces,nothing)
 
-    odefcn = ODEFunction(dydt;paramjac=jacp!)
-
+    
     if forwardsensitivities
+        odefcn = ODEFunction(dydt;paramjac=jacp!)
         ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
         recsolver = Sundials.CVODE_BDF(linear_solver=:GMRES)
     else
+        odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!)
         ode = ODEProblem(odefcn,y0,tspan,p)
         recsolver  = Sundials.CVODE_BDF()
     end
