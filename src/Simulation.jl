@@ -153,6 +153,10 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
         dy = similar(p,length(y))
         return dydtreactor!(dy,y,t,bsol.domain,[],p=p)[ind]
     end
+    function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:Float64,Y<:Float64,Z} 
+        dy = zeros(length(y))
+        return dydtreactor!(dy,y,t,bsol.domain,[],p=p)[ind]
+    end
     function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z} 
         dy = similar(y,length(y))
         return dydtreactor!(dy,y,t,bsol.domain,[],p=p)[ind]
