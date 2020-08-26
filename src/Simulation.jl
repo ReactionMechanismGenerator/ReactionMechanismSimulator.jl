@@ -185,7 +185,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     s = svals[indnum]
     V = getV(bsol,t)
     c = bsol.sol(t)[indnum]/V
-    val =  (s-c*sum(svals)*R*bsol.domain.T/bsol.domain.P)/(c*V) #known T and P
+    val =  (s-c*sum(svals)*R*getT(bsol,t)/getP(bsol,t))/(c*V) #known T and P
     if t == 0
         return 0.0
     else
@@ -228,7 +228,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     C = getC(bsol,t)
     c = bsol.sol(t)[indnum]/V
     k = bsol.domain.p[inddeno+length(bsol.domain.phase.species)]
-    val = k*(s-c*sum(svals)*R*bsol.domain.T/bsol.domain.P)/(c*V) #known T and P
+    val = k*(s-c*sum(svals)*R*T/P)/(c*V) #known T and P
     if t == 0
         return 0.0
     else
