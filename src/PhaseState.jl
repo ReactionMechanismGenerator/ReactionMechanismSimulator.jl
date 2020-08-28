@@ -168,7 +168,7 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
 end
 export getkfkrev
 
-@inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,kfs::W6=nothing) where {U<:AbstractPhase,W6,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
+@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5;kfs::W6=nothing) where {U<:AbstractPhase,W6,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
     if !phase.diffusionlimited && kfs === nothing
         kfs = getkfs(phase,T,P,C,ns,V)
         krev = @fastmath kfs./getKcs(phase,T,Gs)
