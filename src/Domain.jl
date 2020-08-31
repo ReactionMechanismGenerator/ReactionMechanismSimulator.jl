@@ -1864,8 +1864,6 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
         end
     end
     
-    @inbounds jacobianytherm!(jac,y,p,t,domain,interfaces,domain.indexes[3],V,colorvec)
-    
     return jac
 end
 
