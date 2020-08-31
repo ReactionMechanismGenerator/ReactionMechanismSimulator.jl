@@ -1858,7 +1858,7 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
     @simd for inter in interfaces
         if isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
-            @simd for i in domain:indexes[1]:domain.indexes[2]
+            @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] .-= flow/N
             end
         end
