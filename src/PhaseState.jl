@@ -1,6 +1,7 @@
 using Parameters
 using SpecialFunctions
 using LinearAlgebra
+using Tracker
 
 @inline function calcgibbs(ph::U,T::W) where {U<:IdealPhase,W<:Real}
     return getGibbs.(getfield.(ph.species,:thermo),T)
@@ -168,7 +169,7 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
 end
 export getkfkrev
 
-@inline function getkfkrevs(;phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,kfs::W6=nothing) where {U<:AbstractPhase,W6,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:AbstractArray,Q3<:AbstractArray}
+@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5;kfs::W6=nothing) where {U<:AbstractPhase,W6,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:Array{Float64,1},Q3<:AbstractArray}
     if !phase.diffusionlimited && kfs === nothing
         kfs = getkfs(phase,T,P,C,ns,V)
         krev = @fastmath kfs./getKcs(phase,T,Gs)
@@ -190,4 +191,53 @@ export getkfkrev
     end
     return kfs,krev
 end
+
+@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5;kfs::W6=nothing) where {U<:AbstractPhase,W6,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q3<:AbstractArray} #autodiff p
+    if !phase.diffusionlimited && kfs === nothing
+        kfs = getkfs(phase,T,P,C,ns,V)
+        krev = @fastmath kfs./getKcs(phase,T,Gs)
+    elseif !phase.diffusionlimited && !(kfs === nothing)
+        krev = @fastmath kfs./getKcs(phase,T,Gs)
+    elseif phase.diffusionlimited && !(kfs === nothing)
+        len = length(phase.reactions)
+        krev = similar(kfs)
+        kfsdiff = similar(kfs)
+        @simd for i = 1:len
+           @fastmath @inbounds kfsdiff[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V;kf=kfs[i])
+        end
+        return kfsdiff, krev
+    else
+        len = length(phase.reactions)
+        kfs = zeros(typeof(Gs[1]),len)
+        krev = zeros(typeof(Gs[1]),len)
+        @simd for i = 1:len
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V)
+        end
+    end
+    return kfs,krev
+end
+
+@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Array{Q2,1},diffs::Q3,V::W5;kfs::W6=nothing) where {U<:AbstractPhase,W6,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:ForwardDiff.Dual,Q3<:AbstractArray} #autodiff p
+    if !phase.diffusionlimited && kfs === nothing
+        kfs = getkfs(phase,T,P,C,ns,V)
+        krev = @fastmath kfs./getKcs(phase,T,Gs)
+    elseif !phase.diffusionlimited && !(kfs === nothing)
+        krev = @fastmath kfs./getKcs(phase,T,Gs)
+    elseif phase.diffusionlimited && !(kfs === nothing)
+        len = length(phase.reactions)
+        krev = similar(kfs)
+        @simd for i = 1:len
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V;kf=kfs[i])
+        end
+    else
+        len = length(phase.reactions)
+        kfs = zeros(typeof(Gs[1]),len)
+        krev = zeros(typeof(Gs[1]),len)
+        @simd for i = 1:len
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V)
+        end
+    end
+    return kfs,krev
+end
+
 export getkfkrevs
