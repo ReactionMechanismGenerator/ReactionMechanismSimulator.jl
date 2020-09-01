@@ -1849,7 +1849,7 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
     @simd for i in domain.indexes[1]:domain.indexes[2]
         @views @inbounds @fastmath jac[domain.indexes[3],i] = sum(jac[domain.indexes[1]:domain.indexes[2],i])*R*T/P
     end
-    @views @inbounds @fastmath jac[domain.indexes[3],domain.indexes[3]] = sum(jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]])*R*T/P
+    @views @inbounds @fastmath jac[domain.indexes[3],domain.indexes[3]] = sum(jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]])*R*T/P + Calculus.derivative(domain.T,t)/T - Calculus.derivative(domain.P,t)/P
     
     @simd for ind in domain.constantspeciesinds
         @inbounds jac[ind,:] .= 0.
@@ -1858,13 +1858,11 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
     @simd for inter in interfaces
         if isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
-            @simd for i in domain:indexes[1]:domain.indexes[2]
+            @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] .-= flow/N
             end
         end
     end
-    
-    @inbounds jacobianytherm!(jac,y,p,t,domain,interfaces,domain.indexes[3],V,colorvec)
     
     return jac
 end
