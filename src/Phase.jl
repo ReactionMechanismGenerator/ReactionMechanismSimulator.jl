@@ -150,9 +150,9 @@ function getveckinetics(rxns)
     otherrxninds = Array{Int64,1}()
     for (i,tp) in enumerate(tps)
         if typeof(tp)<:Tuple
-            typ = tp[1]
+            typ = split(tp[1],".")[end] #this split needs done because in pyrms the type names come as ReactionMechanismSimulator.Arrhenius instead of Arrhenius in RMS proper
         else
-            typ = tp
+            typ = split(tp,".")[end]
         end
         rinds = [findfirst(isequal(rxn),rxns) for rxn in rxnlists[i]]
         fcn = Symbol(typ * "vec")
