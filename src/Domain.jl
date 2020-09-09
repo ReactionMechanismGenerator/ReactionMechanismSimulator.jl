@@ -1988,6 +1988,193 @@ end
 
 export jacobiany!
 
+@inline function jacobianpnsderiv!(jacp::Q,y::U,p::W,t::Z,domain::D,rxnarray::Array{Int64,2},cs::Array{Float64,1},T::Float64,V::Float64,kfs::Array{Float64,1},krevs::Array{Float64,1},Nspcs::Int64,Nrxns::Int64) where {Q3<:AbstractArray,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantTPDomain,ConstantTADomain}}
+    @fastmath  RTinv = 1.0/(R*T)
+    @simd for rxnind = 1:Nrxns
+        if @inbounds rxnarray[2,rxnind] == 0
+            @inbounds fderiv = cs[rxnarray[1,rxnind]]
+        elseif @inbounds  rxnarray[3,rxnind] == 0
+            @fastmath @inbounds fderiv = cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]
+        else
+            @fastmath @inbounds fderiv = cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]
+        end
+
+        if @inbounds rxnarray[5,rxnind] == 0
+            @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]
+        elseif @inbounds rxnarray[6,rxnind] == 0
+            @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]
+        else
+            @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]
+        end
+
+        flux = fderiv-rderiv
+        _spreadreactantpartials!(jacp,flux,rxnarray,rxnind,Nspcs+rxnind)
+        _spreadproductpartials!(jacp,-flux,rxnarray,rxnind,Nspcs+rxnind)
+        
+        @fastmath @inbounds gderiv = rderiv*kfs[rxnind]*RTinv
+
+        @inbounds jacp[rxnarray[1,rxnind],rxnarray[1,rxnind]] -= gderiv
+        @inbounds _spreadreactantpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[1,rxnind])
+        if @inbounds rxnarray[2,rxnind] !== 0
+            @inbounds jacp[rxnarray[2,rxnind],rxnarray[1,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[1,rxnind],rxnarray[2,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[2,rxnind],rxnarray[2,rxnind]] -= gderiv
+            @inbounds _spreadreactantpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[2,rxnind])
+            if @inbounds rxnarray[3,rxnind] !== 0
+                @inbounds jacp[rxnarray[3,rxnind],rxnarray[1,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[3,rxnind],rxnarray[2,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[1,rxnind],rxnarray[3,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[2,rxnind],rxnarray[3,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[3,rxnind],rxnarray[3,rxnind]] -= gderiv
+                @inbounds _spreadreactantpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[3,rxnind])
+            end
+        end
+
+        @inbounds jacp[rxnarray[4,rxnind],rxnarray[4,rxnind]] -= gderiv
+        @inbounds _spreadproductpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[4,rxnind])
+        if @inbounds rxnarray[5,rxnind] !== 0
+            @inbounds jacp[rxnarray[5,rxnind],rxnarray[4,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[4,rxnind],rxnarray[5,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[5,rxnind],rxnarray[5,rxnind]] -= gderiv
+            @inbounds _spreadproductpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[5,rxnind])
+            if @inbounds rxnarray[6,rxnind] !== 0
+                @inbounds jacp[rxnarray[6,rxnind],rxnarray[4,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[6,rxnind],rxnarray[5,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[4,rxnind],rxnarray[6,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[5,rxnind],rxnarray[6,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[6,rxnind],rxnarray[6,rxnind]] -= gderiv
+                @inbounds _spreadproductpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[6,rxnind])
+            end
+        end
+        
+    end
+    jacp .*= V
+end
+
+@inline function jacobianpnsderiv!(jacp::Q,y::U,p::W,t::Z,domain::D,rxnarray::Array{Int64,2},cs::Array{Float64,1},T::Float64,V::Float64,kfs::Array{Float64,1},krevs::Array{Float64,1},Nspcs::Int64,Nrxns::Int64) where {Q3<:AbstractArray,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ParametrizedTConstantVDomain}}
+    @fastmath  RTinv = 1.0/(R*T)
+    @simd for rxnind = 1:Nrxns
+        if @inbounds rxnarray[2,rxnind] == 0
+            @fastmath @inbounds fderiv = kfs[rxnind]*cs[rxnarray[1,rxnind]]
+        elseif @inbounds rxnarray[3,rxnind] == 0
+            @fastmath @inbounds fderiv = kfs[rxnind]*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]
+        else
+            @fastmath @inbounds fderiv = kfs[rxnind]*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]
+        end
+
+        if @inbounds rxnarray[5,rxnind] == 0
+            @fastmath @inbounds rderiv = krevs[rxnind]*cs[rxnarray[4,rxnind]]
+        elseif @inbounds rxnarray[6,rxnind] == 0
+            @fastmath @inbounds rderiv = krevs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]
+        else
+            @fastmath @inbounds rderiv = krevs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]
+        end
+
+        @fastmath flux = fderiv-rderiv
+        _spreadreactantpartials!(jacp,flux,rxnarray,rxnind,Nspcs+rxnind)
+        _spreadproductpartials!(jacp,-flux,rxnarray,rxnind,Nspcs+rxnind)
+        
+        @fastmath gderiv = rderiv*RTinv
+
+        @inbounds jacp[rxnarray[1,rxnind],rxnarray[1,rxnind]] -= gderiv
+        @inbounds _spreadreactantpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[1,rxnind])
+        if @inbounds rxnarray[2,rxnind] !== 0
+            @inbounds jacp[rxnarray[2,rxnind],rxnarray[1,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[1,rxnind],rxnarray[2,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[2,rxnind],rxnarray[2,rxnind]] -= gderiv
+            @inbounds _spreadreactantpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[2,rxnind])
+            if @inbounds rxnarray[3,rxnind] !== 0
+                @inbounds jacp[rxnarray[3,rxnind],rxnarray[1,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[3,rxnind],rxnarray[2,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[1,rxnind],rxnarray[3,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[2,rxnind],rxnarray[3,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[3,rxnind],rxnarray[3,rxnind]] -= gderiv
+                @inbounds _spreadreactantpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[3,rxnind])
+            end
+        end
+
+        @inbounds jacp[rxnarray[4,rxnind],rxnarray[4,rxnind]] -= gderiv
+        @inbounds _spreadproductpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[4,rxnind])
+        if @inbounds rxnarray[5,rxnind] !== 0
+            @inbounds jacp[rxnarray[5,rxnind],rxnarray[4,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[4,rxnind],rxnarray[5,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[5,rxnind],rxnarray[5,rxnind]] -= gderiv
+            @inbounds _spreadproductpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[5,rxnind])
+            if @inbounds rxnarray[6,rxnind] !== 0
+                @inbounds jacp[rxnarray[6,rxnind],rxnarray[4,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[6,rxnind],rxnarray[5,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[4,rxnind],rxnarray[6,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[5,rxnind],rxnarray[6,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[6,rxnind],rxnarray[6,rxnind]] -= gderiv
+                @inbounds _spreadproductpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[6,rxnind])
+            end
+        end
+    end
+    jacp .*= V
+end
+
+@inline function jacobianpnsderiv!(jacp::Q,y::U,p::W,t::Z,domain::D,rxnarray::Array{Int64,2},cs::Array{Float64,1},T::Float64,V::Float64,kfs::Array{Float64,1},krevs::Array{Float64,1},Nspcs::Int64,Nrxns::Int64) where {Q3<:AbstractArray,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantTVDomain}}
+    @fastmath RTinv = 1.0/(R*T)
+    @simd for rxnind = 1:Nrxns
+        if @inbounds rxnarray[2,rxnind] == 0
+            @fastmath @inbounds fderiv = kfs[rxnind]*kfs[rxnind]/(p[Nspcs+rxnind]*p[Nspcs+rxnind])*cs[rxnarray[1,rxnind]]
+        elseif @inbounds rxnarray[3,rxnind] == 0
+            @fastmath @inbounds fderiv = kfs[rxnind]*kfs[rxnind]/(p[Nspcs+rxnind]*p[Nspcs+rxnind])*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]
+        else
+            @fastmath @inbounds fderiv = kfs[rxnind]*kfs[rxnind]/(p[Nspcs+rxnind]*p[Nspcs+rxnind])*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]
+        end
+
+        if @inbounds rxnarray[5,rxnind] == 0
+            @fastmath @inbounds rderiv = kfs[rxnind]*krevs[rxnind]/(p[Nspcs+rxnind]*p[Nspcs+rxnind])*cs[rxnarray[4,rxnind]]
+        elseif @inbounds rxnarray[6,rxnind] == 0
+            @fastmath @inbounds rderiv = kfs[rxnind]*krevs[rxnind]/(p[Nspcs+rxnind]*p[Nspcs+rxnind])*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]
+        else
+            @fastmath @inbounds rderiv = kfs[rxnind]*krevs[rxnind]/(p[Nspcs+rxnind]*p[Nspcs+rxnind])*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]
+        end
+
+        @fastmath flux = fderiv-rderiv
+        _spreadreactantpartials!(jacp,flux,rxnarray,rxnind,Nspcs+rxnind)
+        _spreadproductpartials!(jacp,-flux,rxnarray,rxnind,Nspcs+rxnind)
+        
+        @fastmath @inbounds gderiv = rderiv*(p[Nspcs+rxnind]*p[Nspcs+rxnind])/kfs[rxnind]*RTinv
+
+        @inbounds jacp[rxnarray[1,rxnind],rxnarray[1,rxnind]] -= gderiv
+        @inbounds _spreadreactantpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[1,rxnind])
+        if @inbounds rxnarray[2,rxnind] !== 0
+            @inbounds jacp[rxnarray[2,rxnind],rxnarray[1,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[1,rxnind],rxnarray[2,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[2,rxnind],rxnarray[2,rxnind]] -= gderiv
+            @inbounds _spreadreactantpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[2,rxnind])
+            if @inbounds rxnarray[3,rxnind] !== 0
+                @inbounds jacp[rxnarray[3,rxnind],rxnarray[1,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[3,rxnind],rxnarray[2,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[1,rxnind],rxnarray[3,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[2,rxnind],rxnarray[3,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[3,rxnind],rxnarray[3,rxnind]] -= gderiv
+                @inbounds _spreadreactantpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[3,rxnind])
+            end
+        end
+
+        @inbounds jacp[rxnarray[4,rxnind],rxnarray[4,rxnind]] -= gderiv
+        @inbounds _spreadproductpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[4,rxnind])
+        if @inbounds rxnarray[5,rxnind] !== 0
+            @inbounds jacp[rxnarray[5,rxnind],rxnarray[4,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[4,rxnind],rxnarray[5,rxnind]] -= gderiv
+            @inbounds jacp[rxnarray[5,rxnind],rxnarray[5,rxnind]] -= gderiv
+            @inbounds _spreadproductpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[5,rxnind])
+            if @inbounds rxnarray[6,rxnind] !== 0
+                @inbounds jacp[rxnarray[6,rxnind],rxnarray[4,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[6,rxnind],rxnarray[5,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[4,rxnind],rxnarray[6,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[5,rxnind],rxnarray[6,rxnind]] -= gderiv
+                @inbounds jacp[rxnarray[6,rxnind],rxnarray[6,rxnind]] -= gderiv
+                @inbounds _spreadproductpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[6,rxnind])
+            end
+        end
+    end
+    jacp .*= V
+end
+
 function getreactionindices(ig::Q) where {Q<:AbstractPhase}
     arr = zeros(Int64,(6,length(ig.reactions)))
     for (i,rxn) in enumerate(ig.reactions)
