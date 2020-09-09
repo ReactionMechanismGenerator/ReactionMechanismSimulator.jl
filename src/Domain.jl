@@ -2286,6 +2286,8 @@ function jacobianp!(jacp::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2
     end
 end
 
+export jacobianp!
+
 function getreactionindices(ig::Q) where {Q<:AbstractPhase}
     arr = zeros(Int64,(6,length(ig.reactions)))
     for (i,rxn) in enumerate(ig.reactions)
