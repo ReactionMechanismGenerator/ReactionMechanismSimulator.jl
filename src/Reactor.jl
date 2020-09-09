@@ -266,7 +266,7 @@ end
 # end
 # export jacobiany!
 
-function jacobianp!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     function f(dy::X,p::Array{T,1}) where {X,T<:Real} 
         dydtreactor!(dy,y,t,domain,interfaces;p=p,sensitivity=false)
     end
@@ -274,13 +274,27 @@ function jacobianp!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=no
     ForwardDiff.jacobian!(J,f,dy,p)
 end
 
-function jacobianp!(J::Q,y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
+function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
     function f(dy::X,p::Array{T,1}) where {X,T<:Real} 
         dydtreactor!(dy,y,t,domains,interfaces;p=p,sensitivity=false)
     end
     dy = zeros(length(y))
     ForwardDiff.jacobian!(J,f,dy,p)
 end
+
+export jacobianpforwarddiff!
+
+function jacobianpforwarddiff(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+    J = zeros(length(y),length(domain.phase.species)+length(domain.phase.reactions))
+    jacobianpforwarddiff!(J,y,p,t,domain,interfaces,colorvec)
+end
+
+function jacobianpforwarddiff(y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
+    J = zeros(length(y),length(domains.phase.species)+length(domains.phase.reactions))
+    jacobianpforwarddiff!(J,y,p,t,domains,interfaces,colorvec)
+end
+
+export jacobianpforwarddiff
 
 # function jacobianp!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2<:AbstractArray,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
 #     f(p::Array{T,1}) where {T<:Real} = dydtreactor!(y,domain.t[1],domain,interfaces;p=p,sensitivity=false)
@@ -293,7 +307,6 @@ end
 #     @views wV = dydt[domain.indexes[1]:domain.indexes[2]]
 #     jacobianp!(domain;cs=cs,V=V,T=T,Us=Us,Cvave=Cvave,N=N,kfs=kfs,krevs=krevs,wV=wV,ratederiv=J)
 # end
-export jacobianp!
 
 function jacobiany(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     J = zeros(length(y),length(y))
