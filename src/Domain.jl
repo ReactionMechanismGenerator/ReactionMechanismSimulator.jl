@@ -2272,6 +2272,20 @@ function jacobianp!(jacp::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2
     end
 end
 
+function jacobianp!(jacp::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTADomain}}
+    jacp.=0.0
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
+    
+    Nspcs = length(cs)
+    Nrxns = size(domain.rxnarray)[2]
+    
+    jacobianpnsderiv!(jacp,y,p,t,domain,domain.rxnarray,cs,T,V,kfs,krevs,Nspcs,Nrxns)
+    
+    @simd for ind in domain.constantspeciesinds
+        @inbounds jacp[ind,:] .= 0.
+    end
+end
+
 function getreactionindices(ig::Q) where {Q<:AbstractPhase}
     arr = zeros(Int64,(6,length(ig.reactions)))
     for (i,rxn) in enumerate(ig.reactions)
