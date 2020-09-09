@@ -321,6 +321,7 @@ export jacobiany
 function jacobianp(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     J = zeros(length(y),length(domain.phase.species)+length(domain.phase.reactions))
     jacobianp!(J,y,p,t,domain,interfaces,colorvec)
+    return J
 end
 export jacobianp
 
