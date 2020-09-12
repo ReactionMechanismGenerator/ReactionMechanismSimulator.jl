@@ -309,20 +309,20 @@ end
 export jacobianp
 
 @inline function _spreadreactantpartials!(jac::S,deriv::Float64,rxnarray::Array{Int64,2},rxnind::Int64,ind::Int64) where {S<:AbstractArray}
-    jac[rxnarray[4,rxnind],ind] += deriv
-    if rxnarray[5,rxnind] !== 0
-        jac[rxnarray[5,rxnind],ind] += deriv
-        if rxnarray[6,rxnind] !== 0
-            jac[rxnarray[6,rxnind],ind] += deriv
+    @inbounds jac[rxnarray[4,rxnind],ind] += deriv
+    if @inbounds rxnarray[5,rxnind] !== 0
+        @inbounds jac[rxnarray[5,rxnind],ind] += deriv
+        if @inbounds rxnarray[6,rxnind] !== 0
+            @inbounds jac[rxnarray[6,rxnind],ind] += deriv
         end
     end
 end
 @inline function _spreadproductpartials!(jac::S,deriv::Float64,rxnarray::Array{Int64,2},rxnind::Int64,ind::Int64) where {S<:AbstractArray}
-    jac[rxnarray[1,rxnind],ind] += deriv
-    if rxnarray[2,rxnind] !== 0
-        jac[rxnarray[2,rxnind],ind] += deriv
-        if rxnarray[3,rxnind] !== 0
-            jac[rxnarray[3,rxnind],ind] += deriv
+    @inbounds jac[rxnarray[1,rxnind],ind] += deriv
+    if @inbounds rxnarray[2,rxnind] !== 0
+        @inbounds jac[rxnarray[2,rxnind],ind] += deriv
+        if @inbounds rxnarray[3,rxnind] !== 0
+            @inbounds jac[rxnarray[3,rxnind],ind] += deriv
         end
     end
 end
