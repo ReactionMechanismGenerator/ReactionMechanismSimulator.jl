@@ -116,6 +116,24 @@ y = sol(t);
 ja=jacobiany(y,p,t,domain,[],nothing);
 j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+
+#sensitivities
+react = Reactor(domain,y0,(0.0,0.02),p=p) #Create the reactor object
+sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
+sim = Simulation(sol,domain)
+dps = getadjointsensitivities(sim,"H2",CVODE_BDF();sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol=1e-16,reltol=1e-6)
+react2 = Reactor(domain,y0,(0.0,0.02);p=p,forwardsensitivities=true)
+sol2 = solve(react2.ode,CVODE_BDF(),abstol=1e-16,reltol=1e-6); #solve the ode associated with the reactor
+sim2 = Simulation(sol2,domain)
+
+x,dp = extract_local_sensitivities(sol2,0.02);
+ind = findfirst(isequal("H2"),sim2.names)
+dpvs = [v[ind] for v in dp]
+dpvs[length(domain.phase.species)+1:end] .*= domain.p[length(domain.phase.species)+1:end]
+dpvs ./= sol2(0.02)[ind]
+rerr = (dpvs .- dps')./dpvs
+rerr = [isinf(x) ? 0.0 : x for x in rerr]
+@test all((abs.(rerr) .> 2e-1).==false)
 end;
 
 #Constant P adiabatic Ideal Gas

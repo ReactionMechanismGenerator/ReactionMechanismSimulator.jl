@@ -138,7 +138,7 @@ By default uses the InterpolatingAdjoint algorithm with vector Jacobian products
 this assumes no changes in code branching during simulation, if that were to become no longer true, the Tracker 
 based alternative algorithm is slower, but avoids this concern. 
 """
-function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2}
+function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2}
     @assert target in bsol.names || target in ["T","V","P"]
     if target in ["T","V","P"]
         ind = getthermovariableindex(bsol.domain,target)
