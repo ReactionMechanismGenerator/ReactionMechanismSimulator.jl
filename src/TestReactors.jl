@@ -29,6 +29,10 @@ y=sol(t)
 ja=jacobiany(y,p,t,domain,[],nothing);
 j=jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+
+jpa=jacobianp(y,p,t,domain,[],nothing);
+jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 end;
 
 @testset "Test liquid phase Parametrized T Constant V reactor jacobian" begin
@@ -45,6 +49,10 @@ y=sol(t)
 ja=jacobiany(y,p,t,domain,[],nothing);
 j=jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+
+jpa=jacobianp(y,p,t,domain,[],nothing);
+jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 end;
 
 #Use superminimal example to test
@@ -79,6 +87,10 @@ y=sol(t)
 ja=jacobiany(y,p,t,domain,[],nothing);
 j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+
+jpa=jacobianp(y,p,t,domain,[],nothing);
+jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 
 #sensitivities
 dps = getadjointsensitivities(sim,"H2",CVODE_BDF(linear_solver=:GMRES);sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)),abstol=1e-16,reltol=1e-6)
@@ -116,6 +128,10 @@ y = sol(t);
 ja=jacobiany(y,p,t,domain,[],nothing);
 j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+
+jpa=jacobianp(y,p,t,domain,[],nothing);
+jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 
 #sensitivities
 react = Reactor(domain,y0,(0.0,0.02),p=p) #Create the reactor object
@@ -163,6 +179,10 @@ ja=jacobiany(y,p,t,domain,[],nothing);
 j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
 
+jpa=jacobianp(y,p,t,domain,[],nothing);
+jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
+
 end;
 
 #Parametrized T and P Ideal Gas
@@ -180,6 +200,10 @@ y = sol(t);
 ja=jacobiany(y,p,t,domain,[],nothing);
 j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+
+jpa=jacobianp(y,p,t,domain,[],nothing);
+jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 end;
 
 #Parametrized V adiabatic Ideal Gas
@@ -197,6 +221,10 @@ y = sol(t);
 ja=jacobiany(y,p,t,domain,[],nothing);
 j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+
+jpa=jacobianp(y,p,t,domain,[],nothing);
+jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 end;
 
 #Parametrized P adiabatic Ideal Gas
@@ -214,6 +242,10 @@ y = sol(t);
 ja=jacobiany(y,p,t,domain,[],nothing);
 j = jacobianyforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+
+jpa=jacobianp(y,p,t,domain,[],nothing);
+jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
+@test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 end;
 
 

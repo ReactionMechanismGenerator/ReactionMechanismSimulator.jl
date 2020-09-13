@@ -17,13 +17,16 @@ function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=Dif
     jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobiany!(J,y,p,t,domain,interfaces,nothing)
     jacyforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,nothing)
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
+    jacpforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,nothing)
     
-    if !forwardsensitivities && domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTADomain}
-        odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!)
-    elseif forwardsensitivities
-        odefcn = ODEFunction(dydt;paramjac=jacp!)
+    if domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTADomain}
+        if !forwardsensitivities
+            odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!)
+        else
+            odefcn = ODEFunction(dydt;paramjac=jacp!)
+        end
     else
-        odefcn = ODEFunction(dydt;jac=jacyforwarddiff!,paramjac=jacp!)
+        odefcn = ODEFunction(dydt;jac=jacyforwarddiff!,paramjac=jacpforwarddiff!) 
     end
     if forwardsensitivities
         ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
@@ -98,7 +101,7 @@ function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=[],ps::X=DiffEqBase.N
     
     dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q<:Real,V} = dydtreactor!(dy,y,t,domains,interfaces,p=p)
     jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianyforwarddiff!(J,y,p,t,domains,interfaces,nothing)
-    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J,y,p,t,domains,interfaces,nothing)
+    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianpforwarddiff!(J,y,p,t,domains,interfaces,nothing)
 
     
     if forwardsensitivities
@@ -266,7 +269,7 @@ end
 # end
 # export jacobiany!
 
-function jacobianp!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     function f(dy::X,p::Array{T,1}) where {X,T<:Real} 
         dydtreactor!(dy,y,t,domain,interfaces;p=p,sensitivity=false)
     end
@@ -274,13 +277,27 @@ function jacobianp!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=no
     ForwardDiff.jacobian!(J,f,dy,p)
 end
 
-function jacobianp!(J::Q,y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
+function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
     function f(dy::X,p::Array{T,1}) where {X,T<:Real} 
         dydtreactor!(dy,y,t,domains,interfaces;p=p,sensitivity=false)
     end
     dy = zeros(length(y))
     ForwardDiff.jacobian!(J,f,dy,p)
 end
+
+export jacobianpforwarddiff!
+
+function jacobianpforwarddiff(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+    J = zeros(length(y),length(domain.phase.species)+length(domain.phase.reactions))
+    jacobianpforwarddiff!(J,y,p,t,domain,interfaces,colorvec)
+end
+
+function jacobianpforwarddiff(y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
+    J = zeros(length(y),length(domains.phase.species)+length(domains.phase.reactions))
+    jacobianpforwarddiff!(J,y,p,t,domains,interfaces,colorvec)
+end
+
+export jacobianpforwarddiff
 
 # function jacobianp!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2<:AbstractArray,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
 #     f(p::Array{T,1}) where {T<:Real} = dydtreactor!(y,domain.t[1],domain,interfaces;p=p,sensitivity=false)
@@ -293,7 +310,6 @@ end
 #     @views wV = dydt[domain.indexes[1]:domain.indexes[2]]
 #     jacobianp!(domain;cs=cs,V=V,T=T,Us=Us,Cvave=Cvave,N=N,kfs=kfs,krevs=krevs,wV=wV,ratederiv=J)
 # end
-export jacobianp!
 
 function jacobiany(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     J = zeros(length(y),length(y))
@@ -305,24 +321,25 @@ export jacobiany
 function jacobianp(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     J = zeros(length(y),length(domain.phase.species)+length(domain.phase.reactions))
     jacobianp!(J,y,p,t,domain,interfaces,colorvec)
+    return J
 end
 export jacobianp
 
 @inline function _spreadreactantpartials!(jac::S,deriv::Float64,rxnarray::Array{Int64,2},rxnind::Int64,ind::Int64) where {S<:AbstractArray}
-    jac[rxnarray[4,rxnind],ind] += deriv
-    if rxnarray[5,rxnind] !== 0
-        jac[rxnarray[5,rxnind],ind] += deriv
-        if rxnarray[6,rxnind] !== 0
-            jac[rxnarray[6,rxnind],ind] += deriv
+    @inbounds jac[rxnarray[4,rxnind],ind] += deriv
+    if @inbounds rxnarray[5,rxnind] !== 0
+        @inbounds jac[rxnarray[5,rxnind],ind] += deriv
+        if @inbounds rxnarray[6,rxnind] !== 0
+            @inbounds jac[rxnarray[6,rxnind],ind] += deriv
         end
     end
 end
 @inline function _spreadproductpartials!(jac::S,deriv::Float64,rxnarray::Array{Int64,2},rxnind::Int64,ind::Int64) where {S<:AbstractArray}
-    jac[rxnarray[1,rxnind],ind] += deriv
-    if rxnarray[2,rxnind] !== 0
-        jac[rxnarray[2,rxnind],ind] += deriv
-        if rxnarray[3,rxnind] !== 0
-            jac[rxnarray[3,rxnind],ind] += deriv
+    @inbounds jac[rxnarray[1,rxnind],ind] += deriv
+    if @inbounds rxnarray[2,rxnind] !== 0
+        @inbounds jac[rxnarray[2,rxnind],ind] += deriv
+        if @inbounds rxnarray[3,rxnind] !== 0
+            @inbounds jac[rxnarray[3,rxnind],ind] += deriv
         end
     end
 end
