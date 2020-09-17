@@ -18,18 +18,7 @@ Easy to add new features.
 
 ## Installation
 
-RMS currently has dependencies that are only available in python 2.  So currently in order to use RMS it is necessary for your PyCall to reference a python 2 installation.  
-
-This can be done with PyCall uninstalled:  
-```
-using Pkg
-ENV["PYTHON"] = "absolute path to python 2 executable ex:  ~/anaconda2/envs/conda_jl/bin/python"
-ENV["CONDA_JL_HOME"] = "absolute path to the python install ex:  ~/anaconda2/envs/conda_jl"
-Pkg.add("PyCall")
-Pkg.build("PyCall")
-```
-
-Once this is done RMS can be installed with:
+RMS can be installed with:
 ```
 using Pkg
 Pkg.add("ReactionMechanismSimulator")
