@@ -1739,7 +1739,7 @@ end
         if isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
             @simd for i in domain.indexes[1]:domain.indexes[2]
-                @inbounds @fastmath jac[i,i] .-= flow/N
+                @inbounds @fastmath jac[i,i] -= flow/N
             end
             @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]] .-= flow.*ns.*(-C)
         end
@@ -1777,7 +1777,7 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
         elseif isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
             @simd for i in domain.indexes[1]:domain.indexes[2]
-                @inbounds @fastmath jac[i,i] .-= flow/N
+                @inbounds @fastmath jac[i,i] -= flow/N
                 @inbounds @fastmath dCvavedni = cpdivR[i]*R/N
                 @fastmath dTdt = (P*V/N*flow)/(N*Cvave)
                 @fastmath ddnidTdt = -dTdt*(dCvavedni/Cvave)
@@ -1832,7 +1832,7 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
         elseif isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
             @simd for i in domain.indexes[1]:domain.indexes[2]
-                @inbounds @fastmath jac[i,i] .-= flow/N
+                @inbounds @fastmath jac[i,i] -= flow/N
             end
         end
     end
@@ -1859,7 +1859,7 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
         if isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
             @simd for i in domain.indexes[1]:domain.indexes[2]
-                @inbounds @fastmath jac[i,i] .-= flow/N
+                @inbounds @fastmath jac[i,i] -= flow/N
             end
         end
     end
@@ -1900,7 +1900,7 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
             flow = inter.F(t)
             @fastmath dTdt = (P*V/N*flow)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
-                @inbounds @fastmath jac[i,i] .-= flow/N
+                @inbounds @fastmath jac[i,i] -= flow/N
                 @inbounds @fastmath dCvavedni = cpdivR[i]*R/N
                 @fastmath ddnidTdt = -dTdt*(dCvavedni/Cvave)
                 @inbounds jac[domain.indexes[3],i] -= ddnidTdt
@@ -1955,7 +1955,7 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
         elseif isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
             @simd for i in domain.indexes[1]:domain.indexes[2]
-                @inbounds @fastmath jac[i,i] .-= flow/N
+                @inbounds @fastmath jac[i,i] -= flow/N
             end
             @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]] .-= -flow.*ns./N/V
         end
@@ -1978,7 +1978,7 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
         if isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
             @simd for i in domain.indexes[1]:domain.indexes[2]
-                @inbounds @fastmath jac[i,i] .-= flow/N
+                @inbounds @fastmath jac[i,i] -= flow/N
             end
         end
     end
