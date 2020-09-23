@@ -2,7 +2,6 @@ using Parameters
 using LinearAlgebra
 using StaticArrays
 using Calculus
-using SmoothingSplines
 using DiffEqBase
 using ForwardDiff
 using Tracker
@@ -2306,12 +2305,3 @@ function getreactionindices(ig::Q) where {Q<:AbstractPhase}
     return arr
 end
 export getreactionindices
-
-"""
-fit a cubic spline to data and return a function evaluating that spline
-"""
-function getspline(xs,vals;s=1e-10)
-    smspl = fit(SmoothingSpline,xs,vals,s)
-    F(x::T) where {T} = predict(smspl,x)
-    return F
-end

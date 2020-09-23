@@ -1,3 +1,5 @@
+using SmoothingSplines
+
 function includeall(dir)
     for (root,dirs,files) in walkdir(dir)
         for file in files
@@ -37,3 +39,12 @@ export evalpoly
     return (length(x),-1)
 end
 export getBoundingIndsSorted
+
+"""
+fit a cubic spline to data and return a function evaluating that spline
+"""
+function getspline(xs,vals;s=1e-10)
+    smspl = fit(SmoothingSpline,xs,vals,s)
+    F(x::T) where {T} = _predict(smspl,x)
+    return F
+end
