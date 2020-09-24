@@ -2375,3 +2375,24 @@ export getreactionindices
     
     return sensspcs,sensrxns,sensspcnames,senstooriginspcind,senstooriginrxnind
 end
+
+@inline function getsensdomain(domain::D,ind::Int64) where {D<:AbstractDomain}
+    
+    sensspcs,sensrxns,sensspcnames,senstooriginspcind,senstooriginrxnind = getsensspcsrxns(domain,ind)
+    
+    initialconds = Dict{String,Float64}()
+
+    for fn in fieldnames(typeof(domain))
+        if fn in (:T, :P, :V)
+            initialconds["$fn"] = getfield(domain,fn)
+        end
+    end
+    
+    d = Symbol(split(repr(typeof(domain)),"{")[1])
+
+    if isa(domain.phase,IdealGas)
+        return eval(d)(phase=IdealGas(sensspcs,sensrxns,name="phase"),initialconds=initialconds)[1],sensspcnames,senstooriginspcind,senstooriginrxnind
+    else
+        return eval(d)(phase=IdealDiluteSolution(sensspcs,sensrxns,domain.phase.solvent,name="phase"),initialconds=initialconds)[1],sensspcnames,senstooriginspcind,senstooriginrxnind
+    end
+end
