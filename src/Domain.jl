@@ -2305,3 +2305,73 @@ function getreactionindices(ig::Q) where {Q<:AbstractPhase}
     return arr
 end
 export getreactionindices
+
+@inline function getsensspcsrxns(domain::D,ind::Int64) where {D<:AbstractDomain}
+    sensspcinds = Array{Int64,1}()
+    sensrxninds = Array{Int64,1}()
+    for rxnind in 1:size(domain.rxnarray)[2]
+        if ind in @inbounds @view domain.rxnarray[:,rxnind]
+            for spcind in @inbounds @view domain.rxnarray[:,rxnind]
+                if !(spcind in sensspcinds) && (spcind !== 0)
+                    push!(sensspcinds,spcind)
+                end
+            end
+            push!(sensrxninds,rxnind)
+        end
+    end
+    
+    sensrxns = Array{ElementaryReaction,1}(undef,length(sensrxninds))
+    sensspcs = Array{Species,1}(undef,length(sensspcinds))
+    sensspcnames = Array{String,1}(undef,length(sensspcinds))
+    senstooriginspcind = Array{Int64,1}(undef,length(sensspcinds))
+    senstooriginrxnind = Array{Int64,1}(undef,length(sensrxninds))
+    for (i,spcind) in enumerate(sensspcinds)
+        spc = domain.phase.species[spcind]
+        sensspcnames[i] = spc.name
+        @inbounds sensspcs[i] = Species(
+            name=spc.name,
+            index=i,
+            inchi=spc.inchi,
+            smiles=spc.smiles,
+            thermo=spc.thermo,
+            atomnums=spc.atomnums,
+            bondnum=spc.bondnum,
+            diffusion=spc.diffusion,
+            radius=spc.radius,
+            radicalelectrons=spc.radicalelectrons,
+        )
+        @inbounds senstooriginspcind[i] = spcind
+    end
+    
+    for (i, rxnind) in enumerate(sensrxninds)
+        rxn = domain.phase.reactions[rxnind]
+        reactants = Array{Species,1}()
+        reactantinds = Array{Int64,1}()
+        @simd for reactant in rxn.reactants
+            ind = findfirst(isequal(reactant.name),sensspcnames)
+            @inbounds push!(reactants,sensspcs[ind])
+            push!(reactantinds,ind)
+        end
+        products = Array{Species,1}()
+        productinds = Array{Int64,1}()
+        @simd for product in rxn.products
+            ind = findfirst(isequal(product.name),sensspcnames)
+            @inbounds push!(products,sensspcs[ind])
+            push!(productinds,ind)
+        end
+
+        @inbounds sensrxns[i] = ElementaryReaction(
+            index=i,
+            reactants=SVector(reactants...),
+            reactantinds=SVector(reactantinds...),
+            products=SVector(products...),
+            productinds=SVector(productinds...),
+            kinetics=rxn.kinetics,
+            radicalchange=rxn.radicalchange,
+            pairs=rxn.pairs
+        )
+        @inbounds senstooriginrxnind[i] = rxnind
+    end
+    
+    return sensspcs,sensrxns,sensspcnames,senstooriginspcind,senstooriginrxnind
+end
