@@ -2315,23 +2315,3 @@ function getspline(xs,vals;s=1e-10)
     F(x::T) where {T} = predict(smspl,x)
     return F
 end
-
-function getthermovariableindex(domain::Union{ConstantTPDomain,ParametrizedTPDomain},target::String)
-    return domain.indexes[3]
-end
-
-function getthermovariableindex(domain::Union{ConstantVDomain,ParametrizedVDomain},target::String)
-    if target == "T"
-        return domain.indexes[3]
-    elseif target == "P"
-        return domain.indexes[4]
-    end
-end
-
-function getthermovariableindex(domain::Union{ConstantPDomain,ParametrizedPDomain},target::String)
-    if target == "T"
-        return domain.indexes[3]
-    elseif target == "V"
-        return domain.indexes[4]
-    end
-end
