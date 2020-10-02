@@ -19,7 +19,7 @@ function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=Dif
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
     jacpforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,nothing)
     
-    if domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTADomain}
+    if domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTAPhiDomain}
         if !forwardsensitivities
             odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!)
         else
@@ -178,7 +178,7 @@ export addreactionratecontributions!
 
 @inline function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z<:Real,U,J<:Integer,Q<:AbstractDomain}    
     dydt .= 0.0
-    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,p)
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
     calcdomainderivatives!(domain,dydt,interfaces;t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
@@ -188,7 +188,7 @@ end
     cstot = zeros(typeof(y).parameters[1],length(y))
     dydt .= 0.0
     domain = domains[1]
-    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave = calcthermo(domain,y,t,p)
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,phi = calcthermo(domain,y,t,p)
     vns = Array{Any,1}(undef,length(domains))
     vns[1] = ns
     vcs = Array{Any,1}(undef,length(domains))
@@ -220,11 +220,13 @@ end
     vdiffs[1] = diffs
     vCvave = Array{Any,1}(undef,length(domains))
     vCvave[1] = Cvave
+    vphi = Array{Any,1}(undef,length(domains))
+    vphi[1] = phi
     addreactionratecontributions!(dydt,domain.rxnarray,cstot,kfs,krevs)
     @views dydt[domain.indexes[1]:domain.indexes[2]] .*= V
     for (i,domain) in enumerate(@views domains[2:end])
         k = i + 1
-        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k] = calcthermo(domain,y,t,p)
+        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(domain,y,t,p)
         cstot[domain.indexes[1]:domain.indexes[2]] .= vcs[k]
         addreactionratecontributions!(dydt,domain.rxnarray,cstot,vkfs[k],vkrevs[k])
         @views dydt[domain.indexes[1]:domain.indexes[2]] .*= vV[k]
