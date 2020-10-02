@@ -16,7 +16,7 @@ include("Calculators/Ratevec.jl")
 include("Calculators/Thermovec.jl")
 include("Reaction.jl")
 
-@with_kw struct IdealGas{W<:Tuple,W2} <: IdealPhase
+@with_kw struct IdealGas{W<:Tuple,W2,W3} <: IdealPhase
     name::String = ""
     species::Array{Species,1}
     reactions::Array{ElementaryReaction,1}
@@ -27,6 +27,7 @@ include("Reaction.jl")
     veckineticsinds::Array{Int64,1}
     vecthermo::NASAvec
     otherreactions::Array{ElementaryReaction,1}
+    electronchange::W3
     diffusionlimited::Bool = false
 end
 IdealGas(species,reactions; name="",diffusionlimited=false) = IdealGas(species=species,reactions=reactions,name=name,
@@ -39,12 +40,18 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
         productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     M,Nrp = getstoichmatrix(species,rxns)
+    echangevec = getfield.(rxns,:electronchange)
+    if all(echangevec .== 0)
+        electronchange = nothing
+    else 
+        electronchange = convert(echangevec,Array{Float64,1})
+    end
     return IdealGas(species=species,reactions=rxns,name=name,
-        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple, veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns,diffusionlimited=diffusionlimited,)
+        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple, veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns, electronchange=electronchange, diffusionlimited=diffusionlimited,)
 end
 export IdealGas
 
-@with_kw struct IdealDiluteSolution{W<:Tuple,W2} <: IdealPhase
+@with_kw struct IdealDiluteSolution{W<:Tuple,W2,W3} <: IdealPhase
     name::String = ""
     species::Array{Species,1}
     reactions::Array{ElementaryReaction,1}
@@ -55,6 +62,7 @@ export IdealGas
     veckineticsinds::Array{Int64,1}
     vecthermo::NASAvec
     otherreactions::Array{ElementaryReaction,1}
+    electronchange::W3
     spcdict::Dict{String,Int64}
     diffusionlimited::Bool = true
 end
@@ -67,22 +75,28 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
         productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     M,Nrp = getstoichmatrix(species,rxns)
+    echangevec = getfield.(rxns,:electronchange)
+    if all(echangevec .== 0)
+        electronchange = nothing
+    else 
+        electronchange = convert(echangevec,Array{Float64,1})
+    end
     return IdealDiluteSolution(species=species,reactions=rxns,solvent=solvent,name=name,
-        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple,veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,diffusionlimited=diffusionlimited)
+        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple,veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,diffusionlimited=diffusionlimited)
 end
 export IdealDiluteSolution
 
-@with_kw struct IdealSurface{W<:Tuple,W2} <: IdealPhase
+@with_kw struct IdealSurface{W<:Tuple,W2,W3} <: IdealPhase
     name::String = ""
     species::Array{Species,1}
     reactions::Array{ElementaryReaction,1}
-    sitedensity::Float64
     stoichmatrix::W2
     Nrp::Array{Float64,1}
     veckinetics::W
     veckineticsinds::Array{Int64,1}
     vecthermo::NASAvec
     otherreactions::Array{ElementaryReaction,1}
+    electronchange::W3
     spcdict::Dict{String,Int64}
     diffusionlimited::Bool = false
 end
@@ -94,8 +108,13 @@ function IdealSurface(species,reactions,sitedensity; name="",diffusionlimited=fa
         productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     M,Nrp = getstoichmatrix(species,rxns)
+    if all(echangevec .== 0)
+        electronchange = nothing
+    else 
+        electronchange = convert(echangevec,Array{Float64,1})
+    end
     return IdealSurface(species=species,reactions=rxns,sitedensity=sitedensity,name=name,
-        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple,veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,diffusionlimited=diffusionlimited)
+        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple,veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,diffusionlimited=diffusionlimited)
 end
 export IdealSurface
 
