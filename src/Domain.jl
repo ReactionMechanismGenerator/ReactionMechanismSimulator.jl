@@ -2,7 +2,6 @@ using Parameters
 using LinearAlgebra
 using StaticArrays
 using Calculus
-using SmoothingSplines
 using DiffEqBase
 using ForwardDiff
 using Tracker
@@ -37,6 +36,7 @@ export AbstractVariableKDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
     p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
 end
 function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::Array{X3,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,E2<:AbstractPhase,Q<:AbstractInterface,W<:Real,X,X2,X3}
@@ -97,7 +97,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
     end
     rxnarray = getreactionindices(phase)
     return ConstantTPDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1],[1,length(phase.species)+length(phase.reactions)],constspcinds,
-        T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,false,MVector(false),MVector(0.0),p), y0, p
+        T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,false,MVector(false),MVector(0.0),p, Dict("V"=>phase.species[end].index+1)), y0, p
 end
 export ConstantTPDomain
 
@@ -114,6 +114,7 @@ export ConstantTPDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
     p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
 end
 function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {E,X,X2,Z<:IdealGas,Q<:AbstractInterface}
@@ -164,7 +165,7 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     end
     rxnarray = getreactionindices(phase)
     return ConstantVDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
-    V,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    V,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict("T"=>phase.species[end].index+1,"P"=>phase.species[end].index+2)), y0, p
 end
 export ConstantVDomain
 
@@ -181,6 +182,7 @@ export ConstantVDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
     p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
 end
 function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {E,X,X2,Z<:IdealGas,Q<:AbstractInterface}
@@ -231,7 +233,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
     end
     rxnarray = getreactionindices(phase)
     return ConstantPDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
-    P,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    P,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict("T"=>phase.species[end].index+1,"V"=>phase.species[end].index+2)), y0, p
 end
 export ConstantPDomain
 
@@ -249,6 +251,7 @@ export ConstantPDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
     p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
 end
 function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,Z<:IdealGas,Q<:AbstractInterface}
@@ -311,7 +314,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedTPDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1],[1,length(phase.species)+length(phase.reactions)],constspcinds,
-    Tfcn,Pfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    Tfcn,Pfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict("V"=>phase.species[end].index+1)), y0, p
 end
 export ParametrizedTPDomain
 
@@ -328,6 +331,7 @@ export ParametrizedTPDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
     p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
 end
 function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,E<:Real,Z<:IdealGas,Q<:AbstractInterface}
@@ -387,7 +391,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedVDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
-    Vfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    Vfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict("T"=>phase.species[end].index+1,"P"=>phase.species[end].index+2)), y0, p
 end
 export ParametrizedVDomain
 
@@ -404,6 +408,7 @@ export ParametrizedVDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
     p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
 end
 function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,E<:Real,Z<:IdealGas,Q<:AbstractInterface}
@@ -463,7 +468,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedPDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
-    Pfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    Pfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict("T"=>phase.species[end].index+1,"V"=>phase.species[end].index+2)), y0, p
 end
 export ParametrizedPDomain
 
@@ -488,6 +493,7 @@ export ParametrizedPDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
     p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
 end
 function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse=false,sensitivity=false) where {E,X,X2, Z<:AbstractPhase,Q<:AbstractInterface,W<:Real}
@@ -545,7 +551,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
     end
     rxnarray = getreactionindices(phase)
     return ConstantTVDomain(phase,[phase.species[1].index,phase.species[end].index],[1,length(phase.species)+length(phase.reactions)],constspcinds,
-        T,V,kfs,krevs,kfsnondiff,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,false,MVector(false),MVector(0.0),p), y0, p
+        T,V,kfs,krevs,kfsnondiff,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,false,MVector(false),MVector(0.0),p,Dict{String,Int64}()), y0, p
 end
 export ConstantTVDomain
 
@@ -563,6 +569,7 @@ export ConstantTVDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
     p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
 end
 function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::Dict{X,X3},constantspecies::Array{X2,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {X,X2,X3,Q<:AbstractInterface}
@@ -614,7 +621,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
     end
     rxnarray = getreactionindices(phase)
     return ParametrizedTConstantVDomain(phase,[phase.species[1].index,phase.species[end].index],[1,length(phase.species)+length(phase.reactions)],constspcinds,
-    Tfcn,V,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p), y0, p
+    Tfcn,V,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict{String,Int64}()), y0, p
 end
 export ParametrizedTConstantVDomain
 
@@ -638,6 +645,7 @@ export ParametrizedTConstantVDomain
     jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
     t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
     p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
 end
 function ConstantTADomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::Array{X3,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false,stationary::Bool=false) where {E<:Real,E2<:AbstractPhase,W<:Real,X,X2,X3}
@@ -686,7 +694,7 @@ function ConstantTADomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
     end
     rxnarray = getreactionindices(phase)
     return ConstantTADomain(phase,[phase.species[1].index,phase.species[end].index],[1,length(phase.species)+length(phase.reactions)],constspcinds,
-        T,A,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,jacobian,sensitivity,false,MVector(false),MVector(0.0),stationary), y0, p
+        T,A,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,jacobian,sensitivity,false,MVector(false),MVector(0.0),p,Dict{String,Int64}()), y0, p
 end
 export ConstantTADomain
 
@@ -742,7 +750,7 @@ end
         else
             d.Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         end
-        krevs = getkfkrevs(d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity,V=V;kfs=d.kfs)[2]
+        krevs = getkfkrevs(d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity,V;kfs=d.kfs)[2]
         for ind in d.efficiencyinds #efficiency related rates may have changed
             d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity,V;f=kfps[ind])
         end
@@ -2298,31 +2306,93 @@ function getreactionindices(ig::Q) where {Q<:AbstractPhase}
 end
 export getreactionindices
 
-"""
-fit a cubic spline to data and return a function evaluating that spline
-"""
-function getspline(xs,vals;s=1e-10)
-    smspl = fit(SmoothingSpline,xs,vals,s)
-    F(x::T) where {T} = predict(smspl,x)
-    return F
-end
-
-function getthermovariableindex(domain::Union{ConstantTPDomain,ParametrizedTPDomain},target::String)
-    return domain.indexes[3]
-end
-
-function getthermovariableindex(domain::Union{ConstantVDomain,ParametrizedVDomain},target::String)
-    if target == "T"
-        return domain.indexes[3]
-    elseif target == "P"
-        return domain.indexes[4]
+@inline function getsensspcsrxns(domain::D,ind::Int64) where {D<:AbstractDomain}
+    sensspcinds = Array{Int64,1}()
+    sensrxninds = Array{Int64,1}()
+    for rxnind in 1:size(domain.rxnarray)[2]
+        if ind in @inbounds @view domain.rxnarray[:,rxnind]
+            for spcind in @inbounds @view domain.rxnarray[:,rxnind]
+                if !(spcind in sensspcinds) && (spcind !== 0)
+                    push!(sensspcinds,spcind)
+                end
+            end
+            push!(sensrxninds,rxnind)
+        end
     end
+    
+    sensrxns = Array{ElementaryReaction,1}(undef,length(sensrxninds))
+    sensspcs = Array{Species,1}(undef,length(sensspcinds))
+    sensspcnames = Array{String,1}(undef,length(sensspcinds))
+    senstooriginspcind = Array{Int64,1}(undef,length(sensspcinds))
+    senstooriginrxnind = Array{Int64,1}(undef,length(sensrxninds))
+    for (i,spcind) in enumerate(sensspcinds)
+        spc = domain.phase.species[spcind]
+        sensspcnames[i] = spc.name
+        @inbounds sensspcs[i] = Species(
+            name=spc.name,
+            index=i,
+            inchi=spc.inchi,
+            smiles=spc.smiles,
+            thermo=spc.thermo,
+            atomnums=spc.atomnums,
+            bondnum=spc.bondnum,
+            diffusion=spc.diffusion,
+            radius=spc.radius,
+            radicalelectrons=spc.radicalelectrons,
+        )
+        @inbounds senstooriginspcind[i] = spcind
+    end
+    
+    for (i, rxnind) in enumerate(sensrxninds)
+        rxn = domain.phase.reactions[rxnind]
+        reactants = Array{Species,1}()
+        reactantinds = Array{Int64,1}()
+        @simd for reactant in rxn.reactants
+            ind = findfirst(isequal(reactant.name),sensspcnames)
+            @inbounds push!(reactants,sensspcs[ind])
+            push!(reactantinds,ind)
+        end
+        products = Array{Species,1}()
+        productinds = Array{Int64,1}()
+        @simd for product in rxn.products
+            ind = findfirst(isequal(product.name),sensspcnames)
+            @inbounds push!(products,sensspcs[ind])
+            push!(productinds,ind)
+        end
+
+        @inbounds sensrxns[i] = ElementaryReaction(
+            index=i,
+            reactants=SVector(reactants...),
+            reactantinds=SVector(reactantinds...),
+            products=SVector(products...),
+            productinds=SVector(productinds...),
+            kinetics=rxn.kinetics,
+            radicalchange=rxn.radicalchange,
+            pairs=rxn.pairs
+        )
+        @inbounds senstooriginrxnind[i] = rxnind
+    end
+    
+    return sensspcs,sensrxns,sensspcnames,senstooriginspcind,senstooriginrxnind
 end
 
-function getthermovariableindex(domain::Union{ConstantPDomain,ParametrizedPDomain},target::String)
-    if target == "T"
-        return domain.indexes[3]
-    elseif target == "V"
-        return domain.indexes[4]
+@inline function getsensdomain(domain::D,ind::Int64) where {D<:AbstractDomain}
+    
+    sensspcs,sensrxns,sensspcnames,senstooriginspcind,senstooriginrxnind = getsensspcsrxns(domain,ind)
+    
+    initialconds = Dict{String,Float64}()
+
+    for fn in fieldnames(typeof(domain))
+        if fn in (:T, :P, :V)
+            initialconds["$fn"] = getfield(domain,fn)
+        end
+    end
+    
+    d = Symbol(split(repr(typeof(domain)),"{")[1])
+
+    if isa(domain.phase,IdealGas)
+        return eval(d)(phase=IdealGas(sensspcs,sensrxns,name="phase"),initialconds=initialconds)[1],sensspcnames,senstooriginspcind,senstooriginrxnind
+    else
+        return eval(d)(phase=IdealDiluteSolution(sensspcs,sensrxns,domain.phase.solvent,name="phase"),initialconds=initialconds)[1],sensspcnames,senstooriginspcind,senstooriginrxnind
     end
 end
