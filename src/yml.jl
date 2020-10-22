@@ -13,13 +13,19 @@ function writeyml(spcs,rxns;path="chem.rms")
 end
 
 function getmechdict(spcs,rxns)
+    names = [x.label for x in spcs]
+    for (i,name) in enumerate(names)
+        if count(names.==name) > 1
+            names[i] = string(name,"-",count(names.==name))
+        end
+    end
     D = Dict([])
     D["Units"] = Dict([])
     D["Reactions"] = []
     D["Phases"] = [Dict([])]
     D["Phases"][1]["name"] = "phase"
-    D["Phases"][1]["Species"] = [obj2dict(x,spcs) for x in spcs]
-    D["Reactions"] = [obj2dict(x,spcs) for x in rxns]
+    D["Phases"][1]["Species"] = [obj2dict(x,spcs,names) for x in spcs]
+    D["Reactions"] = [obj2dict(x,spcs,names) for x in rxns]
     return D
 end
 
@@ -32,24 +38,24 @@ function getradicals(obj::T) where {T}
     end
 end
 
-function obj2dict(obj,spcs;label="solvent")
+function obj2dict(obj,spcs,names;label="solvent")
     D = Dict([])
     if pybuiltin("isinstance")(obj,species.Species)
-        D["name"] = obj.label
+        D["name"] = names[findall(x->x==obj,spcs)[1]] 
         D["type"] = "Species"
         if length(obj.molecule) == 0
             println(obj)
             println(obj.label)
         end
         D["smiles"] = obj.molecule[1].to_smiles()
-        D["thermo"] = obj2dict(obj.thermo,spcs)
+        D["thermo"] = obj2dict(obj.thermo,spcs,names)
         if D["smiles"] != "[O][O]"
             D["radicalelectrons"] = obj.molecule[1].multiplicity-1
         else
             D["radicalelectrons"] = 0
         end
     elseif pybuiltin("isinstance")(obj,nasa.NASA)
-        D["polys"] = [obj2dict(k,spcs) for k in obj.polynomials]
+        D["polys"] = [obj2dict(k,spcs,names) for k in obj.polynomials]
         D["type"] = "NASA"
     elseif pybuiltin("isinstance")(obj,nasa.NASAPolynomial)
         D["type"] = "NASApolynomial"
@@ -57,9 +63,9 @@ function obj2dict(obj,spcs;label="solvent")
         D["Tmax"] = obj.Tmax.value_si
         D["Tmin"] = obj.Tmin.value_si
     elseif pybuiltin("isinstance")(obj,reaction.Reaction)
-        D["reactants"] = [x.label for x in obj.reactants]
-        D["products"] = [x.label for x in obj.products]
-        D["kinetics"] = obj2dict(obj.kinetics,spcs)
+        D["reactants"] = [names[findall(y->y==x,spcs)[1]]  for x in obj.reactants]
+        D["products"] = [names[findall(y->y==x,spcs)[1]] for x in obj.products]
+        D["kinetics"] = obj2dict(obj.kinetics,spcs,names)
         D["type"] = "ElementaryReaction"
         D["radicalchange"] = sum([getradicals(x) for x in obj.products])-sum([getradicals(x) for x in obj.reactants])
     elseif pybuiltin("isinstance")(obj,arrhenius.Arrhenius)
@@ -70,26 +76,26 @@ function obj2dict(obj,spcs;label="solvent")
     elseif pybuiltin("isinstance")(obj,arrhenius.PDepArrhenius)
         D["type"] = "PdepArrhenius"
         D["Ps"] = PyVector(obj.pressures.value_si)
-        D["arrs"] = [obj2dict(x,spcs) for x in obj.arrhenius]
+        D["arrs"] = [obj2dict(x,spcs,names) for x in obj.arrhenius]
     elseif pybuiltin("isinstance")(obj,arrhenius.MultiArrhenius)
         D["type"] = "MultiArrhenius"
-        D["arrs"] = [obj2dict(x,spcs) for x in obj.arrhenius]
+        D["arrs"] = [obj2dict(x,spcs,names) for x in obj.arrhenius]
     elseif pybuiltin("isinstance")(obj,arrhenius.MultiPDepArrhenius)
         D["type"] = "MultiPdepArrhenius"
-        D["parrs"] = [obj2dict(x,spcs) for x in obj.arrhenius]
+        D["parrs"] = [obj2dict(x,spcs,names) for x in obj.arrhenius]
     elseif pybuiltin("isinstance")(obj,falloff.ThirdBody)
         D["type"] = "ThirdBody"
-        D["arr"] = obj2dict(obj.arrheniusLow,spcs)
+        D["arr"] = obj2dict(obj.arrheniusLow,spcs,names)
         D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
     elseif pybuiltin("isinstance")(obj,falloff.Lindemann)
         D["type"] = "Lindemann"
-        D["arrhigh"] = obj2dict(obj.arrheniusHigh,spcs)
-        D["arrlow"] = obj2dict(obj.arrheniusLow,spcs)
+        D["arrhigh"] = obj2dict(obj.arrheniusHigh,spcs,names)
+        D["arrlow"] = obj2dict(obj.arrheniusLow,spcs,names)
         D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
     elseif pybuiltin("isinstance")(obj,falloff.Troe)
         D["type"] = "Troe"
-        D["arrhigh"] = obj2dict(obj.arrheniusHigh,spcs)
-        D["arrlow"] = obj2dict(obj.arrheniusLow,spcs)
+        D["arrhigh"] = obj2dict(obj.arrheniusHigh,spcs,names)
+        D["arrlow"] = obj2dict(obj.arrheniusLow,spcs,names)
         D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
         D["a"] = obj.alpha
         D["T1"] = obj.T1.value_si
