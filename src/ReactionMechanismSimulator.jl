@@ -55,6 +55,7 @@ module ReactionMechanismSimulator
     include("Reactor.jl")
     include("Simulation.jl")
     include("EdgeAnalysis.jl")
+    include("Debugging.jl")
     include("fluxdiagrams.jl")
     include("Plotting.jl")
 end
