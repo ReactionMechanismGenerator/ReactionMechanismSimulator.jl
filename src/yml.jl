@@ -86,17 +86,17 @@ function obj2dict(obj,spcs,names;label="solvent")
     elseif pybuiltin("isinstance")(obj,falloff.ThirdBody)
         D["type"] = "ThirdBody"
         D["arr"] = obj2dict(obj.arrheniusLow,spcs,names)
-        D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
+        D["efficiencies"] = Dict([names[i]=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
     elseif pybuiltin("isinstance")(obj,falloff.Lindemann)
         D["type"] = "Lindemann"
         D["arrhigh"] = obj2dict(obj.arrheniusHigh,spcs,names)
         D["arrlow"] = obj2dict(obj.arrheniusLow,spcs,names)
-        D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
+        D["efficiencies"] = Dict([names[i]=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
     elseif pybuiltin("isinstance")(obj,falloff.Troe)
         D["type"] = "Troe"
         D["arrhigh"] = obj2dict(obj.arrheniusHigh,spcs,names)
         D["arrlow"] = obj2dict(obj.arrheniusLow,spcs,names)
-        D["efficiencies"] = Dict([spcs[i].label=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
+        D["efficiencies"] = Dict([names[i]=>float(val) for (i,val) in enumerate(obj.get_effective_collider_efficiencies(spcs)) if val != 1])
         D["a"] = obj.alpha
         D["T1"] = obj.T1.value_si
         if !isa(obj.T2,Nothing)
