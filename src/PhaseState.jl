@@ -125,7 +125,7 @@ export getKc
 end
 
 @inline function getKcs(ph::U,T::Z,Gs::Q,phi::V) where {U<:AbstractPhase,Q,Z<:Real,V<:Real}
-    return @fastmath @inbounds exp.(ph.stoichmatrix*(Gs./(R*T).+ph.electronchange.*(phi/(R*T))) .+ ph.Nrp.*log(1.0e5/(R*T)));
+    return @fastmath @inbounds exp.(ph.stoichmatrix*(Gs./(R*T)).+ph.electronchange.*(phi/(R*T)) .+ ph.Nrp.*log(1.0e5/(R*T)));
 end
 export getKcs
 
