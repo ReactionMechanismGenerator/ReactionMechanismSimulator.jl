@@ -46,15 +46,15 @@ end
 
 export makespcsvector
 
-@inline function getkf(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
+@inline function getkf(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4,phi) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
     if isdefined(rxn.kinetics,:efficiencies) && length(rxn.kinetics.efficiencies) > 0
         @views @inbounds @fastmath C += sum([ns[i]*val for (i,val) in rxn.kinetics.efficiencies])/V
     end
-    return rxn.kinetics(T=T,P=P,C=C)
+    return rxn.kinetics(T=T,P=P,C=C,phi=phi)
 end
 export getkf
 
-@inline function getkfs(ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
+@inline function getkfs(ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4,phi) where {U<:AbstractPhase,W1,W2,W3,W4<:Real,Q<:AbstractArray}
     kfs = zeros(Q.parameters[1],length(ph.reactions))
     i = 1
     oldind = 1
@@ -66,7 +66,7 @@ export getkf
         i += 1
     end
     @simd for i in ind+1:length(ph.reactions)
-        @inbounds kfs[i] = getkf(ph.reactions[i],ph,T,P,C,ns,V)
+        @inbounds kfs[i] = getkf(ph.reactions[i],ph,T,P,C,ns,V,phi)
     end
     return kfs
 end
@@ -125,7 +125,7 @@ export getKc
 end
 
 @inline function getKcs(ph::U,T::Z,Gs::Q,phi::V) where {U<:AbstractPhase,Q,Z<:Real,V<:Real}
-    return @fastmath @inbounds exp.(ph.stoichmatrix*(Gs./(R*T).+ph.electronchange.*(phi/(R*T))) .+ ph.Nrp.*log(1.0e5/(R*T)));
+    return @fastmath @inbounds exp.(ph.stoichmatrix*(Gs./(R*T)).+ph.electronchange.*(phi/(R*T)) .+ ph.Nrp.*log(1.0e5/(R*T)));
 end
 export getKcs
 
@@ -175,7 +175,7 @@ export getkfkrev
 
 @inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7;kfs::W6=nothing) where {U<:AbstractPhase,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:Array{Float64,1},Q3<:AbstractArray}
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V)
+        kfs = getkfs(phase,T,P,C,ns,V,phi)
         if phi == 0.0
             krev = @fastmath kfs./getKcs(phase,T,Gs)
         else 
@@ -206,7 +206,7 @@ end
 
 @inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7;kfs::W6=nothing) where {U<:AbstractPhase,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q3<:AbstractArray} #autodiff p
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V)
+        kfs = getkfs(phase,T,P,C,ns,V,phi)
         if phi == 0.0
             krev = @fastmath kfs./getKcs(phase,T,Gs)
         else 
@@ -239,7 +239,7 @@ end
 
 @inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Array{Q2,1},diffs::Q3,V::W5,phi::W7;kfs::W6=nothing) where {U<:AbstractPhase,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3<:Real,W4<:Real, Q1<:AbstractArray,Q2<:ForwardDiff.Dual,Q3<:AbstractArray} #autodiff p
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V)
+        kfs = getkfs(phase,T,P,C,ns,V,phi)
         if phi == 0.0
             krev = @fastmath kfs./getKcs(phase,T,Gs)
         else 
