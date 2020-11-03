@@ -24,8 +24,8 @@ export Arrhenius
         q::B = 0.0
         unc::P = EmptyRateUncertainty()
 end
-@inline (arr::Arrheniusq)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea+arr.q*F*phi)/(R*T))
-@inline (arr::Arrheniusq)(T::Q;P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea+arr.q*F*phi)/(R*T))
+@inline (arr::Arrheniusq)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea-arr.q*F*phi)/(R*T))
+@inline (arr::Arrheniusq)(T::Q;P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea-arr.q*F*phi)/(R*T))
 export Arrheniusq
 
 @with_kw struct PdepArrhenius{T<:Real,Q<:AbstractRateUncertainty,Z<:AbstractRate} <: AbstractRate
