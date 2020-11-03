@@ -630,7 +630,7 @@ export ParametrizedTConstantVDomain
     krevs::Array{W,1}
     efficiencyinds::Array{I,1}
     Gs::Array{W,1}
-    rxnarray::Array{UInt16,2}
+    rxnarray::Array{Int64,2}
     mu::W = 0.0
     diffusivity::Array{W,1} = Array{Float64,1}()
     jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
@@ -690,7 +690,7 @@ function ConstantTAPhiDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies
     end
     rxnarray = getreactionindices(phase)
     return ConstantTAPhiDomain(phase,[phase.species[1].index,phase.species[end].index],[1,length(phase.species)+length(phase.reactions)],constspcinds,
-        T,A,phi,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,jacobian,sensitivity,false,MVector(false),MVector(0.0),p), y0, p
+        T,A,phi,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,Array{Float64,1}(),jacobian,sensitivity,false,MVector(false),MVector(0.0),p), y0, p
 end
 export ConstantTAPhiDomain
 
@@ -1695,7 +1695,7 @@ end
     end
 end
 
-@inline function jacobianynsderiv!(jac::S,domain::Union{ConstantVDomain,ParametrizedVDomain,ConstantTVDomain,ParametrizedTConstantVDomain},rxnarray::Array{Int64,2},efficiencyinds::Array{I,1},cs::Array{Float64,1},kfs::Array{Float64,1},krevs::Array{Float64,1},T::Float64,V::Float64,C::Float64) where {S<:AbstractArray,I<:Integer}
+@inline function jacobianynsderiv!(jac::S,domain::Union{ConstantVDomain,ParametrizedVDomain,ConstantTVDomain,ConstantTAPhiDomain,ParametrizedTConstantVDomain},rxnarray::Array{Int64,2},efficiencyinds::Array{I,1},cs::Array{Float64,1},kfs::Array{Float64,1},krevs::Array{Float64,1},T::Float64,V::Float64,C::Float64) where {S<:AbstractArray,I<:Integer}
     @simd for rxnind = 1:size(rxnarray)[2]
         @inbounds _jacobianynswrtns!(jac,rxnarray,rxnind,cs,kfs[rxnind],krevs[rxnind])
         if rxnind in efficiencyinds
