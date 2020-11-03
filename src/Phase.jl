@@ -86,34 +86,35 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
 end
 export IdealDiluteSolution
 
-@with_kw struct IdealSurface{W<:Tuple,W2,W3} <: IdealPhase
+@with_kw struct IdealSurface{W<:Tuple,W2,W3,W4,W5} <: IdealPhase
     name::String = ""
     species::Array{Species,1}
     reactions::Array{ElementaryReaction,1}
     stoichmatrix::W2
-    Nrp::Array{Float64,1}
+    Nrp::W5
     veckinetics::W
     veckineticsinds::Array{Int64,1}
-    vecthermo::NASAvec
+    vecthermo::W4
     otherreactions::Array{ElementaryReaction,1}
     electronchange::W3
     spcdict::Dict{String,Int64}
     diffusionlimited::Bool = false
 end
-function IdealSurface(species,reactions,sitedensity; name="",diffusionlimited=false)
+function IdealSurface(species,reactions; name="",diffusionlimited=false)
     @assert diffusionlimited==false "diffusionlimited=true not supported for IdealSurface"
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
-        productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+        productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,electronchange=rxn.electronchange,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     M,Nrp = getstoichmatrix(species,rxns)
+    echangevec = getfield.(rxns,:electronchange).*F
     if all(echangevec .== 0)
         electronchange = nothing
     else 
-        electronchange = convert(echangevec,Array{Float64,1})
+        electronchange = convert(typeof(Nrp),echangevec)
     end
-    return IdealSurface(species=species,reactions=rxns,sitedensity=sitedensity,name=name,
+    return IdealSurface(species=species,reactions=rxns,name=name,
         spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple,veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,diffusionlimited=diffusionlimited)
 end
 export IdealSurface
