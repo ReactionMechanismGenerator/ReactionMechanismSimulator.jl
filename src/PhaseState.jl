@@ -169,7 +169,11 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
             end
         end
     end
-    return (kf,krev)
+    if rxn.reversible
+        return (kf,krev)
+    else 
+        return (kf,0.0)
+    end
 end
 export getkfkrev
 
@@ -177,15 +181,15 @@ export getkfkrev
     if !phase.diffusionlimited && kfs === nothing
         kfs = getkfs(phase,T,P,C,ns,V,phi)
         if phi == 0.0
-            krev = @fastmath kfs./getKcs(phase,T,Gs)
+            krev = @fastmath kfs./getKcs(phase,T,Gs).*phase.reversibility
         else 
-            krev = @fastmath kfs./getKcs(phase,T,Gs,phi)
+            krev = @fastmath kfs./getKcs(phase,T,Gs,phi).*phase.reversibility
         end
     elseif !phase.diffusionlimited && !(kfs === nothing)
         if phi == 0.0
-            krev = @fastmath kfs./getKcs(phase,T,Gs)
+            krev = @fastmath kfs./getKcs(phase,T,Gs).*phase.reversibility
         else 
-            krev = @fastmath kfs./getKcs(phase,T,Gs,phi)
+            krev = @fastmath kfs./getKcs(phase,T,Gs,phi).*phase.reversibility
         end
     elseif phase.diffusionlimited && !(kfs === nothing)
         len = length(phase.reactions)
