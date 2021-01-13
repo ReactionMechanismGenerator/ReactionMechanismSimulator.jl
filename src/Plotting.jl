@@ -188,6 +188,80 @@ end
 
 export plotrops
 
+"""
+make a bar graph of the production/loss for all radicals
+associated with each reaction
+N reactions are included all of which must have absolute value greater than abs(maximum prod or loss rate)*tol
+"""
+function plotradicalrops(bsol::Y,t::Z;N=0,tol=0.01) where {Y<:Simulation, Z<:Real}
+    rop = rates(bsol,t).*getfield.(bsol.domain.phase.reactions,:radicalchange)
+    inds = reverse(sortperm(abs.(rop)))
+    if N == 0
+        N = length(inds)
+    elseif N > length(inds)
+        N = length(inds)
+    end
+    inds = inds[1:N]
+    mval = abs(rop[inds[1]])
+    minval = mval*tol
+    k = 1
+    while k < length(inds) && abs(rop[inds[k]]) >= minval
+        k += 1
+    end
+    inds = inds[1:k]
+    xs = Array{Float64,1}(1:length(inds))
+    barh(xs,reverse(rop[inds]))
+    yticks(xs,reverse(getrxnstr.(bsol.domain.phase.reactions[inds])))
+    xlabel("Production/Loss Rate mol/(m^3*s)")
+    return
+end
+
+"""
+make a line graph of the production/loss for all radicals
+associated with each reaction across a time domain
+reactions with maximum (over time) production value greater than max production*tol or
+maximum (over time) loss value greater than maximum loss*tol are included
+"""
+function plotradicalrops(bsol::Y;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05) where {Y<:Simulation, X<:AbstractString}
+    if length(rxnrates) == 0 || length(ts) == 0
+        rxnrates = rates(bsol)
+        ts = bsol.sol.t
+    end
+    
+    cs = getfield.(bsol.domain.phase.reactions,:radicalchange)
+    @views maxrates = maximum(cs.*rxnrates,dims=2)[:,1]
+    @views minrates = minimum(cs.*rxnrates,dims=2)[:,1]
+    maxthresh = maximum(maxrates)*tol
+    minthresh = minimum(minrates)*tol
+    maxperm = reverse(sortperm(maxrates))
+    minperm = sortperm(minrates)
+
+    leg = Array{String,1}()
+    for i in 1:length(maxperm)
+        ind = maxperm[i]
+        if maxrates[ind] >= maxthresh
+            push!(leg,getrxnstr(bsol.domain.phase.reactions[ind]))
+            plot(ts,rxnrates[ind,:]*cs[ind])
+        else
+            break
+        end
+    end
+    for i in 1:length(minperm)
+        ind = minperm[i]
+        if minrates[ind] <= minthresh
+            push!(leg,getrxnstr(bsol.domain.phase.reactions[ind]))
+            plot(ts,rxnrates[ind,:]*cs[ind])
+        else
+            break
+        end
+    end
+    legend(leg,loc="upper left", bbox_to_anchor=(1,1))
+    ylabel("Radical Flux in mol/s")
+    xlabel("Time in sec")
+end
+
+export plotradicalrops
+
 function plotthermoadjointsensitivities(bsol::Y,name::X,dps::Z;N=0,tol=0.01) where {Y<:Simulation, X<:AbstractString, Z}
     t = bsol.sol.t[end]
     if name in ["T","V"] || name in bsol.names
