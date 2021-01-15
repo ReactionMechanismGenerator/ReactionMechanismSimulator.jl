@@ -96,6 +96,8 @@ in this case `rxnrates` corresponds to the matrix of reaction rates at each time
 time points to plot at (otherwise defaults to `bsol.sol.t`), any reaction with flux smaller
 than `tol` * the largest absolute rate at every time point is excluded from the plot.  
 
+The analogous functions `plotradicalrops(bsol,t;N=0,tol=0.01)` and `plotradicalrops(bsol;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05)` are available for plotting the rops for the sum of all radicals.
+
 ### Other Plots
 
 While we are trying to build up a library of plotting functions that make mechanism analysis easier
