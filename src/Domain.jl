@@ -2388,8 +2388,14 @@ end
         end
     end
     
-    d = Symbol(split(repr(typeof(domain)),"{")[1])
-
+    d = split(repr(typeof(domain)),"{")[1]
+    
+    if occursin(".",d)
+        d = Symbol(split(d,".")[2])
+    else 
+        d = Symbol(d)
+    end
+    
     if isa(domain.phase,IdealGas)
         return eval(d)(phase=IdealGas(sensspcs,sensrxns,name="phase"),initialconds=initialconds)[1],sensspcnames,senstooriginspcind,senstooriginrxnind
     else
