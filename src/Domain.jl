@@ -536,7 +536,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
     P = 1.0e8  #essentiallly assuming this is a liquid
     C = N/V
     kfs,krevs = getkfkrevs(phase,T,P,C,N,ns,Gs,diffs,V,0.0)
-    kfsnondiff = getkfs(phase,T,P,C,ns,V)
+    kfsnondiff = getkfs(phase,T,P,C,ns,V,0.0)
     p = vcat(Gs,kfsnondiff)
     if sparse
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
