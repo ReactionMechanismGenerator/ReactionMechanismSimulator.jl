@@ -2,6 +2,7 @@ using Parameters
 using DiffEqBase
 using ForwardDiff
 using Sundials
+using ModelingToolkit
 abstract type AbstractReactor end
 export AbstractReactor
 
@@ -12,12 +13,12 @@ struct Reactor{D,Q} <: AbstractReactor
     forwardsensitivities::Bool
 end
 
-function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=DiffEqBase.NullParameters(),forwardsensitivities=false,forwarddiff=false) where {T<:AbstractDomain,W<:Real,Z<:AbstractArray,X}
-    dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q<:Real,V} = dydtreactor!(dy,y,t,domain,interfaces,p=p)
-    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobiany!(J,y,p,t,domain,interfaces,nothing)
-    jacyforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,nothing)
-    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
-    jacpforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,nothing)
+function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=DiffEqBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false) where {T<:AbstractDomain,W<:Real,Z<:AbstractArray,X}
+    dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V} = dydtreactor!(dy,y,t,domain,interfaces,p=p)
+    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobiany!(J,y,p,t,domain,interfaces,nothing)
+    jacyforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,nothing)
+    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
+    jacpforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,nothing)
     
     if (forwardsensitivities || !forwarddiff) && domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTAPhiDomain}
         if !forwardsensitivities
@@ -35,9 +36,23 @@ function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=Dif
         ode = ODEProblem(odefcn,y0,tspan,p)
         recsolver  = Sundials.CVODE_BDF()
     end
+    if modelingtoolkit
+        sys = modelingtoolkitize(ode)
+        jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
+        if (forwardsensitivities || !forwarddiff) && domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTAPhiDomain}
+            odefcn = ODEFunction(dydt;jac=jac,paramjac=jacp!)
+        else 
+            odefcn = ODEFunction(dydt;jac=jac,paramjac=jacpforwarddiff!)
+        end
+        if forwardsensitivities
+            ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
+        else
+            ode = ODEProblem(odefcn,y0,tspan,p)
+        end
+    end
     return Reactor(domain,ode,recsolver,forwardsensitivities)
 end
-function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=[],ps::X=DiffEqBase.NullParameters();forwardsensitivities=false) where {T<:Tuple,W,Z<:AbstractArray,X,W2}
+function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=[],ps::X=DiffEqBase.NullParameters();forwardsensitivities=false,modelingtoolkit=false) where {T<:Tuple,W,Z<:AbstractArray,X,W2}
     #adjust indexing
     y0 = zeros(sum(length(y) for y in y0s))
     Nvars = 0
@@ -99,19 +114,31 @@ function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=[],ps::X=DiffEqBase.N
         end
     end
     
-    dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q<:Real,V} = dydtreactor!(dy,y,t,domains,interfaces,p=p)
-    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianyforwarddiff!(J,y,p,t,domains,interfaces,nothing)
-    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianpforwarddiff!(J,y,p,t,domains,interfaces,nothing)
+    dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V} = dydtreactor!(dy,y,t,domains,interfaces,p=p)
+    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domains,interfaces,nothing)
+    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domains,interfaces,nothing)
 
     
     if forwardsensitivities
         odefcn = ODEFunction(dydt;paramjac=jacp!)
         ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
         recsolver = Sundials.CVODE_BDF(linear_solver=:GMRES)
+        if modelingtoolkit
+            sys = modelingtoolkitize(ode)
+            jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
+            odefcn = ODEFunction(dydt;jac=jac,paramjac=jacp!)
+            ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
+        end
     else
         odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!)
         ode = ODEProblem(odefcn,y0,tspan,p)
         recsolver  = Sundials.CVODE_BDF()
+        if modelingtoolkit
+            sys = modelingtoolkitize(ode)
+            jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
+            odefcn = ODEFunction(dydt;jac=jac,paramjac=jacp!)
+            ode = ODEProblem(odefcn,y0,tspan,p)
+        end
     end
     return Reactor(domains,ode,recsolver,forwardsensitivities),y0,p
 end
@@ -176,7 +203,7 @@ export getrate
 end
 export addreactionratecontributions!
 
-@inline function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z<:Real,U,J<:Integer,Q<:AbstractDomain}    
+@inline function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z,U,Q<:AbstractDomain}    
     dydt .= 0.0
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,p)
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
@@ -184,7 +211,7 @@ export addreactionratecontributions!
     calcdomainderivatives!(domain,dydt,interfaces;t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
     return dydt
 end
-@inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z<:Real,U,J<:Integer,Q<:Tuple}    
+@inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z,U,Q<:Tuple}    
     cstot = zeros(typeof(y).parameters[1],length(y))
     dydt .= 0.0
     domain = domains[1]
