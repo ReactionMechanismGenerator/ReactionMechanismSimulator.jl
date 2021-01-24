@@ -13,8 +13,8 @@ export AbstractFalloffRate
         Ea::Q
         unc::P = EmptyRateUncertainty()
 end
-@inline (arr::Arrhenius)(;T::Q,P::N=0.0,C::S=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))
-@inline (arr::Arrhenius)(T::Q;P::N=0.0,C::S=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))
+@inline (arr::Arrhenius)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))
+@inline (arr::Arrhenius)(T::Q;P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))
 export Arrhenius
 
 @with_kw struct Arrheniusq{N<:Real,K<:Real,Q<:Real,P<:AbstractRateUncertainty,B} <: AbstractRate
@@ -35,7 +35,7 @@ export Arrheniusq
 end
 PdepArrhenius(Ps::Array{Q,1},arrs::Array{Z,1}) where {Q<:Real,Z<:AbstractRate} = PdepArrhenius(sort(Ps),arrs)
 
-@inline function (parr::PdepArrhenius)(;T::Q=nothing,P::V=nothing,C::S=0.0) where {Q<:Real,V<:Real,S<:Real}
+@inline function (parr::PdepArrhenius)(;T::Q=nothing,P::V=nothing,C::S=0.0,phi=0.0) where {Q<:Real,V<:Real,S<:Real}
     inds = getBoundingIndsSorted(P,parr.Ps)::Tuple{Int64,Int64}
 
     if inds[2] == -1
@@ -55,7 +55,7 @@ export PdepArrhenius
     unc::Q = EmptyRateUncertainty()
 end
 
-@inline function (marr::MultiArrhenius)(;T::Q,P::R=0.0,C::S=0.0) where {Q<:Real,R<:Real,S<:Real}
+@inline function (marr::MultiArrhenius)(;T::Q,P::R=0.0,C::S=0.0,phi=0.0) where {Q<:Real,R<:Real,S<:Real}
     out = 0.0
     for arr in marr.arrs
         @fastmath out += arr(T)
@@ -69,7 +69,7 @@ export MultiArrhenius
     unc::Q = EmptyRateUncertainty()
 end
 
-@inline function (parr::MultiPdepArrhenius)(;T::Q,P::R=0.0,C::S=0.0) where {Q<:Real,R<:Real,S<:Real}
+@inline function (parr::MultiPdepArrhenius)(;T::Q,P::R=0.0,C::S=0.0,phi=0.0) where {Q<:Real,R<:Real,S<:Real}
     out = 0.0
     for pdar in parr.parrs
         @fastmath out += pdar(T=T,P=P)
@@ -84,7 +84,7 @@ export MultiPdepArrhenius
     unc::Q = EmptyRateUncertainty()
 end
 
-(tbarr::ThirdBody)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q<:Real,R<:Real,S<:Real} = C*(tbarr.arr(T))
+(tbarr::ThirdBody)(;T::Q=nothing,P::R=0.0,C::S=nothing,phi=0.0) where {Q<:Real,R<:Real,S<:Real} = C*(tbarr.arr(T))
 export ThirdBody
 
 @with_kw struct Lindemann{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractFalloffRate
@@ -94,7 +94,7 @@ export ThirdBody
     unc::Q = EmptyRateUncertainty()
 end
 
-@inline function (lnd::Lindemann)(;T::Q=nothing,P::R=0.0,C::S=nothing) where {Q<:Real,R<:Real,S<:Real}
+@inline function (lnd::Lindemann)(;T::Q=nothing,P::R=0.0,C::S=nothing,phi=0.0) where {Q<:Real,R<:Real,S<:Real}
     k0 = lnd.arrlow(T=T)
     kinf = lnd.arrhigh(T=T)
     @fastmath Pr = k0*C/kinf
@@ -113,7 +113,7 @@ export Lindemann
     unc::R = EmptyRateUncertainty()
 end
 
-@inline function (tr::Troe)(;T::Q,P::R=0.0,C::S=nothing) where {Q<:Real,R<:Real,S<:Real}
+@inline function (tr::Troe)(;T::Q,P::R=0.0,C::S=nothing,phi=0.0) where {Q<:Real,R<:Real,S<:Real}
     k0 = tr.arrlow(T=T)
     kinf = tr.arrhigh(T=T)
     @fastmath Pr = k0*C/kinf
@@ -182,7 +182,7 @@ export getredtemp
 end
 export getredpress
 
-@inline function (ch::Chebyshev)(;T::N,P::Q=0.0,C::B=0.0) where {N<:Real,B<:Real,Q<:Real}
+@inline function (ch::Chebyshev)(;T::N,P::Q=0.0,C::B=0.0,phi=0.0) where {N<:Real,B<:Real,Q<:Real}
     k = 0.0
     Tred = getredtemp(ch,T)
     Pred = getredpress(ch,P)
