@@ -1375,10 +1375,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantTAPhiDomain{W,Y},y::Array{W2,1},t::Q,p::Q2=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,Q2,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q<:Real} #autodiff y
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns./d.A
@@ -1396,10 +1392,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantTAPhiDomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q<:Real} #autodiff p
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns./d.A
