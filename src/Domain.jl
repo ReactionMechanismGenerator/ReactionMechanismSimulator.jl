@@ -695,10 +695,6 @@ end
 export ConstantTAPhiDomain
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W3=DiffEqBase.NullParameters()) where {W3<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q} #no parameter input
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P*V/(R*d.T)
@@ -711,10 +707,6 @@ export ConstantTAPhiDomain
 end
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q<:Float64} #uses parameter input
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P*V/(R*d.T)
@@ -755,10 +747,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y},y::Array{W3,1},t::Q,p::W2=DiffEqBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,W3<:ForwardDiff.Dual,Q} #Autodiff y
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P*V/(R*d.T)
@@ -779,10 +767,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J,Q} #Autodiff p
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P*V/(R*d.T)
@@ -803,10 +787,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J,Q} #Tracker/reversediff
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P*V/(R*d.T)
@@ -824,10 +804,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     P = y[d.indexes[4]]
@@ -853,10 +829,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     P = y[d.indexes[4]]
@@ -883,10 +855,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     P = y[d.indexes[4]]
@@ -913,10 +881,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     V = y[d.indexes[4]]
@@ -941,10 +905,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     V = y[d.indexes[4]]
@@ -974,10 +934,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     V = y[d.indexes[4]]
@@ -1003,10 +959,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     V = d.V(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1032,10 +984,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     V = d.V(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1062,10 +1010,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     V = d.V(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1092,10 +1036,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1121,10 +1061,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1150,10 +1086,6 @@ end
     return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Hs,Array{Float64,1}(),Gs,diffs,Cvave,cpdivR,0.0
 end
 @inline function calcthermo(d::ParametrizedPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1180,10 +1112,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     V = d.V
     T = d.T(t)
     ns = y[d.indexes[1]:d.indexes[2]]
@@ -1205,10 +1133,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     V = d.V
     T = d.T(t)
     ns = y[d.indexes[1]:d.indexes[2]]
@@ -1231,10 +1155,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     V = d.V
     T = d.T(t)
     ns = y[d.indexes[1]:d.indexes[2]]
@@ -1257,10 +1177,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:DiffEqBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     T = d.T(t)
     @assert T < 10000.0
     P = d.P(t)
@@ -1286,10 +1202,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     T = d.T(t)
     @assert T < 10000.0
     P = d.P(t)
@@ -1316,10 +1228,6 @@ end
 end
 
 @inline function calcthermo(d::ParametrizedTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     T = d.T(t)
     @assert T < 10000.0
     P = d.P(t)
@@ -1346,10 +1254,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2<:DiffEqBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns./d.V
@@ -1359,10 +1263,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:Array{Float64,1},Q<:Real}
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns./d.V
@@ -1403,10 +1303,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y},y::Array{W2,1},t::Q,p::Q2=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real} #autodiff y
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns./d.V
@@ -1424,10 +1320,6 @@ end
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y},y::J,t::Q,p::Q2=DiffEqBase.NullParameters()) where {Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q<:Real} #autodiff p
-    if t != d.t[1]
-        d.t[1] = t
-        d.jacuptodate[1] = false
-    end
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns./d.V
