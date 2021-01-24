@@ -136,9 +136,9 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
 @inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W8;kf::W6=-1.0,f::W7=-1.0) where {U<:AbstractPhase,W8,W6,W7,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
     if signbit(kf) 
         if signbit(f)
-            kf = getkf(rxn,ph,T,P,C,ns,V)
+            kf = getkf(rxn,ph,T,P,C,ns,V,phi)
         else
-            kf = getkf(rxn,ph,T,P,C,ns,V)*f
+            kf = getkf(rxn,ph,T,P,C,ns,V,phi)*f
         end
     end
     Kc = getKc(rxn,ph,T,Gs,phi)
