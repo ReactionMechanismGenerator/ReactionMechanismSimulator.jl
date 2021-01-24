@@ -28,7 +28,7 @@ include("Reaction.jl")
     vecthermo::NASAvec
     otherreactions::Array{ElementaryReaction,1}
     electronchange::W3
-    reversiblility::Array{Bool,1}
+    reversibility::Array{Bool,1}
     diffusionlimited::Bool = false
 end
 IdealGas(species,reactions; name="",diffusionlimited=false) = IdealGas(species=species,reactions=reactions,name=name,
@@ -51,7 +51,7 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
     return IdealGas(species=species,reactions=rxns,name=name,
         spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple, 
         veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns, electronchange=electronchange, 
-        reversiblility=reversiblility,diffusionlimited=diffusionlimited,)
+        reversibility=reversibility,diffusionlimited=diffusionlimited,)
 end
 export IdealGas
 
