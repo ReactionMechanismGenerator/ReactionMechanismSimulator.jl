@@ -217,7 +217,7 @@ function getvecthermo(spcs)
         typeassert.(thermo,NASA)
         return NASAvec([sp.thermo for sp in spcs])
     elseif isa(thermo[1],ConstantG)
-        typeassert.(thermo,ConstantGvec)
+        typeassert.(thermo,ConstantG)
         return ConstantGvec([th.G for th in thermo],thermo[1].T)
     else
         t = typeof(thermo[1])
