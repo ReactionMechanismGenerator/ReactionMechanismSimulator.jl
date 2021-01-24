@@ -122,3 +122,13 @@ end
     poly = selectPoly(nasavec,T)
     return calcHSCpdless(poly,T)
 end
+
+@with_kw struct ConstantGvec{B,J} <: AbstractThermo
+    G::B
+    T::J
+end
+export ConstantG
+
+@inline function getGibbs(cg::ConstantGvec,T::B) where {B}
+    return cg.G
+end

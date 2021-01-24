@@ -200,8 +200,16 @@ create vectorized thermo calculator for species
 """
 function getvecthermo(spcs)
     thermo = [sp.thermo for sp in spcs]
-    typeassert.(thermo,NASA)
-    return NASAvec([sp.thermo for sp in spcs])
+    if isa(thermo[1],NASA)
+        typeassert.(thermo,NASA)
+        return NASAvec([sp.thermo for sp in spcs])
+    elseif isa(thermo[1],ConstantG)
+        typeassert.(thermo,ConstantG)
+        return ConstantGvec([th.G for th in thermo],thermo[1].T)
+    else
+        t = typeof(thermo[1])
+        error("Thermo type $t unsupported!")
+    end
 end
 export getvecthermo
 
