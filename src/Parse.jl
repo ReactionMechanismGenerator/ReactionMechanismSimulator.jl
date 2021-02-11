@@ -36,7 +36,7 @@ end
 
 const unitsdict = Dict()
 const elementdict = Dict([1=>"H",6=>"C",8=>"O",7=>"N",17=>"Cl",16=>"S",18=>"Ar",10=>"Ne",2=>"He",
-        15=>"P",9=>"F",35=>"Br",53=>"I",289=>"Fl"])
+        15=>"P",9=>"F",35=>"Br",53=>"I",289=>"Fl",0=>"X"])
 
 const allowedfcnlist = vcat(names(Calc),names(Spc),names(Rxn),names(Solv))
 
@@ -134,10 +134,26 @@ function getatomdictfromrdkit(mol)
 end
 export getatomdictfromrdkit
 
+function getatomdictfromrmg(mol)
+    atmD = Dict{String,Int64}()
+    for atm in mol.atoms
+        v = elementdict[atm.element.number]
+        if v in keys(atmD)
+            atmD[v] += 1
+        else
+            atmD[v] = 1
+        end
+    end
+    nbonds = length(mol.get_all_edges())
+    molecularweight = mol.get_molecular_weight()
+    return atmD,nbonds,molecularweight
+end
 getatomdictsmiles(smiles) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
 export getatomdictsmiles
 getatomdictinchi(inchi) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromInchi(inchi)))
 export getatomdictinchi
+getatomdictadjlist(adjlist) = getatomdictfromrmg(molecule.Molecule().from_adjacency_list(adjlist))
+export getatomdictadjlist
 
 function getspeciesradius(atomdict::Dict{String,Int64},nbonds::Int64)
     """
@@ -251,7 +267,13 @@ function readinputyml(fname::String)
             spcname = d["name"]
             #attempt to generate molecular information from rdkit if possible
             if !("atomnums" in keys(d)) || !("bondnum" in keys(d)) || !("molecularweight" in keys(d))
-                if "smiles" in keys(d)
+                if "adjlist" in keys(d)
+                    try
+                        d["atomnums"],d["bondnum"],d["molecularweight"] = getatomdictadjlist(d["adjlist"])
+                    catch
+                         @warn("failed to generate molecular information from smiles for species $spcname")
+                    end
+                elseif "smiles" in keys(d)
                     try
                         d["atomnums"],d["bondnum"],d["molecularweight"] = getatomdictsmiles(d["smiles"])
                     catch
