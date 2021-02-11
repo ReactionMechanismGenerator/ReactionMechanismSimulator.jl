@@ -25,15 +25,32 @@ end
 
 export Simulation
 
-struct SystemSimulation{Q<:Tuple{Vararg{AbstractSimulation,N} where N},B<:AbstractODESolution}
+struct SystemSimulation{Q,B<:AbstractODESolution,X,Y,Z}
     sol::B
     sims::Q
+    interfaces::X
+    names::Array{String,1}
+    species::Array{Z,1}
+    reactions::Array{Y,1}
     p::Array{Float64,1}
 end
 
-function SystemSimulation(sol,domains,p)
+function SystemSimulation(sol,domains,interfaces,p)
     sims = Tuple([Simulation(sol,domain) for domain in domains])
-    return SystemSimulation(sol,sims,p)
+    names = Array{String,1}()
+    reactions = Array{ElementaryReaction,1}()
+    species = Array{Species,1}()
+    for sim in sims
+        append!(names,sim.names)
+        append!(species,sim.domain.phase.species)
+        append!(reactions,sim.domain.phase.reactions)
+    end
+    for inter in interfaces
+        if hasproperty(inter,:reactions)
+            append!(reactions,inter.reactions)
+        end
+    end
+    return SystemSimulation(sol,sims,interfaces,names,species,reactions,p)
 end
 export SystemSimulation
 
@@ -51,7 +68,7 @@ export spcindex
 
 function molefractions(bsol::Q,name::W,t::E) where {Q<:AbstractSimulation, W<:String, E<:Real}
     @assert name in bsol.names
-    ind = findfirst(isequal(name),bsol.names)
+    ind = findfirst(isequal(name),bsol.names)+bsol.domain.indexes[1]-1
     return bsol.sol(t)[ind]/bsol.N(t)
 end
 
@@ -64,6 +81,61 @@ function molefractions(bsol::Q) where {Q<:AbstractSimulation}
 end
 
 export molefractions
+
+function concentrations(bsol::Q,name::W,t::E) where {Q<:AbstractSimulation, W<:String, E<:Real}
+    @assert name in bsol.names
+    ind = findfirst(isequal(name),bsol.names)+bsol.domain.indexes[1]-1
+    if !isa(bsol.domain,ConstantTAPhiDomain)
+        return bsol.sol(t)[bsol.domain.indexes[1]+ind-1]/getV(bsol,t)
+    else 
+        return bsol.sol(t)[bsol.domain.indexes[1]+ind-1]/bsol.domain.A 
+    end
+end
+
+function concentrations(bsol::Q, t::E) where {Q<:AbstractSimulation,E<:Real}
+    if !isa(bsol.domain,ConstantTAPhiDomain)
+        return bsol.sol(t)[bsol.domain.indexes[1]:bsol.domain.indexes[2]]./getV(bsol,t)
+    else 
+        return bsol.sol(t)[bsol.domain.indexes[1]:bsol.domain.indexes[2]]./bsol.domain.A 
+    end
+end
+
+function concentrations(bsol::Q) where {Q<:AbstractSimulation}
+    if !isa(bsol.domain,ConstantTAPhiDomain)
+        @views return hcat(bsol.sol.u...)[bsol.domain.indexes[1]:bsol.domain.indexes[2],:]./getV(bsol,t)
+    else 
+        @views return hcat(bsol.sol.u...)[bsol.domain.indexes[1]:bsol.domain.indexes[2],:]./bsol.domain.A
+    end 
+end
+
+function concentrations(ssys::Q,name::W,t::E) where {Q<:SystemSimulation, W<:String, E<:Real}
+    @assert name in ssys.names
+    for sim in ssys.sims
+        if name in sim.names
+            return concentrations(sim,name,t)
+        end
+    end
+end
+
+function concentrations(ssys::Q, t::E) where {Q<:SystemSimulation,E<:Real}
+    cstot = zeros(length(ssys.species))
+    for sim in ssys.sims
+        cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] .= concentrations(sim,t)
+    end
+    return cstot
+end
+
+function concentrations(ssys::Q) where {Q<:SystemSimulation}
+    cstots = zeros((length(ssys.species),length(ssys.sol.t)))
+    for (i,t) in enumerate(ssys.sol.t)
+        for sim in ssys.sims
+            cstots[sim.domain.indexes[1]:sim.domain.indexes[2],i] .= concentrations(sim,t)
+        end
+    end
+    return cstots
+end
+
+export concentrations
 
 getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTPDomain,ConstantTVDomain},K<:Real,Q,G,L} = bsol.domain.T
 getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ParametrizedVDomain,ConstantPDomain,ParametrizedPDomain},K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[3]]
@@ -92,7 +164,7 @@ this outputs a sparse matrix of  num reactions xnum species containing the produ
 rate of that species associated with that reaction
 """
 function rops(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
-    ropmat = zeros(length(bsol.domain.phase.reactions),length(bsol.domain.phase.species))
+    ropmat = spzeros(length(bsol.domain.phase.reactions),length(bsol.domain.phase.species))
     cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
     @simd for i in 1:length(bsol.domain.phase.reactions)
         rxn = bsol.domain.phase.reactions[i]
@@ -102,6 +174,45 @@ function rops(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
         end
         for ind in rxn.reactantinds
             ropmat[i,ind] -= R
+        end
+    end
+    return ropmat
+end
+
+function rops(ssys::SystemSimulation,t)
+    domains = getfield.(ssys.sims,:domain)
+    Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter,:reactions)])
+    Nspcs = sum([length(sim.domain.phase.species) for sim in ssys.sims])
+    cstot = zeros(Nspcs)
+    vns = Array{Any,1}(undef,length(domains))
+    vcs = Array{Any,1}(undef,length(domains))
+    vT = Array{Any,1}(undef,length(domains))
+    vP = Array{Any,1}(undef,length(domains))
+    vV = Array{Any,1}(undef,length(domains))
+    vC = Array{Any,1}(undef,length(domains))
+    vN = Array{Any,1}(undef,length(domains))
+    vmu = Array{Any,1}(undef,length(domains))
+    vkfs = Array{Any,1}(undef,length(domains))
+    vkrevs = Array{Any,1}(undef,length(domains))
+    vHs = Array{Any,1}(undef,length(domains))
+    vUs = Array{Any,1}(undef,length(domains))
+    vGs = Array{Any,1}(undef,length(domains))
+    vdiffs = Array{Any,1}(undef,length(domains))
+    vCvave = Array{Any,1}(undef,length(domains))
+    vphi = Array{Any,1}(undef,length(domains))
+    ropmat = spzeros(Nrxns,Nspcs)
+    start = 1
+    for (k,sim) in enumerate(ssys.sims)
+        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(sim.domain,ssys.sol(t),t)
+        cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
+        rops!(ropmat,sim.domain.rxnarray,cstot,vkfs[k],vkrevs[k],start)
+        start += length(vkfs[k])
+    end
+    for inter in ssys.interfaces
+        if hasproperty(inter,:reactions)
+            kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
+            rops!(ropmat,inter.rxnarray,cstot,kfs,krevs,start)
+            start += length(kfs)
         end
     end
     return ropmat
@@ -128,7 +239,109 @@ function rops(bsol::Y,name::X,t::Z) where {Y<:Simulation, X<:AbstractString, Z<:
     end
     return rop
 end
+
+function rops(ssys::SystemSimulation,name,t)
+    domains = getfield.(ssys.sims,:domain)
+    ind = findfirst(isequal(name),ssys.names)
+    Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter,:reactions)])
+    Nspcs = sum([length(sim.domain.phase.species) for sim in ssys.sims])
+    cstot = zeros(Nspcs)
+    vns = Array{Any,1}(undef,length(domains))
+    vcs = Array{Any,1}(undef,length(domains))
+    vT = Array{Any,1}(undef,length(domains))
+    vP = Array{Any,1}(undef,length(domains))
+    vV = Array{Any,1}(undef,length(domains))
+    vC = Array{Any,1}(undef,length(domains))
+    vN = Array{Any,1}(undef,length(domains))
+    vmu = Array{Any,1}(undef,length(domains))
+    vkfs = Array{Any,1}(undef,length(domains))
+    vkrevs = Array{Any,1}(undef,length(domains))
+    vHs = Array{Any,1}(undef,length(domains))
+    vUs = Array{Any,1}(undef,length(domains))
+    vGs = Array{Any,1}(undef,length(domains))
+    vdiffs = Array{Any,1}(undef,length(domains))
+    vCvave = Array{Any,1}(undef,length(domains))
+    vphi = Array{Any,1}(undef,length(domains))
+    ropvec = spzeros(Nrxns)
+    start = 0
+    for (k,sim) in enumerate(ssys.sims)
+        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(sim.domain,ssys.sol(t),t)
+        cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
+        rops!(ropvec,sim.domain.rxnarray,cstot,vkfs[k],vkrevs[k],start,ind)
+        start += length(vkfs[k])
+    end
+    for inter in ssys.interfaces
+        if hasproperty(inter,:reactions)
+            kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
+            rops!(ropvec,inter.rxnarray,cstot,kfs,krevs,start,ind)
+            start += length(kfs)
+        end
+    end
+    return ropvec
+end
+
 export rops
+
+function rops!(ropmat,rarray,cs,kfs,krevs,start)
+    for i = 1:length(kfs)
+        if @inbounds rarray[2,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
+        elseif @inbounds rarray[3,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
+        else
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
+        end
+        if @inbounds rarray[5,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
+        elseif @inbounds rarray[6,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
+        else
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+        end
+        @fastmath R = fR - rR
+        
+        @inbounds @fastmath ropmat[i+start,rarray[1,i]] -= R
+        if @inbounds rarray[2,i] != 0
+            @inbounds @fastmath ropmat[i+start,rarray[2,i]] -= R
+            if @inbounds rarray[3,i] != 0
+                @inbounds @fastmath ropmat[i+start,rarray[3,i]] -= R
+            end
+        end
+        @inbounds @fastmath ropmat[i+start,rarray[4,i]] += R
+        if @inbounds rarray[5,i] != 0
+            @inbounds @fastmath ropmat[i+start,rarray[5,i]] += R
+            if @inbounds rarray[6,i] != 0
+                @inbounds @fastmath ropmat[i+start,rarray[6,i]] += R
+            end
+        end   
+    end
+end
+
+function rops!(ropvec,rarray,cs,kfs,krevs,start,ind)
+    for i = 1:length(kfs)
+        c = count(isequal(ind),rarray[4:6,i])-count(isequal(ind),rarray[1:3,i])
+        if c != 0.0
+            if @inbounds rarray[2,i] == 0
+                @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
+            elseif @inbounds rarray[3,i] == 0
+                @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
+            else
+                @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
+            end
+            if @inbounds rarray[5,i] == 0
+                @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
+            elseif @inbounds rarray[6,i] == 0
+                @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
+            else
+                @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+            end
+            @fastmath R = fR - rR
+            @fastmath @inbounds ropvec[i+start] = c*R
+        end
+    end
+end
+
+
 
 """
 Calculates sensitivities with respect to `target` at the time point at the end of the simulation
@@ -271,6 +484,59 @@ function rates(bsol::Q;ts::X=Array{Float64,1}()) where {Q<:Simulation,X<:Abstrac
         ts = bsol.sol.t
     end
     return hcat([rates(bsol,t) for t in ts]...)
+end
+
+"""
+calculate the rates of all reactions at time t
+"""
+function rates(ssys::Q,t::X) where {Q<:SystemSimulation,X<:Real}
+    rts = zeros(length(ssys.reactions))
+    domains = getfield.(ssys.sims,:domain)
+    Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter,:reactions)])
+    Nspcs = sum([length(sim.domain.phase.species) for sim in ssys.sims])
+    cstot = zeros(Nspcs)
+    vns = Array{Any,1}(undef,length(domains))
+    vcs = Array{Any,1}(undef,length(domains))
+    vT = Array{Any,1}(undef,length(domains))
+    vP = Array{Any,1}(undef,length(domains))
+    vV = Array{Any,1}(undef,length(domains))
+    vC = Array{Any,1}(undef,length(domains))
+    vN = Array{Any,1}(undef,length(domains))
+    vmu = Array{Any,1}(undef,length(domains))
+    vkfs = Array{Any,1}(undef,length(domains))
+    vkrevs = Array{Any,1}(undef,length(domains))
+    vHs = Array{Any,1}(undef,length(domains))
+    vUs = Array{Any,1}(undef,length(domains))
+    vGs = Array{Any,1}(undef,length(domains))
+    vdiffs = Array{Any,1}(undef,length(domains))
+    vCvave = Array{Any,1}(undef,length(domains))
+    vphi = Array{Any,1}(undef,length(domains))
+    index = 1
+    for (k,sim) in enumerate(ssys.sims)
+        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(sim.domain,ssys.sol(t),t)
+        cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
+        rts[index:index+length(vkfs[k])-1] .= getrates(sim.domain.rxnarray,vcs[k],vkfs[k],vkrevs[k])
+        index += length(vkfs[k])
+    end
+    for inter in ssys.interfaces
+        if hasproperty(inter,:reactions)
+            kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
+            rts[index:index+length(kfs)-1] = getrates(inter.rxnarray,cstot,kfs,krevs)
+            index += length(kfs)
+        end
+    end
+    return rts
+end
+
+"""
+calculate the rates of all reactions at given times ts
+defaults to using bsol.sol.t if ts is not supplied
+"""
+function rates(ssys::Q;ts::X=Array{Float64,1}()) where {Q<:SystemSimulation,X<:AbstractArray}
+    if length(ts) == 0
+        ts = ssys.sol.t
+    end
+    return hcat([rates(ssys,t) for t in ts]...)
 end
 
 export rates

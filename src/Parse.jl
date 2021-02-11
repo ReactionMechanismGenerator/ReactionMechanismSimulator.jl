@@ -129,7 +129,8 @@ function getatomdictfromrdkit(mol)
         end
     end
     nbonds = length(mol.GetBonds())
-    return atmD,nbonds
+    molecularweight = Desc.MolWt(mol)/1000.0
+    return atmD,nbonds,molecularweight
 end
 export getatomdictfromrdkit
 
@@ -239,9 +240,9 @@ function readinputyml(fname::String)
     end
 
     #phases
-    spcindex = 1
     spcdict = Dict()
     for p in D["Phases"]
+        spcindex = 1
         name = p["name"]
         spclist = Array{Species,1}()
         for d in p["Species"]
@@ -249,16 +250,16 @@ function readinputyml(fname::String)
             spcindex += 1
             spcname = d["name"]
             #attempt to generate molecular information from rdkit if possible
-            if !("atomnums" in keys(d)) || !("bondnum" in keys(d))
+            if !("atomnums" in keys(d)) || !("bondnum" in keys(d)) || !("molecularweight" in keys(d))
                 if "smiles" in keys(d)
                     try
-                        d["atomnums"],d["bondnum"] = getatomdictsmiles(d["smiles"])
+                        d["atomnums"],d["bondnum"],d["molecularweight"] = getatomdictsmiles(d["smiles"])
                     catch
                         @warn("failed to generate molecular information from smiles for species $spcname")
                     end
                 elseif "inchi" in keys(d)
                     try
-                        d["atomnums"],d["bondnum"] = getatomdictinchi(d["inchi"])
+                        d["atomnums"],d["bondnum"],d["molecularweight"] = getatomdictinchi(d["inchi"])
                     catch
                         @warn("failed to generate molecular information from inchi for species $spcname")
                     end
@@ -281,6 +282,9 @@ function readinputyml(fname::String)
 
             spc = fcndict2obj(d,ymlunitsdict)
             push!(spclist,spc)
+            if haskey(spcdict,spc.name)
+                error("Two species in the file have the same name")
+            end
             spcdict[spc.name] = (spc,p["name"])
         end
         outdict[name] = Dict()
@@ -322,10 +326,11 @@ function readinputyml(fname::String)
         if length(phs) == 1
             push!(outdict[phs[1]]["Reactions"],r)
         else
-            if Set(phs) in keys(outDict)
-                push!(outdict[Set(phs)],r)
+            if Set(phs) in keys(outdict)
+                push!(outdict[Set(phs)]["Reactions"],r)
             else
-                outdict[Set(phs)]=[r]
+                outdict[Set(phs)] = Dict()
+                outdict[Set(phs)]["Reactions"] = Array{ElementaryReaction,1}([r])
             end
         end
     end

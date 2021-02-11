@@ -107,9 +107,10 @@ export IdealDiluteSolution
     electronchange::W3
     spcdict::Dict{String,Int64}
     reversibility::Array{Bool,1}
+    sitedensity::Float64
     diffusionlimited::Bool = false
 end
-function IdealSurface(species,reactions; name="",diffusionlimited=false)
+function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=false)
     @assert diffusionlimited==false "diffusionlimited=true not supported for IdealSurface"
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
@@ -127,7 +128,7 @@ function IdealSurface(species,reactions; name="",diffusionlimited=false)
     return IdealSurface(species=species,reactions=rxns,name=name,
         spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple,
         veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,
-        reversibility=reversibility,diffusionlimited=diffusionlimited)
+        reversibility=reversibility,sitedensity=sitedensity,diffusionlimited=diffusionlimited)
 end
 export IdealSurface
 
@@ -225,6 +226,16 @@ function getvecthermo(spcs)
     end
 end
 export getvecthermo
+
+function getC0(ph::X,T) where {X<:Union{IdealDiluteSolution,IdealGas}}
+    return 1.0e5/(R*T)
+end
+
+function getC0(ph::X,T) where {X<:IdealSurface}
+    return ph.sitedensity
+end
+
+export getC0
 
 length(p::T) where {T<:AbstractPhase} = 1
 export length

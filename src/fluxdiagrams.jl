@@ -41,7 +41,9 @@ function drawspc(spc::Species,path::String=".")
             return
         end
     end
-    if spc.inchi != ""
+    if spc.adjlist != ""
+        mol = molecule.Molecule().from_adjacency_list(spc.adjlist)
+    elseif spc.inchi != ""
         mol = molecule.Molecule().from_inchi(spc.inchi)
     elseif spc.smiles != ""
         mol = molecule.Molecule().from_smiles(spc.smiles)
@@ -55,8 +57,8 @@ export drawspc
 """
 generate pngs for all species in phase and store them in the "species" folder
 """
-function drawspecies(phase::T) where {T<:AbstractPhase}
-    for spc in phase.species
+function drawspecies(spcs)
+    for spc in spcs
         drawspc(spc,"species")
     end
 end
@@ -90,25 +92,27 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
     maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
     colorscheme="viridis",removeunconnectednodes=false)
-
-    specieslist = bsol.domain.phase.species
+    
+    if hasproperty(bsol,:domain)
+        specieslist = bsol.domain.phase.species
+        reactionlist = bsol.domain.phase.reactions
+    else 
+        specieslist = bsol.species
+        reactionlist = bsol.reactions
+    end
+    
     speciesnamelist = getfield.(specieslist,:name)
     numspecies = length(specieslist)
-    reactionlist = bsol.domain.phase.reactions
-    phase = bsol.domain.phase
+
     if !isdir(outputdirectory)
         mkdir(outputdirectory)
     end
 
-    concentrations = hcat([bsol.sol(t)[1:numspecies]./getV(bsol,t) for t in ts]...)
+    concs = concentrations(bsol)
+    
+    reactionrates = rates(bsol)
 
-    reactionrates = zeros(length(reactionlist),length(ts))
-    for (i,t) in enumerate(ts)
-        cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
-        reactionrates[:,i] = [getrate(rxn,cs,kfs,krevs) for rxn in reactionlist]
-    end
-
-    drawspecies(bsol.domain.phase)
+    drawspecies(specieslist)
     speciesdirectory = joinpath(pwd(),"species")
 
     #find central species
@@ -143,8 +147,8 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         end
     end
 
-    maxconcentrations = maximum(concentrations,dims=2)
-    maxconcentration = maximum(maxconcentrations)
+    maxconcs = maximum(concs,dims=2)
+    maxconcentration = maximum(maxconcs)
 
     maxreactionrates = maximum(abs.(reactionrates),dims=2)
 
@@ -158,7 +162,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     if !superimpose && length(centralspecieslist) != 0
         for centralspeciesindex in centralspeciesindices
             push!(nodes,centralspeciesindex)
-            addadjacentnodes!(centralspeciesindex,nodes,edges,phase,
+            addadjacentnodes!(centralspeciesindex,nodes,edges,reactions,
                 maxreactionrates,maxspeciesrates,centralreactioncount,radius,Array{Int64,1}(),speciesnamelist)
         end
     else
@@ -196,7 +200,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
             for centralspeciesindex in centralspeciesindices
                 if !(centralspeciesindex in nodes)
                     push!(nodes,centralspeciesindex)
-                    addadjacentnodes!(centralspeciesindex,nodes,edges,phase,
+                    addadjacentnodes!(centralspeciesindex,nodes,edges,reactions,
                         maxreactionrates,maxspeciesrates,centralreactioncount,-1,nodescopy,speciesnamelist)
                 end
             end
@@ -284,7 +288,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
             end
 
             node = graph.get_node(species_string)[1]
-            concentration = concentrations[index,t] / maxconcentration
+            concentration = concs[index,t] / maxconcentration
             if concentration < concentrationtol
                 penwidth = 0.0
             else
@@ -367,7 +371,7 @@ end
 
 export makefluxdiagrams
 
-function addadjacentnodes!(targetnodeindex,nodes,edges,phase,maxreactionrates,maxspeciesrates,reactioncount,rad,mainnodes,speciesnamelist)
+function addadjacentnodes!(targetnodeindex,nodes,edges,reactions,maxreactionrates,maxspeciesrates,reactioncount,rad,mainnodes,speciesnamelist)
     if rad == 0
         return
     elseif rad < 0 && targetnodeindex in mainnodes
@@ -375,7 +379,7 @@ function addadjacentnodes!(targetnodeindex,nodes,edges,phase,maxreactionrates,ma
     else
         lt(x::Int64,y::Int64) = maxreactionrates[x] < maxreactionrates[y]
         targetreactionindices = Array{Int64,1}()
-        for reaction in phase.reactions
+        for reaction in reactions
             if targetnodeindex in reaction.reactantinds || targetnodeindex in reaction.productinds
                 push!(targetreactionindices,reaction.index)
             end
@@ -383,9 +387,9 @@ function addadjacentnodes!(targetnodeindex,nodes,edges,phase,maxreactionrates,ma
         sort!(targetreactionindices,lt=lt,rev=true)
 
         if reactioncount == -1
-            targetreactionlist = phase.reactions[targetreactionindices]
+            targetreactionlist = reactions[targetreactionindices]
         else
-            targetreactionlist = phase.reactions[targetreactionindices[1:reactioncount]]
+            targetreactionlist = reactions[targetreactionindices[1:reactioncount]]
         end
         for reaction in targetreactionlist
             if length(reaction.pairs[1]) > 1
@@ -399,7 +403,7 @@ function addadjacentnodes!(targetnodeindex,nodes,edges,phase,maxreactionrates,ma
                 if rindex == targetnodeindex
                     if !(pindex in nodes)
                         push!(nodes,pindex)
-                        addadjacentnodes!(pindex,nodes,edges,phase,maxreactionrates,maxspeciesrates,reactioncount,rad-1,mainnodes,speciesnamelist)
+                        addadjacentnodes!(pindex,nodes,edges,reactions,maxreactionrates,maxspeciesrates,reactioncount,rad-1,mainnodes,speciesnamelist)
                     end
                     if !((rindex,pindex) in edges) && !((pindex,rindex) in edges)
                         push!(edges,(rindex,pindex))
@@ -408,7 +412,7 @@ function addadjacentnodes!(targetnodeindex,nodes,edges,phase,maxreactionrates,ma
                 if pindex == targetnodeindex
                     if !(rindex in nodes)
                         push!(nodes,rindex)
-                        addadjacentnodes!(rindex,nodes,edges,phase,maxreactionrates,maxspeciesrates,reactioncount,rad-1,mainnodes,speciesnamelist)
+                        addadjacentnodes!(rindex,nodes,edges,reactions,maxreactionrates,maxspeciesrates,reactioncount,rad-1,mainnodes,speciesnamelist)
                     end
                     if !((rindex,pindex) in edges) && !((pindex,rindex) in edges)
                         push!(edges,(rindex,pindex))
