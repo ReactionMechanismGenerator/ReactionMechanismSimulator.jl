@@ -521,13 +521,13 @@ function rates(ssys::Q,t::X) where {Q<:SystemSimulation,X<:Real}
     for (k,sim) in enumerate(ssys.sims)
         vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(sim.domain,ssys.sol(t),t)
         cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
-        rts[index:index+length(vkfs[k])-1] .= getrates(sim.domain.rxnarray,vcs[k],vkfs[k],vkrevs[k])*getdomainsize(sim,t)
+        rts[index:index+length(vkfs[k])-1] .= getrates(sim.domain.rxnarray,cstot,vkfs[k],vkrevs[k]).*getdomainsize(sim,t)
         index += length(vkfs[k])
     end
     for inter in ssys.interfaces
         if hasproperty(inter,:reactions)
             kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
-            rts[index:index+length(kfs)-1] = getrates(inter.rxnarray,cstot,kfs,krevs)*inter.A
+            rts[index:index+length(kfs)-1] = getrates(inter.rxnarray,cstot,kfs,krevs).*inter.A
             index += length(kfs)
         end
     end
