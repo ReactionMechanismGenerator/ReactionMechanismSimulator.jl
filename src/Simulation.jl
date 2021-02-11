@@ -159,7 +159,7 @@ getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantPDomain,K<:Real,Q,G,L} =
 getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ParametrizedPDomain,K<:Real,Q,G,L} = bsol.domain.P(t)/(R*getT(bsol,t))
 export getC
 getdomainsize(bsol,t) = getV(bsol,t)
-getdomainsize(bsol::X,t) where {X<:ConstantTAPhiDomain} = bsol.domain.A
+getdomainsize(bsol::Simulation{Q,W,L,G},t) where {W<:ConstantTAPhiDomain,Q,L,G} = bsol.domain.A
 
 """
 calculates the rates of production/loss at a given time point
