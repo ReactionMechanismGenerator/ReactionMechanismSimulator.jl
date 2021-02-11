@@ -162,7 +162,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     if !superimpose && length(centralspecieslist) != 0
         for centralspeciesindex in centralspeciesindices
             push!(nodes,centralspeciesindex)
-            addadjacentnodes!(centralspeciesindex,nodes,edges,reactions,
+            addadjacentnodes!(centralspeciesindex,nodes,edges,reactionlist,
                 maxreactionrates,maxspeciesrates,centralreactioncount,radius,Array{Int64,1}(),speciesnamelist)
         end
     else
@@ -200,7 +200,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
             for centralspeciesindex in centralspeciesindices
                 if !(centralspeciesindex in nodes)
                     push!(nodes,centralspeciesindex)
-                    addadjacentnodes!(centralspeciesindex,nodes,edges,reactions,
+                    addadjacentnodes!(centralspeciesindex,nodes,edges,reactionlist,
                         maxreactionrates,maxspeciesrates,centralreactioncount,-1,nodescopy,speciesnamelist)
                 end
             end
