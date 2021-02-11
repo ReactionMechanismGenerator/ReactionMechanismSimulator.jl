@@ -158,6 +158,9 @@ getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ParametrizedTPDomain,K<:Real,Q,G
 getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantPDomain,K<:Real,Q,G,L} = bsol.domain.P/(R*getT(bsol,t))
 getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ParametrizedPDomain,K<:Real,Q,G,L} = bsol.domain.P(t)/(R*getT(bsol,t))
 export getC
+getdomainsize(bsol,t) = getV(bsol,t)
+getdomainsize(bsol::X,t) where {X<:ConstantTAPhiDomain} = bsol.domain.A
+
 """
 calculates the rates of production/loss at a given time point
 this outputs a sparse matrix of  num reactions xnum species containing the production/loss
@@ -166,9 +169,10 @@ rate of that species associated with that reaction
 function rops(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
     ropmat = spzeros(length(bsol.domain.phase.reactions),length(bsol.domain.phase.species))
     cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
+    V = getdomainsize(bsol,t)
     @simd for i in 1:length(bsol.domain.phase.reactions)
         rxn = bsol.domain.phase.reactions[i]
-        R = getrate(rxn,cs,kfs,krevs)
+        R = getrate(rxn,cs,kfs,krevs)*V
         for ind in rxn.productinds
             ropmat[i,ind] += R
         end
@@ -205,13 +209,13 @@ function rops(ssys::SystemSimulation,t)
     for (k,sim) in enumerate(ssys.sims)
         vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(sim.domain,ssys.sol(t),t)
         cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
-        rops!(ropmat,sim.domain.rxnarray,cstot,vkfs[k],vkrevs[k],start)
+        rops!(ropmat,sim.domain.rxnarray,cstot,vkfs[k],vkrevs[k],vV[k],start)
         start += length(vkfs[k])
     end
     for inter in ssys.interfaces
         if hasproperty(inter,:reactions)
             kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
-            rops!(ropmat,inter.rxnarray,cstot,kfs,krevs,start)
+            rops!(ropmat,inter.rxnarray,cstot,kfs,krevs,inter.A,start)
             start += length(kfs)
         end
     end
@@ -226,11 +230,12 @@ rate associated with that reaction for the given species
 function rops(bsol::Y,name::X,t::Z) where {Y<:Simulation, X<:AbstractString, Z<:Real}
     rop = spzeros(length(bsol.domain.phase.reactions))
     cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
+    V = getdomainsize(bsol,t)
     ind = findfirst(isequal(name),getfield.(bsol.domain.phase.species,:name))
     @assert !isa(ind,Nothing) "species $name not in species array"
     for (i,rxn) in enumerate(bsol.domain.phase.reactions)
         c = 0
-        R = getrate(rxn,cs,kfs,krevs)
+        R = getrate(rxn,cs,kfs,krevs)*V
         c -= count(isequal(ind),rxn.reactantinds)
         c += count(isequal(ind),rxn.productinds)
         if c != 0
@@ -267,13 +272,13 @@ function rops(ssys::SystemSimulation,name,t)
     for (k,sim) in enumerate(ssys.sims)
         vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(sim.domain,ssys.sol(t),t)
         cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
-        rops!(ropvec,sim.domain.rxnarray,cstot,vkfs[k],vkrevs[k],start,ind)
+        rops!(ropvec,sim.domain.rxnarray,cstot,vkfs[k],vkrevs[k],vV[k],start,ind)
         start += length(vkfs[k])
     end
     for inter in ssys.interfaces
         if hasproperty(inter,:reactions)
             kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
-            rops!(ropvec,inter.rxnarray,cstot,kfs,krevs,start,ind)
+            rops!(ropvec,inter.rxnarray,cstot,kfs,krevs,inter.A,start,ind)
             start += length(kfs)
         end
     end
@@ -282,7 +287,7 @@ end
 
 export rops
 
-function rops!(ropmat,rarray,cs,kfs,krevs,start)
+function rops!(ropmat,rarray,cs,kfs,krevs,V,start)
     for i = 1:length(kfs)
         if @inbounds rarray[2,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
@@ -298,7 +303,7 @@ function rops!(ropmat,rarray,cs,kfs,krevs,start)
         else
             @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
         end
-        @fastmath R = fR - rR
+        @fastmath R = (fR - rR)*V
         
         @inbounds @fastmath ropmat[i+start,rarray[1,i]] -= R
         if @inbounds rarray[2,i] != 0
@@ -317,7 +322,7 @@ function rops!(ropmat,rarray,cs,kfs,krevs,start)
     end
 end
 
-function rops!(ropvec,rarray,cs,kfs,krevs,start,ind)
+function rops!(ropvec,rarray,cs,kfs,krevs,V,start,ind)
     for i = 1:length(kfs)
         c = count(isequal(ind),rarray[4:6,i])-count(isequal(ind),rarray[1:3,i])
         if c != 0.0
@@ -335,7 +340,7 @@ function rops!(ropvec,rarray,cs,kfs,krevs,start,ind)
             else
                 @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
             end
-            @fastmath R = fR - rR
+            @fastmath R = (fR - rR)*V
             @fastmath @inbounds ropvec[i+start] = c*R
         end
     end
@@ -472,7 +477,8 @@ calculate the rates of all reactions at time t
 """
 function rates(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
     cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
-    return [getrate(rxn,cs,kfs,krevs) for rxn in bsol.domain.phase.reactions]
+    V = getdomainsize(bsol,t)
+    return [getrate(rxn,cs,kfs,krevs)*V for rxn in bsol.domain.phase.reactions]
 end
 
 """
@@ -515,13 +521,13 @@ function rates(ssys::Q,t::X) where {Q<:SystemSimulation,X<:Real}
     for (k,sim) in enumerate(ssys.sims)
         vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(sim.domain,ssys.sol(t),t)
         cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
-        rts[index:index+length(vkfs[k])-1] .= getrates(sim.domain.rxnarray,vcs[k],vkfs[k],vkrevs[k])
+        rts[index:index+length(vkfs[k])-1] .= getrates(sim.domain.rxnarray,vcs[k],vkfs[k],vkrevs[k])*getdomainsize(sim,t)
         index += length(vkfs[k])
     end
     for inter in ssys.interfaces
         if hasproperty(inter,:reactions)
             kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
-            rts[index:index+length(kfs)-1] = getrates(inter.rxnarray,cstot,kfs,krevs)
+            rts[index:index+length(kfs)-1] = getrates(inter.rxnarray,cstot,kfs,krevs)*inter.A
             index += length(kfs)
         end
     end
