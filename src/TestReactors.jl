@@ -55,6 +55,22 @@ jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 end;
 
+@testset "Test ConstantTAPhi Reactor Simulation" begin
+    phaseDict = readinput("../src/testing/ORR.rms")
+    spcs = phaseDict["phase"]["Species"]; #mechanism dictionaries index:  phaseDict[phasename]["Species" or "Reactions"]
+    rxns = phaseDict["phase"]["Reactions"];
+    AdivV = 1.0
+    is = IdealSurface(spcs,rxns,2.486e-5;name="surf");
+    initialconds = Dict(["T"=>298.0,"A"=>1.0,"Phi"=>-0.5,"A*"=>0.5,"B*"=>0.5,"OHA"=>0.0,"O2"=>0.25*AdivV,"H+"=>1.81e-6*AdivV,"H2O2aq"=>0.0*AdivV,"H2O"=>5.55e4*AdivV])
+    domain,y0,p =ConstantTAPhiDomain(phase=is,initialconds=initialconds;sensitivity=false,constantspecies=["H+","O2","H2O2aq","H2O"]);
+    react = Reactor(domain,y0,(0.0,1e-5),p=p);
+    sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-6);
+    sim = Simulation(sol,domain);
+    @test concentrations(sim,"OA",1e-6) ≈ 0.00013773350978007822 rtol=1e-5
+    @test concentrations(sim,"A*",1e-6) ≈ 1.3559599927418817e-5 rtol=1e-5
+    @test concentrations(sim,"OHA",1e-6) ≈ 0.4998487068452803 rtol=1e-5
+end
+
 #Use superminimal example to test
 phaseDict = readinput("../src/testing/superminimal.rms") #load mechanism dictionary
 spcs = phaseDict["phase"]["Species"]; #mechanism dictionaries index:  phaseDict[phasename]["Species" or "Reactions"]
@@ -248,8 +264,6 @@ jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 end;
 
-
-
 @testset "Multi-domain ConstantV and ConstantTP simulation" begin
     phaseDict = readinput("../src/testing/superminimal.rms")
     spcs = phaseDict["phase"]["Species"]
@@ -281,5 +295,36 @@ end;
     print(length(sol(t)[length(spcs)+1:end-3]))
     print(length(solV(t)[1:end-2]))
     @test sol(t)[length(spcs)+1:end-3] ≈ solV(t)[1:end-2] rtol=1e-5
+end;
+
+@testset "Multi-domain Gas-Surface ConstantTP and ConstantTAPhi Simulation" begin
+    phaseDict = readinput("../src/testing/ch4o2cat.rms")
+    gasspcs = phaseDict["gas"]["Species"]; 
+    gasrxns = phaseDict["gas"]["Reactions"];
+    surfacespcs = phaseDict["surface"]["Species"]
+    surfacerxns = phaseDict["surface"]["Reactions"]
+    interfacerxns = phaseDict[Set(["gas","surface"])]["Reactions"];
+    
+    ig = IdealGas(gasspcs,gasrxns;name="gas"); 
+    cat = IdealSurface(surfacespcs,surfacerxns,2.486e-5;name="surface");
+    
+    initialconds = Dict(["T"=>800.0,"P"=>1.0e5,"O2"=>0.2,"N2"=>0.7,"CH4"=>0.1]); 
+    domaingas,y0gas,pgas = ConstantTPDomain(phase=ig,initialconds=initialconds,); 
+    
+    V = 8.314*800.0/1.0e5
+    A = 1.0e5*V
+    initialconds = Dict(["T"=>800.0,"A"=>A,"vacantX"=>cat.sitedensity*A]); 
+    domaincat,y0cat,pcat = ConstantTAPhiDomain(phase=cat,initialconds=initialconds,); 
+    
+    inter,pinter = ReactiveInternalInterfaceConstantTPhi(domaingas,domaincat,interfacerxns,800.0,A);
+    
+    react,y0,p = Reactor((domaingas,domaincat),(y0gas,y0cat),(0.0,0.1),(inter,),(pgas,pcat,pinter));
+    
+    sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-6);
+    
+    ssys = SystemSimulation(sol,(domaingas,domaincat,),(inter,),p);
+    
+    @test concentrations(ssys,"OX",0.5e-5) ≈ 8.033191655902819e-6 rtol=1e-5
+    @test molefractions(ssys.sims[1],"H2O",0.5e-5) ≈ 0.10899527627867926 rtol=1e-5
 end;
 end;

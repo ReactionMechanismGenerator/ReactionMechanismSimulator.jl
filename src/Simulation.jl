@@ -85,27 +85,15 @@ export molefractions
 function concentrations(bsol::Q,name::W,t::E) where {Q<:AbstractSimulation, W<:String, E<:Real}
     @assert name in bsol.names
     ind = findfirst(isequal(name),bsol.names)+bsol.domain.indexes[1]-1
-    if !isa(bsol.domain,ConstantTAPhiDomain)
-        return bsol.sol(t)[bsol.domain.indexes[1]+ind-1]/getV(bsol,t)
-    else 
-        return bsol.sol(t)[bsol.domain.indexes[1]+ind-1]/bsol.domain.A 
-    end
+    return bsol.sol(t)[ind]/getdomainsize(bsol,t)
 end
 
 function concentrations(bsol::Q, t::E) where {Q<:AbstractSimulation,E<:Real}
-    if !isa(bsol.domain,ConstantTAPhiDomain)
-        return bsol.sol(t)[bsol.domain.indexes[1]:bsol.domain.indexes[2]]./getV(bsol,t)
-    else 
-        return bsol.sol(t)[bsol.domain.indexes[1]:bsol.domain.indexes[2]]./bsol.domain.A 
-    end
+    return bsol.sol(t)[bsol.domain.indexes[1]:bsol.domain.indexes[2]]./getdomainsize(bsol,t)
 end
 
 function concentrations(bsol::Q) where {Q<:AbstractSimulation}
-    if !isa(bsol.domain,ConstantTAPhiDomain)
-        @views return hcat(bsol.sol.u...)[bsol.domain.indexes[1]:bsol.domain.indexes[2],:]./getV(bsol,t)
-    else 
-        @views return hcat(bsol.sol.u...)[bsol.domain.indexes[1]:bsol.domain.indexes[2],:]./bsol.domain.A
-    end 
+    @views return hcat(bsol.sol.u...)[bsol.domain.indexes[1]:bsol.domain.indexes[2],:]./getdomainsize.(bsol,bsol.sol.t)
 end
 
 function concentrations(ssys::Q,name::W,t::E) where {Q<:SystemSimulation, W<:String, E<:Real}
