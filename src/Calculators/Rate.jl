@@ -17,6 +17,16 @@ end
 @inline (arr::Arrhenius)(T::Q;P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))
 export Arrhenius
 
+@with_kw struct StickingCoefficient{N<:Real,K<:Real,Q<:Real,P<:AbstractRateUncertainty} <: AbstractRate
+        A::N
+        n::K
+        Ea::Q
+        unc::P = EmptyRateUncertainty()
+end
+@inline (arr::StickingCoefficient)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath min(arr.A*T^arr.n*exp(-arr.Ea/(R*T)),1.0)
+@inline (arr::StickingCoefficient)(T::Q;P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath min(arr.A*T^arr.n*exp(-arr.Ea/(R*T)),1.0)
+export StickingCoefficient
+
 @with_kw struct Arrheniusq{N<:Real,K<:Real,Q<:Real,P<:AbstractRateUncertainty,B} <: AbstractRate
         A::N
         n::K
