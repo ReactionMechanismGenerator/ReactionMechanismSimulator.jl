@@ -281,6 +281,9 @@ function readinputyml(fname::String)
 
             spc = fcndict2obj(d,ymlunitsdict)
             push!(spclist,spc)
+            if haskey(spcdict,spc.name)
+                error("Two species in the file have the same name")
+            end
             spcdict[spc.name] = (spc,p["name"])
         end
         outdict[name] = Dict()
