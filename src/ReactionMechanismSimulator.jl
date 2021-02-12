@@ -2,6 +2,7 @@ module ReactionMechanismSimulator
     using PyCall
     push!(PyVector(pyimport("sys")["path"]), "")
     const Chem = PyNULL()
+    const Desc = PyNULL()
     const molecule = PyNULL()
     const pydot = PyNULL()
     const chemkin =PyNULL()
@@ -17,6 +18,7 @@ module ReactionMechanismSimulator
     const os = PyNULL()
     function __init__()
         copy!(Chem,pyimport_conda("rdkit.Chem","rdkit","rdkit"))
+        copy!(Desc,pyimport_conda("rdkit.Chem.Descriptors","rdkit","rdkit"))
         copy!(molecule,pyimport_conda("rmgpy.molecule","rmg","rmg"))
         copy!(pydot,pyimport_conda("pydot","pydot"))
         copy!(chemkin,pyimport_conda("rmgpy.chemkin","rmg","rmg"))
