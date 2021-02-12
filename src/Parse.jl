@@ -322,10 +322,11 @@ function readinputyml(fname::String)
         if length(phs) == 1
             push!(outdict[phs[1]]["Reactions"],r)
         else
-            if Set(phs) in keys(outDict)
-                push!(outdict[Set(phs)],r)
+            if Set(phs) in keys(outdict)
+                push!(outdict[Set(phs)]["Reactions"],r)
             else
-                outdict[Set(phs)]=[r]
+                outdict[Set(phs)] = Dict()
+                outdict[Set(phs)]["Reactions"] = Array{ElementaryReaction,1}([r])
             end
         end
     end
