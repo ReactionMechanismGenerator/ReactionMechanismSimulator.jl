@@ -524,7 +524,8 @@ calculate the rates of all reactions at time t
 """
 function rates(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
     cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
-    return [getrate(rxn,cs,kfs,krevs) for rxn in bsol.domain.phase.reactions]
+    V = getdomainsize(bsol,t)
+    return [getrate(rxn,cs,kfs,krevs)*V for rxn in bsol.domain.phase.reactions]
 end
 
 """
@@ -536,6 +537,59 @@ function rates(bsol::Q;ts::X=Array{Float64,1}()) where {Q<:Simulation,X<:Abstrac
         ts = bsol.sol.t
     end
     return hcat([rates(bsol,t) for t in ts]...)
+end
+
+"""
+calculate the rates of all reactions at time t
+"""
+function rates(ssys::Q,t::X) where {Q<:SystemSimulation,X<:Real}
+    rts = zeros(length(ssys.reactions))
+    domains = getfield.(ssys.sims,:domain)
+    Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter,:reactions)])
+    Nspcs = sum([length(sim.domain.phase.species) for sim in ssys.sims])
+    cstot = zeros(Nspcs)
+    vns = Array{Any,1}(undef,length(domains))
+    vcs = Array{Any,1}(undef,length(domains))
+    vT = Array{Any,1}(undef,length(domains))
+    vP = Array{Any,1}(undef,length(domains))
+    vV = Array{Any,1}(undef,length(domains))
+    vC = Array{Any,1}(undef,length(domains))
+    vN = Array{Any,1}(undef,length(domains))
+    vmu = Array{Any,1}(undef,length(domains))
+    vkfs = Array{Any,1}(undef,length(domains))
+    vkrevs = Array{Any,1}(undef,length(domains))
+    vHs = Array{Any,1}(undef,length(domains))
+    vUs = Array{Any,1}(undef,length(domains))
+    vGs = Array{Any,1}(undef,length(domains))
+    vdiffs = Array{Any,1}(undef,length(domains))
+    vCvave = Array{Any,1}(undef,length(domains))
+    vphi = Array{Any,1}(undef,length(domains))
+    index = 1
+    for (k,sim) in enumerate(ssys.sims)
+        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(sim.domain,ssys.sol(t),t)
+        cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
+        rts[index:index+length(vkfs[k])-1] .= getrates(sim.domain.rxnarray,cstot,vkfs[k],vkrevs[k]).*getdomainsize(sim,t)
+        index += length(vkfs[k])
+    end
+    for inter in ssys.interfaces
+        if hasproperty(inter,:reactions)
+            kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
+            rts[index:index+length(kfs)-1] = getrates(inter.rxnarray,cstot,kfs,krevs).*inter.A
+            index += length(kfs)
+        end
+    end
+    return rts
+end
+
+"""
+calculate the rates of all reactions at given times ts
+defaults to using bsol.sol.t if ts is not supplied
+"""
+function rates(ssys::Q;ts::X=Array{Float64,1}()) where {Q<:SystemSimulation,X<:AbstractArray}
+    if length(ts) == 0
+        ts = ssys.sol.t
+    end
+    return hcat([rates(ssys,t) for t in ts]...)
 end
 
 export rates
