@@ -4,6 +4,7 @@ abstract type AbstractDiffusivity end
 export AbstractDiffusivity
 
 struct EmptyDiffusivity <: AbstractDiffusivity end
+(ed::EmptyDiffusivity)(;T::N,mu::Q,P::R=0.0) where {N,R,Q<:Number} = Inf
 export EmptyDiffusivity
 
 @with_kw struct ConstantDiffusivity{N<:Number} <: AbstractDiffusivity
