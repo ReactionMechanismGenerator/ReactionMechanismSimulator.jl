@@ -57,8 +57,8 @@ export drawspc
 """
 generate pngs for all species in phase and store them in the "species" folder
 """
-function drawspecies(phase::T) where {T<:AbstractPhase}
-    for spc in phase.species
+function drawspecies(spcs)
+    for spc in spcs
         drawspc(spc,"species")
     end
 end
@@ -92,25 +92,27 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
     maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
     colorscheme="viridis",removeunconnectednodes=false)
-
-    specieslist = bsol.domain.phase.species
+    
+    if hasproperty(bsol,:domain)
+        specieslist = bsol.domain.phase.species
+        reactionlist = bsol.domain.phase.reactions
+    else 
+        specieslist = bsol.species
+        reactionlist = bsol.reactions
+    end
+    
     speciesnamelist = getfield.(specieslist,:name)
     numspecies = length(specieslist)
-    reactionlist = bsol.domain.phase.reactions
-    phase = bsol.domain.phase
+
     if !isdir(outputdirectory)
         mkdir(outputdirectory)
     end
 
-    concentrations = hcat([bsol.sol(t)[1:numspecies]./getV(bsol,t) for t in ts]...)
+    concs = concentrations(bsol)
+    
+    reactionrates = rates(bsol)
 
-    reactionrates = zeros(length(reactionlist),length(ts))
-    for (i,t) in enumerate(ts)
-        cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
-        reactionrates[:,i] = [getrate(rxn,cs,kfs,krevs) for rxn in reactionlist]
-    end
-
-    drawspecies(bsol.domain.phase)
+    drawspecies(specieslist)
     speciesdirectory = joinpath(pwd(),"species")
 
     #find central species
