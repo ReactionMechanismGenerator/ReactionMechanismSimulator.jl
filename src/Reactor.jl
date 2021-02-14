@@ -181,6 +181,31 @@ export Reactor
 end
 export getrate
 
+@inline function getrates(rarray,cs,kfs,krevs)
+    rts = zeros(length(kfs))
+    for i = 1:length(rts)
+        if @inbounds rarray[2,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
+        elseif @inbounds rarray[3,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
+        else
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
+        end
+        if @inbounds rarray[5,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
+        elseif @inbounds rarray[6,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
+        else
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+        end
+        @fastmath R = fR - rR
+        
+        rts[i] = R
+    end
+    return rts
+end
+export getrates
+
 @inline function addreactionratecontributions!(dydt::Q,rarray::Array{W2,2},cs::W,kfs::Z,krevs::Y) where {Q,Z,Y,T,W,W2}
     @inbounds @simd for i = 1:size(rarray)[2]
         if @inbounds rarray[2,i] == 0
