@@ -52,7 +52,7 @@ function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=Dif
     end
     return Reactor(domain,ode,recsolver,forwardsensitivities)
 end
-function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=[],ps::X=DiffEqBase.NullParameters();forwardsensitivities=false,modelingtoolkit=false) where {T<:Tuple,W,Z<:AbstractArray,X,W2}
+function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqBase.NullParameters();forwardsensitivities=false,modelingtoolkit=false) where {T<:Tuple,W<:Tuple,Z,X,W2}
     #adjust indexing
     y0 = zeros(sum(length(y) for y in y0s))
     Nvars = 0
@@ -111,6 +111,19 @@ function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=[],ps::X=DiffEqBase.N
             push!(phaseinds,(length(p)+1,length(p)+length(ps[i])))
             push!(phases,domain.phase)
             p = vcat(p,ps[i])
+        end
+    end
+    
+    for (i,inter) in enumerate(interfaces)
+        if isa(inter, AbstractReactiveInternalInterface)
+            ind1 = findfirst(isequal(inter.domain1),domains)
+            ind2 = findfirst(isequal(inter.domain2),domains)
+            inter.domaininds[1] = ind1
+            inter.domaininds[2] = ind2
+            inter.parameterindexes[1] = length(p)+1
+            inter.parameterindexes[2] = length(p)+length(ps[i+length(domains)])
+            inter.rxnarray .= getinterfacereactioninds(inter.domain1,inter.domain2,inter.reactions)
+            p = vcat(p,ps[i+length(domains)])
         end
     end
     
