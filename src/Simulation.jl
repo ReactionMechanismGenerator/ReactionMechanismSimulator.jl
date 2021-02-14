@@ -103,6 +103,9 @@ getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ParametrizedTPDomain,K<:Real,Q,G
 getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantPDomain,K<:Real,Q,G,L} = bsol.domain.P/(R*getT(bsol,t))
 getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ParametrizedPDomain,K<:Real,Q,G,L} = bsol.domain.P(t)/(R*getT(bsol,t))
 export getC
+getdomainsize(bsol,t) = getV(bsol,t)
+getdomainsize(bsol::Simulation{Q,W,L,G},t) where {W<:ConstantTAPhiDomain,Q,L,G} = bsol.domain.A
+
 """
 calculates the rates of production/loss at a given time point
 this outputs a sparse matrix of  num reactions xnum species containing the production/loss
