@@ -68,7 +68,7 @@ export spcindex
 
 function molefractions(bsol::Q,name::W,t::E) where {Q<:AbstractSimulation, W<:String, E<:Real}
     @assert name in bsol.names
-    ind = findfirst(isequal(name),bsol.names)
+    ind = findfirst(isequal(name),bsol.names)+bsol.domain.indexes[1]-1
     return bsol.sol(t)[ind]/bsol.N(t)
 end
 
