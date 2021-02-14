@@ -1,0 +1,221 @@
+Phases:
+- Species:
+  - name: O2
+    radicalelectrons: 0
+    smiles: '[O][O]'
+    thermo:
+      G: 1.534e5
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: O2A
+    radicalelectrons: 1
+    thermo:
+      G: 1.3411e5
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: HOOA
+    radicalelectrons: 0
+    thermo:
+      G: 1.1674e5
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: OA
+    radicalelectrons: 1
+    thermo:
+      G: -9.6483e3
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: OHA
+    radicalelectrons: 0
+    thermo:
+      G: -1.4472e4
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: H2O2A
+    radicalelectrons: 0
+    thermo:
+      G: 1.4762e5
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: OB
+    radicalelectrons: 1
+    thermo:
+      G: 5.1136e4
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: OHB
+    radicalelectrons: 0
+    thermo:
+      G: 1.92966e4
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: H2O2aq
+    radicalelectrons: 1
+    smiles: 'OO'
+    thermo:
+      G: 1.79458e5
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: A*
+    radicalelectrons: 0
+    thermo:
+      G: 0.0
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: B*
+    radicalelectrons: 0
+    thermo:
+      G: 0.0
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: H+
+    radicalelectrons: 0
+    thermo:
+      G: 0.0 #-2.3714e5
+      T: 298.0
+      type: ConstantG
+    type: Species
+  - name: H2O
+    radicalelectrons: 0
+    thermo:
+      G: 0.0 #-2.3714e5
+      T: 298.0
+      type: ConstantG
+    type: Species
+  name: phase
+Reactions:
+- kinetics: {A: 1e8, Ea: 0.0, n: 0.0, type: Arrhenius}
+  products: [O2A]
+  radicalchange: 0
+  reactants: [O2, A*]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 0.0, n: 0.0, q: 0.5, type: Arrheniusq}
+  products: [HOOA]
+  radicalchange: 0
+  electronchange: -1
+  reversible: false
+  reactants: [O2A, H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 1.35e4, n: 0.0, q: -0.5, type: Arrheniusq}
+  reactants: [HOOA]
+  radicalchange: 0
+  electronchange: 1
+  reversible: false
+  products: [O2A, H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 0.0, n: 0.0, q: 0.5, type: Arrheniusq}
+  products: [OA,H2O]
+  radicalchange: 0
+  electronchange: -1
+  reversible: false
+  reactants: [HOOA,H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 1.302e5, n: 0.0, q: -0.5, type: Arrheniusq}
+  reactants: [OA,H2O]
+  radicalchange: 0
+  electronchange: 1
+  reversible: false
+  products: [HOOA,H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 0.0, n: 0.0, q: 0.5, type: Arrheniusq}
+  products: [OHA]
+  radicalchange: 0
+  electronchange: -1
+  reversible: false
+  reactants: [OA,H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 4.82426e3, n: 0.0, q: -0.5, type: Arrheniusq}
+  reactants: [OHA]
+  radicalchange: 0
+  electronchange: 1
+  reversible: false
+  products: [OA,H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 0.0, n: 0.0, q: 0.5, type: Arrheniusq}
+  products: [A*,H2O]
+  radicalchange: 0
+  electronchange: -1
+  reversible: false
+  reactants: [OHA,H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: -1.447e4, n: 0.0, q: -0.5, type: Arrheniusq}
+  reactants: [A*,H2O]
+  radicalchange: 0
+  electronchange: 1
+  reversible: false
+  products: [OHA,H+]
+  type: ElementaryReaction
+- kinetics: {A: 6.21e12, Ea: 46311.974208, n: 0.0, type: Arrhenius}
+  products: [OA,OB]
+  radicalchange: 0
+  reactants: [O2A,B*]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 0.0, n: 0.0, q: 0.5, type: Arrheniusq}
+  products: [OHB]
+  radicalchange: 0
+  electronchange: -1
+  reversible: false
+  reactants: [OB,H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 3.666e4, n: 0.0, q: -0.5, type: Arrheniusq}
+  reactants: [OHB]
+  radicalchange: 0
+  electronchange: 1
+  reversible: false
+  products: [OB,H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 0.0, n: 0.0, q: 0.5, type: Arrheniusq}
+  products: [H2O,B*]
+  radicalchange: 0
+  electronchange: -1
+  reversible: false
+  reactants: [OHB,H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 1.9297e4, n: 0.0, q: -0.5, type: Arrheniusq}
+  reactants: [H2O,B*]
+  radicalchange: 0
+  electronchange: 1
+  reversible: false
+  products: [OHB,H+]
+  type: ElementaryReaction
+- kinetics: {A: 6.21e12, Ea: 35698.813451999995, n: 0.0, type: Arrhenius}
+  products: [OHA,OB]
+  radicalchange: 0
+  reactants: [HOOA,B*]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: 0.0, n: 0.0, q: 0.5, type: Arrheniusq}
+  products: [H2O2A]
+  radicalchange: 0
+  electronchange: -1
+  reversible: false
+  reactants: [HOOA,H+]
+  type: ElementaryReaction
+- kinetics: {A: 5.52486e14, Ea: -2.702e4, n: 0.0, q: -0.5, type: Arrheniusq}
+  reactants: [H2O2A]
+  radicalchange: 0
+  electronchange: 1
+  reversible: false
+  products: [HOOA,H+]
+  type: ElementaryReaction
+- kinetics: {A: 6.21e12, Ea: 35698.813451999995, n: 0.0, type: Arrhenius}
+  products: [OHA,OHB]
+  radicalchange: 0
+  reactants: [H2O2A,B*]
+  type: ElementaryReaction
+- kinetics: {A: 1.0e8, Ea: 44382.3086161, n: 0.0, type: Arrhenius}
+  products: [A*,H2O2aq]
+  radicalchange: 0
+  reactants: [H2O2A]
+  type: ElementaryReaction
+Units: {}
