@@ -82,6 +82,49 @@ end
 
 export molefractions
 
+function concentrations(bsol::Q,name::W,t::E) where {Q<:AbstractSimulation, W<:String, E<:Real}
+    @assert name in bsol.names
+    ind = findfirst(isequal(name),bsol.names)+bsol.domain.indexes[1]-1
+    return bsol.sol(t)[ind]/getdomainsize(bsol,t)
+end
+
+function concentrations(bsol::Q, t::E) where {Q<:AbstractSimulation,E<:Real}
+    return bsol.sol(t)[bsol.domain.indexes[1]:bsol.domain.indexes[2]]./getdomainsize(bsol,t)
+end
+
+function concentrations(bsol::Q) where {Q<:AbstractSimulation}
+    @views return hcat(bsol.sol.u...)[bsol.domain.indexes[1]:bsol.domain.indexes[2],:]./getdomainsize.(bsol,bsol.sol.t)
+end
+
+function concentrations(ssys::Q,name::W,t::E) where {Q<:SystemSimulation, W<:String, E<:Real}
+    @assert name in ssys.names
+    for sim in ssys.sims
+        if name in sim.names
+            return concentrations(sim,name,t)
+        end
+    end
+end
+
+function concentrations(ssys::Q, t::E) where {Q<:SystemSimulation,E<:Real}
+    cstot = zeros(length(ssys.species))
+    for sim in ssys.sims
+        cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] .= concentrations(sim,t)
+    end
+    return cstot
+end
+
+function concentrations(ssys::Q) where {Q<:SystemSimulation}
+    cstots = zeros((length(ssys.species),length(ssys.sol.t)))
+    for (i,t) in enumerate(ssys.sol.t)
+        for sim in ssys.sims
+            cstots[sim.domain.indexes[1]:sim.domain.indexes[2],i] .= concentrations(sim,t)
+        end
+    end
+    return cstots
+end
+
+export concentrations
+
 getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTPDomain,ConstantTVDomain},K<:Real,Q,G,L} = bsol.domain.T
 getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ParametrizedVDomain,ConstantPDomain,ParametrizedPDomain},K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[3]]
 getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ParametrizedTConstantVDomain,ParametrizedTPDomain},K<:Real,Q,G,L} = bsol.domain.T(t)
