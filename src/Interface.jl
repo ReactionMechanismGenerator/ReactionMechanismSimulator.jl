@@ -16,6 +16,40 @@ export EmptyInterface
     gas::T
     catalyst::N
     reactions::Array{Q,1}
+"""
+construct the stochiometric matrix for the reactions crossing both domains and the reaction molecule # change
+"""
+function getstoichmatrix(domain1,domain2,rxns)
+    M = spzeros(length(rxns),length(domain1.phase.species)+length(domain2.phase.species))
+    Nrp1 = zeros(length(rxns))
+    Nrp2 = zeros(length(rxns))
+    N1 = length(domain1.phase.species)
+    spcs1 = domain1.phase.species
+    spcs2 = domain2.phase.species
+    for (i,rxn) in enumerate(rxns)
+        Nrp1[i] = Float64(length([x for x in rxn.products if x in spcs1]) - length([x for x in rxn.reactants if x in spcs1]))
+        Nrp2[i] = Float64(length([x for x in rxn.products if x in spcs2]) - length([x for x in rxn.reactants if x in spcs2]))
+        for (j,r) in enumerate(rxn.reactants)
+            isfirst = true
+            ind = findfirst(isequal(r),domain1.phase.species)
+            if ind === nothing
+                isfirst = false
+                ind = findfirst(isequal(r),domain2.phase.species)
+            end
+            M[i,isfirst ? ind : ind+N1] += 1
+        end
+        for (j,r) in enumerate(rxn.products)
+            isfirst = true
+            ind = findfirst(isequal(r),domain1.phase.species)
+            if ind === nothing
+                isfirst = false
+                ind = findfirst(isequal(r),domain2.phase.species)
+            end
+            M[i,isfirst ? ind : ind+N1] -= 1
+        end
+    end
+    return M,Nrp1,Nrp2
+end
 end
 export IdealGasCatalystInterface
 
