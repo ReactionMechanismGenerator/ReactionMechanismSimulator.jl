@@ -275,7 +275,7 @@ end
 end
 export addreactionratecontributions!
 
-@inline function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z,U,Q<:AbstractDomain}    
+@inline function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:AbstractDomain}    
     dydt .= 0.0
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,p)
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
@@ -283,11 +283,11 @@ export addreactionratecontributions!
     calcdomainderivatives!(domain,dydt,interfaces;t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
     return dydt
 end
-@inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z,U,Q<:Tuple}    
+@inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:Tuple}    
     cstot = zeros(typeof(y).parameters[1],length(y))
     dydt .= 0.0
     domain = domains[1]
-    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,phi = calcthermo(domain,y,t,p)
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,p)
     vns = Array{Any,1}(undef,length(domains))
     vns[1] = ns
     vcs = Array{Any,1}(undef,length(domains))
@@ -319,16 +319,23 @@ end
     vdiffs[1] = diffs
     vCvave = Array{Any,1}(undef,length(domains))
     vCvave[1] = Cvave
+    vcpdivR = Array{Any,1}(undef,length(domains))
+    vcpdivR[1] = cpdivR
     vphi = Array{Any,1}(undef,length(domains))
     vphi[1] = phi
     addreactionratecontributions!(dydt,domain.rxnarray,cstot,kfs,krevs)
     @views dydt[domain.indexes[1]:domain.indexes[2]] .*= V
     for (i,domain) in enumerate(@views domains[2:end])
         k = i + 1
-        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(domain,y,t,p)
+        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vcpdivR[k],vphi[k] = calcthermo(domain,y,t,p)
         cstot[domain.indexes[1]:domain.indexes[2]] .= vcs[k]
         addreactionratecontributions!(dydt,domain.rxnarray,cstot,vkfs[k],vkrevs[k])
         @views dydt[domain.indexes[1]:domain.indexes[2]] .*= vV[k]
+    end
+    for (i,inter) in enumerate(interfaces)
+        if isa(inter,AbstractReactiveInternalInterface)
+            evaluate(inter,dydt,domains,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot,p)
+        end
     end
     for (i,domain) in enumerate(domains)
         calcdomainderivatives!(domain,dydt,interfaces;t=t,T=vT[i],P=vP[i],Us=vUs[i],Hs=vHs[i],V=vV[i],C=vC[i],ns=vns[i],N=vN[i],Cvave=vCvave[i])
