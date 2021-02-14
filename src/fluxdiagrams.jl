@@ -41,7 +41,9 @@ function drawspc(spc::Species,path::String=".")
             return
         end
     end
-    if spc.inchi != ""
+    if spc.adjlist != ""
+        mol = molecule.Molecule().from_adjacency_list(spc.adjlist)
+    elseif spc.inchi != ""
         mol = molecule.Molecule().from_inchi(spc.inchi)
     elseif spc.smiles != ""
         mol = molecule.Molecule().from_smiles(spc.smiles)
