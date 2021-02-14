@@ -50,6 +50,32 @@ function getstoichmatrix(domain1,domain2,rxns)
     end
     return M,Nrp1,Nrp2
 end
+
+function getinterfacereactioninds(domain1,domain2,reactions)
+    indices = zeros(Int64,(6,length(reactions)))
+    N1 = length(domain1.phase.species)
+    for (i,rxn) in enumerate(reactions)
+        for (j,r) in enumerate(rxn.reactants)
+            isfirst = true
+            ind = findfirst(isequal(r),domain1.phase.species)
+            if ind === nothing
+                isfirst = false
+                ind = findfirst(isequal(r),domain2.phase.species)
+            end
+            indices[j,i] = isfirst ? ind : ind+N1
+        end
+        for (j,r) in enumerate(rxn.products)
+            isfirst = true
+            ind = findfirst(isequal(r),domain1.phase.species)
+            if ind === nothing
+                isfirst = false
+                ind = findfirst(isequal(r),domain2.phase.species)
+            end
+            indices[j+3,i] = isfirst ? ind : ind+N1
+        end
+    end
+    return indices
+end
 end
 export IdealGasCatalystInterface
 
