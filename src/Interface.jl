@@ -76,8 +76,41 @@ function getinterfacereactioninds(domain1,domain2,reactions)
     end
     return indices
 end
+
+function upgradekinetics(rxns,domain1,domain2)
+    domain1surf = hasproperty(domain1.phase,:sitedensity)
+    domain2surf = hasproperty(domain2.phase,:sitedensity)
+    @assert !(domain1surf && domain2surf)
+    if domain1surf
+        surfdomain = domain1
+    elseif domain2surf
+        surfdomain = domain2
+    end
+    for (i,rxn) in enumerate(rxns)
+        if isa(rxn.kinetics,StickingCoefficient)
+            spc = [spc for spc in rxn.reactants if !(spc in surfdomain.phase.species)]
+            @assert length(spc) == 1
+            kin = stickingcoefficient2arrhenius(rxn.kinetics,surfdomain.phase.sitedensity,length(rxn.reactants)-1,spc[1].molecularweight)
+            rxns[i] = ElementaryReaction(index=rxn.index,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
+                productinds=rxn.productinds,kinetics=kin,radicalchange=rxn.radicalchange,reversible=rxn.reversible,pairs=rxn.pairs)
+        end
+    end
+    return rxns
 end
-export IdealGasCatalystInterface
+
+function stickingcoefficient2arrhenius(sc,sitedensity,N,mw;Tmin=300.0,Tmax=2000.0)
+    mass = mw/Na
+    ksc(T) = sc(T)/sitedensity^N*sqrt(kB*T/(2.0*pi*mass))
+    Ts = Array{Float64,1}(Tmin:10:Tmax);
+    kscvals = ksc.(Ts)
+    k(T,p) = log.(abs(p[1]).*T.^p[2].*exp.(-p[3]./(R.*T)))
+    p0 = [sc.A/sitedensity*sqrt(kB*1000.0/(2.0*pi*mass)),0.5,sc.Ea]
+    fit = curve_fit(k,Ts,log.(kscvals),p0;x_tol=1e-18)
+    @assert fit.converged
+    p = fit.param
+    p[1] = abs(p[1])
+    return Arrhenius(;A=p[1],n=p[2],Ea=p[3])
+end
 
 struct Inlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real} <: AbstractBoundaryInterface
     domain::S
