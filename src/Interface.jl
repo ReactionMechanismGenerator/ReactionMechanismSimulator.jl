@@ -65,7 +65,63 @@ function evaluate(ri::ReactiveInternalInterface,dydt,domains,T1,T2,phi1,phi2,Gs1
 end
 export evaluate
 
+
+struct ReactiveInternalInterfaceConstantTPhi{J,N,B,B2,B3,C,C2,Q<:AbstractReaction} <: AbstractReactiveInternalInterface
+    domain1::J
+    domain2::N
     reactions::Array{Q,1}
+    rxnarray::B
+    stoichmatrix::C
+    Nrp1::C2
+    Nrp2::C2
+    kfs::B2
+    krevs::B3
+    T::Float64
+    A::Float64
+    parameterindexes::Array{Int64,1}
+    domaininds::Array{Int64,1}
+    p::Array{Float64,1}
+    reversibility::Array{Bool,1}
+end
+function ReactiveInternalInterfaceConstantTPhi(domain1,domain2,reactions,T,A,phi=0.0)
+    @assert domain1.T == domain2.T 
+    reactions = upgradekinetics(reactions,domain1,domain2)
+    rxnarray = getinterfacereactioninds(domain1,domain2,reactions)
+    kfs = getkf.(reactions,nothing,T,0.0,0.0,Ref([]),A,phi)
+    Kc = getKc.(reactions,domain1.phase,domain2.phase,Ref(domain1.Gs),Ref(domain2.Gs),T,phi)
+    krevs = kfs./Kc
+    M,Nrp1,Nrp2 = getstoichmatrix(domain1,domain2,reactions)
+    reversibility = Array{Bool,1}(getfield.(reactions,:reversible))
+    return ReactiveInternalInterfaceConstantTPhi(domain1,domain2,reactions,
+            rxnarray,M,Nrp1,Nrp2,kfs,krevs,T,A,[1,length(reactions)],
+            [0,1],kfs[1:end],reversibility),kfs[1:end]
+end
+export ReactiveInternalInterfaceConstantTPhi
+
+function getkfskrevs(ri::ReactiveInternalInterfaceConstantTPhi,T1,T2,phi1,phi2,Gs1,Gs2,cstot)
+    return ri.kfs,ri.krevs
+end
+
+function evaluate(ri::ReactiveInternalInterfaceConstantTPhi,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p::W) where {W<:DiffEqBase.NullParameters}
+    addreactionratecontributions!(dydt,ri.rxnarray,cstot,ri.kfs,ri.krevs,ri.A)
+end
+
+function evaluate(ri::ReactiveInternalInterfaceConstantTPhi,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p)
+    if all(p[ri.parameterindexes[1]:ri.parameterindexes[2]] .== ri.kfs)
+        kfs = ri.kfs
+    else 
+        kfs = p[ri.parameterindexes[1]:ri.parameterindexes[2]]
+    end
+    if length(Gs1) == 0 || length(Gs2) == 0 || (all(Gs1 .== ri.domain1.Gs) && all(Gs2 .== ri.domain2.Gs))
+        krevs = ri.krevs
+    else
+        Kc = getKcs(ri,T1,Gs1,Gs2)
+        krevs = kfs./Kc
+    end
+    addreactionratecontributions!(dydt,ri.rxnarray,cstot,kfs,krevs,ri.A)
+end
+export evaluate
+
 """
 construct the stochiometric matrix for the reactions crossing both domains and the reaction molecule # change
 """
