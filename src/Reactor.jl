@@ -239,6 +239,40 @@ export getrates
         end
     end
 end
+
+@inline function addreactionratecontributions!(dydt::Q,rarray::Array{W2,2},cs::W,kfs::Z,krevs::Y,V) where {Q,Z,Y,T,W,W2}
+    @inbounds for i = 1:size(rarray)[2]
+        if @inbounds rarray[2,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
+        elseif @inbounds rarray[3,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
+        else
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
+        end
+        if @inbounds rarray[5,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
+        elseif @inbounds rarray[6,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
+        else
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+        end
+        @fastmath R = (fR - rR)*V
+        @inbounds @fastmath dydt[rarray[1,i]] -= R
+        if @inbounds rarray[2,i] != 0
+            @inbounds @fastmath dydt[rarray[2,i]] -= R
+            if @inbounds rarray[3,i] != 0
+                @inbounds @fastmath dydt[rarray[3,i]] -= R
+            end
+        end
+        @inbounds @fastmath dydt[rarray[4,i]] += R
+        if @inbounds rarray[5,i] != 0
+            @inbounds @fastmath dydt[rarray[5,i]] += R
+            if @inbounds rarray[6,i] != 0
+                @inbounds @fastmath dydt[rarray[6,i]] += R
+            end
+        end
+    end
+end
 export addreactionratecontributions!
 
 @inline function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z,U,Q<:AbstractDomain}    
