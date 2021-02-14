@@ -25,15 +25,32 @@ end
 
 export Simulation
 
-struct SystemSimulation{Q<:Tuple{Vararg{AbstractSimulation,N} where N},B<:AbstractODESolution}
+struct SystemSimulation{Q,B<:AbstractODESolution,X,Y,Z}
     sol::B
     sims::Q
+    interfaces::X
+    names::Array{String,1}
+    species::Array{Z,1}
+    reactions::Array{Y,1}
     p::Array{Float64,1}
 end
 
-function SystemSimulation(sol,domains,p)
+function SystemSimulation(sol,domains,interfaces,p)
     sims = Tuple([Simulation(sol,domain) for domain in domains])
-    return SystemSimulation(sol,sims,p)
+    names = Array{String,1}()
+    reactions = Array{ElementaryReaction,1}()
+    species = Array{Species,1}()
+    for sim in sims
+        append!(names,sim.names)
+        append!(species,sim.domain.phase.species)
+        append!(reactions,sim.domain.phase.reactions)
+    end
+    for inter in interfaces
+        if hasproperty(inter,:reactions)
+            append!(reactions,inter.reactions)
+        end
+    end
+    return SystemSimulation(sol,sims,interfaces,names,species,reactions,p)
 end
 export SystemSimulation
 
