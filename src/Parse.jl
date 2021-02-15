@@ -120,6 +120,7 @@ function getatomdictfromrdkit(mol)
     retrives the number of each type of atom and the number of bonds of an rdkit molecule
     """
     atmD = Dict{String,Int64}()
+    molecularweight = 0.0
     for atm in mol.GetAtoms()
         v = elementdict[atm.GetAtomicNum()]
         if v in keys(atmD)
@@ -129,7 +130,11 @@ function getatomdictfromrdkit(mol)
         end
     end
     nbonds = length(mol.GetBonds())
-    molecularweight = Desc.MolWt(mol)/1000.0
+    try
+        molecularweight = Desc.MolWt(mol)/1000.0
+    catch
+        @warn("unable to compute molecular weight")
+    end
     return atmD,nbonds,molecularweight
 end
 export getatomdictfromrdkit
