@@ -2,6 +2,7 @@ using Parameters
 using DiffEqBase
 using ForwardDiff
 using Sundials
+using ModelingToolkit
 abstract type AbstractReactor end
 export AbstractReactor
 
@@ -12,14 +13,14 @@ struct Reactor{D,Q} <: AbstractReactor
     forwardsensitivities::Bool
 end
 
-function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=DiffEqBase.NullParameters(),forwardsensitivities=false) where {T<:AbstractDomain,W<:Real,Z<:AbstractArray,X}
-    dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q<:Real,V} = dydtreactor!(dy,y,t,domain,interfaces,p=p)
-    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobiany!(J,y,p,t,domain,interfaces,nothing)
-    jacyforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,nothing)
-    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
-    jacpforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,nothing)
+function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=DiffEqBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false) where {T<:AbstractDomain,W<:Real,Z<:AbstractArray,X}
+    dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V} = dydtreactor!(dy,y,t,domain,interfaces,p=p)
+    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobiany!(J,y,p,t,domain,interfaces,nothing)
+    jacyforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,nothing)
+    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
+    jacpforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,nothing)
     
-    if domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTADomain}
+    if (forwardsensitivities || !forwarddiff) && domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTAPhiDomain}
         if !forwardsensitivities
             odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!)
         else
@@ -35,9 +36,23 @@ function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=Dif
         ode = ODEProblem(odefcn,y0,tspan,p)
         recsolver  = Sundials.CVODE_BDF()
     end
+    if modelingtoolkit
+        sys = modelingtoolkitize(ode)
+        jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
+        if (forwardsensitivities || !forwarddiff) && domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTAPhiDomain}
+            odefcn = ODEFunction(dydt;jac=jac,paramjac=jacp!)
+        else 
+            odefcn = ODEFunction(dydt;jac=jac,paramjac=jacpforwarddiff!)
+        end
+        if forwardsensitivities
+            ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
+        else
+            ode = ODEProblem(odefcn,y0,tspan,p)
+        end
+    end
     return Reactor(domain,ode,recsolver,forwardsensitivities)
 end
-function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=[],ps::X=DiffEqBase.NullParameters();forwardsensitivities=false) where {T<:Tuple,W,Z<:AbstractArray,X,W2}
+function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqBase.NullParameters();forwardsensitivities=false,modelingtoolkit=false) where {T<:Tuple,W<:Tuple,Z,X,W2}
     #adjust indexing
     y0 = zeros(sum(length(y) for y in y0s))
     Nvars = 0
@@ -99,19 +114,44 @@ function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=[],ps::X=DiffEqBase.N
         end
     end
     
-    dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q<:Real,V} = dydtreactor!(dy,y,t,domains,interfaces,p=p)
-    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianyforwarddiff!(J,y,p,t,domains,interfaces,nothing)
-    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianpforwarddiff!(J,y,p,t,domains,interfaces,nothing)
+    for (i,inter) in enumerate(interfaces)
+        if isa(inter, AbstractReactiveInternalInterface)
+            ind1 = findfirst(isequal(inter.domain1),domains)
+            ind2 = findfirst(isequal(inter.domain2),domains)
+            inter.domaininds[1] = ind1
+            inter.domaininds[2] = ind2
+            inter.parameterindexes[1] = length(p)+1
+            inter.parameterindexes[2] = length(p)+length(ps[i+length(domains)])
+            inter.rxnarray .= getinterfacereactioninds(inter.domain1,inter.domain2,inter.reactions)
+            p = vcat(p,ps[i+length(domains)])
+        end
+    end
+    
+    dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V} = dydtreactor!(dy,y,t,domains,interfaces,p=p)
+    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domains,interfaces,nothing)
+    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domains,interfaces,nothing)
 
     
     if forwardsensitivities
         odefcn = ODEFunction(dydt;paramjac=jacp!)
         ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
         recsolver = Sundials.CVODE_BDF(linear_solver=:GMRES)
+        if modelingtoolkit
+            sys = modelingtoolkitize(ode)
+            jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
+            odefcn = ODEFunction(dydt;jac=jac,paramjac=jacp!)
+            ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
+        end
     else
         odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!)
         ode = ODEProblem(odefcn,y0,tspan,p)
         recsolver  = Sundials.CVODE_BDF()
+        if modelingtoolkit
+            sys = modelingtoolkitize(ode)
+            jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
+            odefcn = ODEFunction(dydt;jac=jac,paramjac=jacp!)
+            ode = ODEProblem(odefcn,y0,tspan,p)
+        end
     end
     return Reactor(domains,ode,recsolver,forwardsensitivities),y0,p
 end
@@ -140,6 +180,31 @@ export Reactor
     return R
 end
 export getrate
+
+@inline function getrates(rarray,cs,kfs,krevs)
+    rts = zeros(length(kfs))
+    for i = 1:length(rts)
+        if @inbounds rarray[2,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
+        elseif @inbounds rarray[3,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
+        else
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
+        end
+        if @inbounds rarray[5,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
+        elseif @inbounds rarray[6,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
+        else
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+        end
+        @fastmath R = fR - rR
+        
+        rts[i] = R
+    end
+    return rts
+end
+export getrates
 
 @inline function addreactionratecontributions!(dydt::Q,rarray::Array{W2,2},cs::W,kfs::Z,krevs::Y) where {Q,Z,Y,T,W,W2}
     @inbounds @simd for i = 1:size(rarray)[2]
@@ -174,21 +239,55 @@ export getrate
         end
     end
 end
+
+@inline function addreactionratecontributions!(dydt::Q,rarray::Array{W2,2},cs::W,kfs::Z,krevs::Y,V) where {Q,Z,Y,T,W,W2}
+    @inbounds for i = 1:size(rarray)[2]
+        if @inbounds rarray[2,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
+        elseif @inbounds rarray[3,i] == 0
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
+        else
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
+        end
+        if @inbounds rarray[5,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
+        elseif @inbounds rarray[6,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
+        else
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+        end
+        @fastmath R = (fR - rR)*V
+        @inbounds @fastmath dydt[rarray[1,i]] -= R
+        if @inbounds rarray[2,i] != 0
+            @inbounds @fastmath dydt[rarray[2,i]] -= R
+            if @inbounds rarray[3,i] != 0
+                @inbounds @fastmath dydt[rarray[3,i]] -= R
+            end
+        end
+        @inbounds @fastmath dydt[rarray[4,i]] += R
+        if @inbounds rarray[5,i] != 0
+            @inbounds @fastmath dydt[rarray[5,i]] += R
+            if @inbounds rarray[6,i] != 0
+                @inbounds @fastmath dydt[rarray[6,i]] += R
+            end
+        end
+    end
+end
 export addreactionratecontributions!
 
-@inline function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z<:Real,U,J<:Integer,Q<:AbstractDomain}    
+@inline function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:AbstractDomain}    
     dydt .= 0.0
-    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,p)
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
     calcdomainderivatives!(domain,dydt,interfaces;t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
     return dydt
 end
-@inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z<:Real,U,J<:Integer,Q<:Tuple}    
+@inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:Tuple}    
     cstot = zeros(typeof(y).parameters[1],length(y))
     dydt .= 0.0
     domain = domains[1]
-    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave = calcthermo(domain,y,t,p)
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,p)
     vns = Array{Any,1}(undef,length(domains))
     vns[1] = ns
     vcs = Array{Any,1}(undef,length(domains))
@@ -220,14 +319,23 @@ end
     vdiffs[1] = diffs
     vCvave = Array{Any,1}(undef,length(domains))
     vCvave[1] = Cvave
+    vcpdivR = Array{Any,1}(undef,length(domains))
+    vcpdivR[1] = cpdivR
+    vphi = Array{Any,1}(undef,length(domains))
+    vphi[1] = phi
     addreactionratecontributions!(dydt,domain.rxnarray,cstot,kfs,krevs)
     @views dydt[domain.indexes[1]:domain.indexes[2]] .*= V
     for (i,domain) in enumerate(@views domains[2:end])
         k = i + 1
-        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k] = calcthermo(domain,y,t,p)
+        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vcpdivR[k],vphi[k] = calcthermo(domain,y,t,p)
         cstot[domain.indexes[1]:domain.indexes[2]] .= vcs[k]
         addreactionratecontributions!(dydt,domain.rxnarray,cstot,vkfs[k],vkrevs[k])
         @views dydt[domain.indexes[1]:domain.indexes[2]] .*= vV[k]
+    end
+    for (i,inter) in enumerate(interfaces)
+        if isa(inter,AbstractReactiveInternalInterface)
+            evaluate(inter,dydt,domains,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot,p)
+        end
     end
     for (i,domain) in enumerate(domains)
         calcdomainderivatives!(domain,dydt,interfaces;t=t,T=vT[i],P=vP[i],Us=vUs[i],Hs=vHs[i],V=vV[i],C=vC[i],ns=vns[i],N=vN[i],Cvave=vCvave[i])
@@ -236,25 +344,25 @@ end
 end
 export dydtreactor!
 
-function jacobianyforwarddiff!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+function jacobianyforwarddiff!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     f(dy::X,y::Array{T,1}) where {T<:Real,X} = dydtreactor!(dy,y,t,domain,interfaces;p=p,sensitivity=false)
     ForwardDiff.jacobian!(J,f,zeros(size(y)),y)
 end
 export jacobianyforwarddiff!
 
-function jacobianyforwarddiff(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+function jacobianyforwarddiff(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     J = zeros(length(y),length(y))
     jacobianyforwarddiff!(J,y,p,t,domain,interfaces,colorvec)
     return J
 end
 export jacobianyforwarddiff
 
-function jacobianyforwarddiff!(J::Q,y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
+function jacobianyforwarddiff!(J::Q,y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
     f(dy::X,y::Array{T,1}) where {T<:Real,X} = dydtreactor!(dy,y,t,domains,interfaces;p=p,sensitivity=false)
     ForwardDiff.jacobian!(J,f,zeros(size(y)),y)
 end
 
-function jacobianyforwarddiff(y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
+function jacobianyforwarddiff(y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
     J = zeros(length(y),length(y))
     jacobianyforwarddiff!(J,y,p,t,domains,interfaces,colorvec)
     return J
@@ -269,7 +377,7 @@ end
 # end
 # export jacobiany!
 
-function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     function f(dy::X,p::Array{T,1}) where {X,T<:Real} 
         dydtreactor!(dy,y,t,domain,interfaces;p=p,sensitivity=false)
     end
@@ -277,7 +385,7 @@ function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colo
     ForwardDiff.jacobian!(J,f,dy,p)
 end
 
-function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
+function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
     function f(dy::X,p::Array{T,1}) where {X,T<:Real} 
         dydtreactor!(dy,y,t,domains,interfaces;p=p,sensitivity=false)
     end
@@ -287,12 +395,12 @@ end
 
 export jacobianpforwarddiff!
 
-function jacobianpforwarddiff(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+function jacobianpforwarddiff(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     J = zeros(length(y),length(domain.phase.species)+length(domain.phase.reactions))
     jacobianpforwarddiff!(J,y,p,t,domain,interfaces,colorvec)
 end
 
-function jacobianpforwarddiff(y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
+function jacobianpforwarddiff(y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
     J = zeros(length(y),length(domains.phase.species)+length(domains.phase.reactions))
     jacobianpforwarddiff!(J,y,p,t,domains,interfaces,colorvec)
 end
@@ -311,14 +419,14 @@ export jacobianpforwarddiff
 #     jacobianp!(domain;cs=cs,V=V,T=T,Us=Us,Cvave=Cvave,N=N,kfs=kfs,krevs=krevs,wV=wV,ratederiv=J)
 # end
 
-function jacobiany(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+function jacobiany(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     J = zeros(length(y),length(y))
     jacobiany!(J,y,p,t,domain,interfaces,colorvec)
     return J
 end
 export jacobiany
 
-function jacobianp(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+function jacobianp(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
     J = zeros(length(y),length(domain.phase.species)+length(domain.phase.reactions))
     jacobianp!(J,y,p,t,domain,interfaces,colorvec)
     return J

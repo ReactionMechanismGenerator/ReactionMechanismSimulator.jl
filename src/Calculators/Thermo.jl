@@ -149,4 +149,14 @@ end
     return @fastmath w.S0 + w.Cpinf*log(T)-(w.Cpinf-w.Cp0)*(log(y)+y*(1+y*evalpoly(y,w.coefs./(2:5))))
 end
 
+@with_kw struct ConstantG{B<:Number,J} <: AbstractThermo
+    G::B
+    T::J
+end
+export ConstantG
+
+@inline function getGibbs(cg::ConstantG,T::B) where {B<:Number}
+    return cg.G
+end
+
 export getGibbs, getEntropy, getEnthalpy, getHeatCapacity
