@@ -12,9 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@latest
+      - uses: julia-actions/setup-julia@v1
         with:
-          version: '1.5'
+          version: 1.4.2
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Fix PyCall linking
+        run: |
+            julia -e 'ENV["PYTHON"]="/home/runner/.julia/conda/3/bin/python"; using Pkg; Pkg.add("PyCall"); Pkg.build("PyCall")'
       - name: Install dependencies
         run: |
             julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
