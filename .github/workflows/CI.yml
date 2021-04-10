@@ -28,7 +28,12 @@ jobs:
       - name: Fix PyCall linking
         run: |
             julia -e 'ENV["PYTHON"]="/home/runner/.julia/conda/3/bin/python"; using Pkg; Pkg.add("PyCall"); Pkg.build("PyCall")'
-      - uses: julia-actions/julia-runtest@v1
+      - name: Build 
+        run: |
+            julia -e 'using Pkg; Pkg.develop(PackageSpec(path="../ReactionMechanismSimulator.jl")); Pkg.add(PackageSpec(;name="ReverseDiff",version="1.4"));'
+      - name: Run tests 
+        run: |
+            julia -e 'using Pkg; Pkg.test("ReactionMechanismSimulator";coverage=true)'
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v1
         with:
