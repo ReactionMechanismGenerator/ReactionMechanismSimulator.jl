@@ -9,7 +9,7 @@ are calculated.  For the `IdealGas` case defining a phase is quite simple:
 ig = IdealGas(spcs,rxns,name="gas")
 ```
 
-where `spcs` and `rxns` and lists of `AbstractSpecies` and `AbstractReaction` objects respectively.  
+where `spcs` and `rxns` are lists of `AbstractSpecies` and `AbstractReaction` objects respectively.  
 For an `IdealDiluteSolution` it is slightly more complicated because some of these properties (currently
  primarily diffusion limitations) can be dependent on the solvent:  
 
