@@ -93,7 +93,7 @@ function concentrations(bsol::Q, t::E) where {Q<:AbstractSimulation,E<:Real}
 end
 
 function concentrations(bsol::Q) where {Q<:AbstractSimulation}
-    @views return hcat(bsol.sol.u...)[bsol.domain.indexes[1]:bsol.domain.indexes[2],:]./getdomainsize.(bsol,bsol.sol.t)
+    @views return hcat(bsol.sol.u...)[bsol.domain.indexes[1]:bsol.domain.indexes[2],:]./getdomainsize.(bsol,bsol.sol.t)'
 end
 
 function concentrations(ssys::Q,name::W,t::E) where {Q<:SystemSimulation, W<:String, E<:Real}
