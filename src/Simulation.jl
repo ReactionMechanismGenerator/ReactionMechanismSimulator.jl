@@ -6,21 +6,29 @@ using ForwardDiff
 abstract type AbstractSimulation end
 export AbstractSimulation
 
-struct Simulation{Q<:AbstractODESolution,W<:AbstractDomain,L<:AbstractArray,G<:Function,G2<:AbstractArray} <: AbstractSimulation
+struct Simulation{Q<:AbstractODESolution,W<:AbstractDomain,M,L<:AbstractArray,G<:Function,G2<:AbstractArray,G3,G4,G5} <: AbstractSimulation
     sol::Q
     domain::W
+    interfaces::M
     names::L
     N::G
     Ns::G2
+    species::G3
+    reactions::G4
+    p::G5
 end
 
-function Simulation(sol::Q,domain::W) where {Q<:AbstractODESolution,W<:AbstractDomain}
+function Simulation(sol::Q,domain::W,interfaces=[],p=nothing) where {Q<:AbstractODESolution,W<:AbstractDomain}
     names = getfield.(domain.phase.species,:name)
     Ns = sum(hcat(sol.interp.u...)[domain.indexes[1]:domain.indexes[2],:],dims=1)
-    Nderivs = sum(hcat(sol.interp.du...)[domain.indexes[1]:domain.indexes[2],:],dims=1)
+    if hasproperty(sol.interp,:du)
+        Nderivs = sum(hcat(sol.interp.du...)[domain.indexes[1]:domain.indexes[2],:],dims=1)
+    else
+        Nderivs = sum(hcat([sol(t,Val{1}) for t in sol.t]...)[domain.indexes[1]:domain.indexes[2],:],dims=1)
+    end
     N = HermiteInterpolation(sol.interp.t,Ns,Nderivs)
     F(t::T) where {T<:Real} = N(t,nothing,Val{0},sol.prob.p,:left)
-    return Simulation(sol,domain,names,F,Ns)
+    return Simulation(sol,domain,interfaces,names,F,Ns,domain.phase.species,domain.phase.reactions,p)
 end
 
 export Simulation
