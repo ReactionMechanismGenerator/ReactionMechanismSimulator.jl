@@ -31,8 +31,6 @@ include("Reaction.jl")
     reversibility::Array{Bool,1}
     diffusionlimited::Bool = false
 end
-IdealGas(species,reactions; name="",diffusionlimited=false) = IdealGas(species=species,reactions=reactions,name=name,
-diffusionlimited=diffusionlimited,spcdict=Dict([sp.name=>sp.index for sp in species]))
 
 function IdealGas(species,reactions; name="",diffusionlimited=false)
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
@@ -71,8 +69,7 @@ export IdealGas
     reversibility::Array{Bool,1}
     diffusionlimited::Bool = true
 end
-IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited=true) = IdealDiluteSolution(species=species,reactions=reactions,
-solvent=solvent,name=name,diffusionlimited=diffusionlimited,spcdict=Dict([sp.name=>sp.index for sp in species]))
+
 function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited=true)
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
