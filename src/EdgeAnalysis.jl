@@ -727,3 +727,23 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
 end
 
 export selectspecies
+
+"""
+calculate threshold rate constants for different numbers of reactants
+(to some extent the filter assumes rate constants can't be faster than these thresholds)
+"""
+function getthresholdrateconstants(sim::Simulation,phase,filterthreshold)
+    return 2.08366122e10*getT(sim,sim.sol.t[end]),filterthreshold,filterthreshold/1.0e3
+end
+
+"""
+calculate threshold rate constants for different numbers of reactants
+(to some extent the filter assumes rate constants can't be faster than these thresholds)
+"""
+function getthresholdrateconstants(sim::Simulation,phase::IdealDiluteSolution,filterthreshold)
+    T = getT(sim,sim.sol.t[end])
+    mu = phase.solvent.mu(T)
+    return 2.08366122e10*T,22.2*T/mu,0.11*T/mu
+end
+
+export getthresholdrateeconstant
