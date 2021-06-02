@@ -342,9 +342,9 @@ function readinputyml(fname::String)
         rxn["products"] = [r for r in rxn["products"]]
         rxn["products"] = SVector(rxn["products"]...)
         rxn["reactantinds"] =  [r.index for r in rxn["reactants"]]
-        rxn["reactantinds"] = SVector(rxn["reactantinds"]...)
+        rxn["reactantinds"] = MVector(rxn["reactantinds"]...)
         rxn["productinds"] =  [r.index for r in rxn["products"]]
-        rxn["productinds"] = SVector(rxn["productinds"]...)
+        rxn["productinds"] = MVector(rxn["productinds"]...)
         if "efficiencies" in keys(rxn["kinetics"])
             rxn["kinetics"]["efficiencies"] = Dict{Int64,Float64}([spcdict[name][1].index=>val-1.0 for (name,val) in rxn["kinetics"]["efficiencies"]]) #in RMS we correct [M] rather than calculate it so we subtract 1
         end

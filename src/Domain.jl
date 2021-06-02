@@ -2177,12 +2177,7 @@ end
 export jacobianp!
 
 function getreactionindices(ig::Q) where {Q<:AbstractPhase}
-    arr = zeros(Int64,(6,length(ig.reactions)))
-    for (i,rxn) in enumerate(ig.reactions)
-        arr[1:length(rxn.reactantinds),i] = rxn.reactantinds
-        arr[4:length(rxn.productinds)+3,i] = rxn.productinds
-    end
-    return arr
+    return deepcopy(ig.rxnarray)
 end
 export getreactionindices
 
@@ -2243,9 +2238,9 @@ export getreactionindices
         @inbounds sensrxns[i] = ElementaryReaction(
             index=i,
             reactants=SVector(reactants...),
-            reactantinds=SVector(reactantinds...),
+            reactantinds=MVector(reactantinds...),
             products=SVector(products...),
-            productinds=SVector(productinds...),
+            productinds=MVector(productinds...),
             kinetics=rxn.kinetics,
             radicalchange=rxn.radicalchange,
             pairs=rxn.pairs

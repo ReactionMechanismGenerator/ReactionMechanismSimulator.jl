@@ -23,6 +23,7 @@ include("Reaction.jl")
     spcdict::Dict{String,Int64}
     stoichmatrix::W2
     Nrp::Array{Float64,1}
+    rxnarray::Array{Int64,2}
     veckinetics::W
     veckineticsinds::Array{Int64,1}
     vecthermo::NASAvec
@@ -46,8 +47,9 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
         electronchange = convert(echangevec,Array{Float64,1})
     end
     reversibility = getfield.(rxns,:reversible)
+    rxnarray = getreactionindices(species,rxns)
     return IdealGas(species=species,reactions=rxns,name=name,
-        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple, 
+        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple, 
         veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns, electronchange=electronchange, 
         reversibility=reversibility,diffusionlimited=diffusionlimited,)
 end
@@ -60,6 +62,7 @@ export IdealGas
     solvent::Solvent
     stoichmatrix::W2
     Nrp::Array{Float64,1}
+    rxnarray::Array{Int64,2}
     veckinetics::W
     veckineticsinds::Array{Int64,1}
     vecthermo::NASAvec
@@ -84,8 +87,9 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
         electronchange = convert(echangevec,Array{Float64,1})
     end
     reversibility = getfield.(rxns,:reversible)
+    rxnarray = getreactionindices(species,rxns)
     return IdealDiluteSolution(species=species,reactions=rxns,solvent=solvent,name=name,
-        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple,
+        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
         veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,
         reversibility=reversibility,diffusionlimited=diffusionlimited)
 end
@@ -97,6 +101,7 @@ export IdealDiluteSolution
     reactions::Array{ElementaryReaction,1}
     stoichmatrix::W2
     Nrp::W5
+    rxnarray::Array{Int64,2}
     veckinetics::W
     veckineticsinds::Array{Int64,1}
     vecthermo::W4
@@ -122,8 +127,9 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
         electronchange = convert(typeof(Nrp),echangevec)
     end
     reversibility = getfield.(rxns,:reversible)
+    rxnarray = getreactionindices(species,rxns)
     return IdealSurface(species=species,reactions=rxns,name=name,
-        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,veckinetics=vectuple,
+        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
         veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,
         reversibility=reversibility,sitedensity=sitedensity,diffusionlimited=diffusionlimited)
 end
@@ -242,3 +248,32 @@ export iterate
 
 Broadcast.broadcastable(p::T) where {T<:AbstractPhase} = Ref(p)
 export broadcastable
+
+function getreactionindices(spcs,rxns) where {Q<:AbstractPhase}
+    arr = zeros(Int64,(6,length(rxns)))
+    names = [spc.name for spc in spcs]
+    for (i,rxn) in enumerate(rxns)
+        inds = [findfirst(isequal(spc),spcs) for spc in rxn.reactants]
+        for (j,spc) in enumerate(rxn.reactants)
+            ind = findfirst(isequal(spc),spcs)
+            arr[j,i] = ind
+            rxn.reactantinds[j] = ind
+        end
+        for (j,spc) in enumerate(rxn.products)
+            ind = findfirst(isequal(spc),spcs)
+            arr[j+3,i] = ind
+            rxn.productinds[j] = ind
+        end
+        if hasproperty(rxn.kinetics,:efficiencies) && length(rxn.kinetics.nameefficiencies) > 0
+            while length(rxn.kinetics.efficiencies) > 0
+                pop!(rxn.kinetics.efficiencies)
+            end
+            for (key,val) in rxn.kinetics.nameefficiencies
+                ind = findfirst(isequal(key),names)
+                rxn.kinetics.efficiencies[ind] = val
+            end
+        end
+    end
+    return arr
+end
+export getreactionindices
