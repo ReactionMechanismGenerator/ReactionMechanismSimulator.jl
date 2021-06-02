@@ -366,3 +366,56 @@ function processfluxes(sim::Simulation,corespcsinds,corerxninds,edgespcsinds,edg
 end
 
 export processfluxes
+
+"""
+Calculate branching numbers for appropriate reactions for use in evaluating
+the branching criterion: 1.0 < branchfactor * max(branchingratio,branchingratiomax) * rateratio^branchingindex
+"""
+function calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxninds,edgereactionrates,corespeciesrateratios,
+        corespeciesconsumptionrates,branchfactor,branchingratiomax,branchingindex)
+    branchingnums = zeros(length(edgereactionrates))
+    for index in 1:length(edgereactionrates)
+        reactionrate = edgereactionrates[index]
+            
+        if reactionrate > 0
+            reactantside = reactantinds[:,index+length(corerxninds)]
+            productside = productinds[:,index+length(corerxninds)]
+        else
+            reactantside = productinds[:,index+length(corerxninds)]
+            productside = reactantinds[:,index+length(corerxninds)]
+        end
+            
+        rade = [sim.species[i].radicalelectrons for i in productside if i != 0]
+            
+        if maximum(rade) > 1
+            continue
+        end
+            
+        for spcindex in reactantside
+            if spcindex == 0 
+                continue
+            elseif spcindex < length(corespcsinds)
+                if sim.species[spcindex].radicalelectrons != 1
+                    continue
+                end
+                consumption = corespeciesconsumptionrates[spcindex]
+                if consumption != 0
+                    br = reactionrate / consumption
+                    rr = corespeciesrateratios[spcindex]
+                    if br > branchingratiomax
+                        br = branchingratiomax
+                    end
+                        
+                    bnum = branchfactor * br * rr^branchingindex
+                        
+                    if bnum > branchingnums[index]
+                        branchingnums[index] = bnum
+                    end
+                end
+            end
+        end
+    end
+   return branchingnums 
+end
+
+export calcbranchingnumbers
