@@ -165,3 +165,84 @@ Calculate key flux and concentration related quantities for edge analysis
     return dydt,rtsall,frtsall,rrtsall,cstot
 end
 export calcfluxes
+
+"""
+Precalculate important indices and maps for use in edge analysis
+"""
+function getkeyselectioninds(coreeedgedomains,coreedgeinters,domains,inters)
+    corespcsinds = flatten([coreedgedomains[i].indexes[1]:coreedgedomains[i].indexes[1]+domains[i].indexes[2]-domains[i].indexes[1] for i = 1:length(domains)])
+    edgespcsinds = flatten([coreedgedomains[i].indexes[1]+domains[i].indexes[2]-domains[i].indexes[1]:coreedgedomains[i].indexes[2] for i = 1:length(domains)])
+    corerxninds = Array{Int64,1}()
+    edgerxninds = Array{Int64,1}()
+    reactantindices = zeros(Int64,(3,length(corerxninds)))
+    productindices  = zeros(Int64,(3,length(corerxninds)))
+    coretoedgespcmap = Dict{Int64,Int64}()
+    coretoedgerxnmap = Dict{Int64,Int64}()
+    spcindexcore = 0
+    spcindexedge = 0
+    rxnindexcore = 0
+    rxnindexedge = 0
+    ind = 1
+    for i = 1:length(domains)
+        for (j,spc) in enumerate(domains[i].phase.species)
+            edgeind = findfirst(isequal(spc),coreedgedomains[i].phase.species)
+            coretoedgespcmap[j+spcindexcore] = edgeind+spcindexedge
+        end
+        for j = 3:length(domains[i].indexes)
+            coretoedgespcmap[domains[i].indexes[j]] = coreedgedomains[i].indexes[j]
+        end
+        for (j,rxn) in enumerate(coreedgedomains[i].phase.reactions)
+            coreind = findfirst(isequal(rxn),domains[i].phase.reactions)
+            if coreind === nothing
+                push!(edgerxninds,j+indexedge)
+            else 
+                coretoedgerxnmap[coreind+indexcore] = j+indexedge
+                push!(corerxninds,j+indexedge)
+            end
+        end
+        spcindexcore += length(domains[i].phase.species)
+        spcindexedge += length(coreedgedomains[i].phase.species)
+        rxnindexcore += length(domains[i].phase.reactions)
+        rxnindexedge += length(coreedgedomains[i].phase.reactions)
+        
+        indend = length(domains[i].reactions)
+        reactantindices[:,ind:ind+indend-1] = domains[i].rxnarray[1:3,:]
+        productindices[:,ind:ind+indend-1] = domains[i].rxnarray[4:6,:]
+        ind += indend
+    end
+        
+    for i = 1:length(inters)
+        if isa(inters[i],ReactiveInternalInterface)
+            push!(corerxnrangearray,index:index+length(inters[i].reactions))
+            push!(edgerxnrangearray,index+length(inters[i].reactions):index+length(coreedgeinters[i].reactions))
+            index += length(coreedgeinters[i].phase.reactions)
+            
+            indend = length(inters[i].reactions)
+            reactantindices[:,ind:ind+indend] = inters[i].rxnarray[1:3,:]
+            productindices[:,ind:ind+indend] = inters[i].rxnarray[4:6,:]
+            ind += indend
+        end
+    end
+    corerxninds = flatten(corerxnrangearray)
+    edgerxninds = flatten(edgerxnrangearray)
+    
+    return corespcsinds,corerxninds,edgespcsinds,edgerxninds,reactantindices,productindices,coretoedgespcmap,coretoedgerxnmap
+end
+
+"""
+Precalculate important indices and maps for use in edge analysis
+"""
+function getkeyselectioninds(coreedgedomain::AbstractDomain,coreedgeinters,domain,inters)
+    corespcsinds = 1:length(domain.phase.species)
+    edgespcsinds = length(domain.phase.species)+1:length(coreedgedomain.phase.species)
+    corerxninds = 1:length(domain.phase.reactions)
+    edgerxninds = length(domain.phase.reactions)+1:length(coreedgedomain.phase.reactions)
+    reactantindices = coreedgedomain.rxnarray[1:3,:]
+    productindices = coreedgedomain.rxnarray[4:6,:]
+    coretoedgespcmap = Dict([i=>findfirst(isequal(spc),coreedgedomain.phase.species) for (i,spc) in enumerate(domain.phase.species)])
+    coretoedgerxnmap = Dict([i=>findfirst(isequal(rxn),coreedgedomain.phase.reactions) for (i,rxn) in enumerate(domain.phase.reactions)])
+    for j = 3:length(domain.indexes)
+        coretoedgespcmap[domain.indexes[j]] = coreedgedomain.indexes[j]
+    end
+    return corespcsinds,corerxninds,edgespcsinds,edgerxninds,reactantindices,productindices,coretoedgespcmap,coretoedgerxnmap
+end
