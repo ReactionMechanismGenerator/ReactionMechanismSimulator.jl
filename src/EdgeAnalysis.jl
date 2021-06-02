@@ -462,3 +462,206 @@ function updatefilterthresholds!(sim,corespcsinds,corespeciesconcentrations,char
 end
 
 export updatefilterthresholds!
+
+"""
+Determine species/reactions that should be added to the model core, react thresholding and 
+whether the simulation should be interrupted or terminated
+"""
+function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
+        edgerxninds,reactantinds,productinds,unimolecularthreshold,bimolecularthreshold,
+        trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,
+        ignoreoverallfluxcriterion,filterreactions,maxnumobjsperiter,branchfactor,branchingratiomax,
+        branchingindex,terminateatmaxobjects,termination,y0,invalidobjects,firsttime,
+        filterthreshold)
+    
+    rxnarray = vcat()
+    t = sim.sol.t[end]
+    y = sim.sol.u[end]
+    breakflag = false
+    numcorespc = length(corespcsinds)
+    numcorerxns = length(corerxninds)
+    invalidobjectsprintboolean = true
+    terminated = false
+    
+    (dydt,rts,frts,rrts,cs,corespeciesratse,charrate,edgespeciesrates,
+    edgereactionrates,corespeciesrateratios,edgespeciesrateratios,
+    corereactionrates,corespeciesconcentrations,corespeciesproductionrates,
+    corespeciesconsumptionrates) = processfluxes(sim,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
+    
+    for i = 1:length(edgespeciesrateratios)
+        if edgespeciesrateratios[i] > maxedgespeciesrateratios[i]
+            maxedgespeciesrateratios[i] = edgespeciesrateratios[i]
+        end
+    end
+    
+    if charrate == 0 && length(edgereactionrates) > 0
+        maxspeciesindex = argmax(edgespeciesrates)
+        maxspeciesrate = edgespeciesrates[maxspeciesindex]
+        name = sim.names[maxspeciesindex]
+        @info "at time $t s, species $name was added to model core to avoid singularity"
+        push!(invalidobjects,sim.species[maxspeciesindex])
+        return (false,true)
+    end
+    
+    if branchfactor != 0.0 && !firsttime
+        branchingnums = calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxninds,edgereactionrates,
+            corespeciesrateratios,corespeciesconsumptionrates,branchfactor,branchingratiomax,branchingindex)
+    end
+    
+    if filterreactions
+        updatefilterthresholds!(sim,corespcsinds,corespeciesconcentrations,charrate,
+            unimolecularthreshold,bimolecularthreshold,trimolecularthreshold,tolmovetocore,
+            filterthreshold)
+    end
+        
+    newobjectinds = Array{Int64,1}()
+    newobjects = []
+    newobjectvals = Array{Float64,1}()
+    newobjecttype = []
+        
+    tempnewobjects = []
+    tempnewobjectinds = Array{Int64,1}()
+    tempnewobjectvals = Array{Float64,1}()
+    tempnewobjecttype = []
+        
+    interrupt = false
+        
+    #movement of species to core based on rate ratios
+        
+    if !ignoreoverallfluxcriterion
+        for (i,ind) in enumerate(edgespcsinds)
+            rr = edgespeciesrateratios[i]
+            obj = sim.species[ind]
+            name = obj.name
+            if rr > tolmovetocore
+                if !(obj in newobjects || obj in invalidobjects)
+                    push!(tempnewobjects,obj)
+                    push!(tempnewobjectinds,ind)
+                    push!(tempnewobjectvals,rr)
+                    push!(tempnewobjecttype,"rr")
+                end
+            end
+            if rr > tolinterruptsimulation
+                @info "at time $t sec, species $name at $rr exceeded the minimum rate for simulation interruption of $tolinterruptsimulation"
+                interrupt = true
+            end
+        end
+        
+        sortedinds = reverse(sortperm(tempnewobjectvals))
+        
+        for q in sortedinds
+            push!(newobjects,tempnewobjects[q])
+            push!(newobjectinds,tempnewobjectinds[q])
+            push!(newobjectvals,tempnewobjectvals[q])
+            push!(newobjecttype,tempnewobjecttype[q])
+        end
+        
+        tempnewobjects = []
+        tempnewobjectinds = Array{Int64,1}()
+        tempnewobjectvals = Array{Float64,1}()
+        tempnewobjecttype = []
+    end
+    
+    if branchfactor != 0.0 && !firsttime
+        for (i,ind) in enumerate(edgerxninds)
+            bnum = branchingnums[i]
+            if bnum > 1
+                obj = sim.reactions[ind+numcorerxns]
+                if !(obj in newobjects || obj in invalidobjects)
+                    push!(tempnewobjects,obj)
+                    push!(tempnewobjectinds,ind)
+                    push!(tempnewobjectvals,bnum)
+                    push!(tempnewobjecttype,"branching")
+                end
+            end
+        end
+        sortedinds = reverse(sortperm(tempnewobjectvals))
+        
+        for q in sortedinds
+            push!(newobjects,tempnewobjects[q])
+            push!(newobjectinds,tempnewobjectinds[q])
+            push!(newobjectvals,tempnewobjectvals[q])
+            push!(newobjecttype,tempnewobjecttype[q])
+        end
+        
+        tempnewobjects = []
+        tempnewobjectinds = Array{Int64,1}()
+        tempnewobjectvals = Array{Float64,1}()
+        tempnewobjecttype = []
+    end
+    
+    if length(invalidobjects) + length(newobjects) > maxnumobjsperiter
+        if invalidobjectsprintboolean
+            @info "Exceeded max number of objects...removing excess objects"
+            invalidobjectsprintboolean = false
+        end
+        num = maxnumobjsperiter - length(invalidobjects)
+        newobjects = newobjects[:num]
+        newobjectinds = newobjectinds[:num]
+        newobjectvals = newobjectvals[:num]
+        newobjecttype = newobjecttype[:num]
+    end
+    
+    if terminateatmaxobjects && length(invalidobjects) + length(newobjects) >= maxnumobjsperiter
+        @info "Reached max number of objects...preparing to terminate"
+        interrupt = true
+    end
+    
+    if length(newobjects) > 0
+        for (i,obj) in enumerate(newobjects)
+            val = newobjectvals[i]
+            ind = newobjectinds[i]
+            if isa(obj, Species)
+                name = obj.name
+                @info "At time $t sec, species $name at rate ratio $val exceeded the minimum rate for moving to model core of $tolmovetocore"
+            elseif isa(obj,ElementaryReaction)
+                rstr = getrxnstr(obj)
+                @info "at time $t sec, reaction $rstr at a branching number of $val exceeded the threshold of 1 for moving to model core"
+            end
+        end
+        
+        append!(invalidobjects,newobjects)
+    end
+    
+    if interrupt
+        @info "Terminating simulation due to interrupt"
+    end
+    
+    for term in termination
+        if isa(term, TerminationTime)
+            if t > term.time
+                terminated = true
+                @info "at time $t sec, reached target termination time"
+            end
+        elseif isa(term, TerminationRateRatio)
+            if maxcharrate != 0.0 && charrate / maxcharrate < term.ratio
+                terminated = true
+                ratio = term.ratio
+                @info "At time $t sec, reached target termination rate ratio $ratio"
+            end
+        else isa(term, TerminationConversion)
+            index = findfirst(isequal(term.species),sim.species)
+            conversion = 1 - (y[index] / y0[index])
+            name = sim.species[index].name
+            if conversion >= term.conversion
+                terminated = true
+                @info "At time $t sec, reeached target termination conversion $conversion of $name"
+            end
+        end
+    end
+    
+    if terminated
+        for term in termination
+            if isa(term, TerminationConversion)
+                index = findfirst(isequal(term.species),sim.species)
+                conversion = 1 - (y[index] / y0[index])
+                name = sim.species[index].name
+                @info "$name conversion: $conversion"
+            end
+        end
+    end
+    
+    return (terminated,interrupt) 
+end
+
+export identifyobjects!
