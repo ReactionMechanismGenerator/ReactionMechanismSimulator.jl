@@ -419,3 +419,46 @@ function calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxni
 end
 
 export calcbranchingnumbers
+
+"""
+determine species pairings that are concentrated enough that they should be reacted
+"""
+function updatefilterthresholds!(sim,corespcsinds,corespeciesconcentrations,charrate,
+        unimolecularthreshold,bimolecularthreshold,trimolecularthreshold,tolmovetocore,
+        filterthreshold)
+    unimolecularthresholdrateconstant,bimolecularthresholdrateconstant,trimolecularthresholdrateconstant = getthresholdrateconstants(sim,sim.domain.phase,filterthreshold)
+    
+    unimolecularthresholdval = tolmovetocore * charrate / unimolecularthresholdrateconstant
+    bimolecularthresholdval = tolmovetocore * charrate / bimolecularthresholdrateconstant
+    trimolecularthresholdval = tolmovetocore * charrate / trimolecularthresholdrateconstant
+        
+    for i in 1:length(corespcsinds)
+        if !unimolecularthreshold[i]
+            if corespeciesconcentrations[i] > unimolecularthresholdval
+                unimolecularthreshold[i] = true
+            end
+        end
+    end
+    for i in 1:length(corespcsinds)
+        for j in i:length(corespcsinds)
+            if  !bimolecularthreshold[i,j]
+                if corespeciesconcentrations[i] * corespeciesconcentrations[j] > bimolecularthresholdval
+                    bimolecularthreshold[i,j] = true
+                end
+            end
+        end
+    end
+    for i in 1:length(corespcsinds)
+        for j in i:length(corespcsinds)
+            for k in j:length(corespcsinds)
+                if !trimolecularthreshold[i,j,k]
+                    if corespeciesconcentrations[i] * corespeciesconcentrations[j] * corespeciesconcentrations[k] > trimolecularthresholdval
+                        trimolecularthreshold[i,j,k] = true
+                    end
+                end
+            end
+        end
+    end
+end
+
+export updatefilterthresholds!
