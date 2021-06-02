@@ -246,3 +246,123 @@ function getkeyselectioninds(coreedgedomain::AbstractDomain,coreedgeinters,domai
     end
     return corespcsinds,corerxninds,edgespcsinds,edgerxninds,reactantindices,productindices,coretoedgespcmap,coretoedgerxnmap
 end
+
+"""
+Process flux information into useful quantities for edge analysis
+"""
+function processfluxes(sim::SystemSimulation,
+        corespcsinds,corerxninds,edgespcsinds,edgerxninds)
+    
+    dydt,rts,frts,rrts,cs = calcfluxes(sim)
+    
+    corespeciesrates = abs.(dydt[corespcsinds])
+    charrate = sqrt(dot(corespeciesrates,corespeciesrates))
+    edgespeciesrates = abs.(dydt[edgespcsinds])
+    edgereactionrates = rts[edgerxninds]
+    corespeciesrateratios = corespeciesrates./charrate
+    edgespeciesrateratios = edgespeciesrates./charrate
+    corereactionrates = rts[corerxninds]
+    corespeciesconcentrations = cs[corespcsinds]
+    corespeciesconsumptionrates = zeros(length(corespeciesconcentrations))
+    corespeciesproductionrates = zeros(length(corespeciesconcentrations))
+    
+    #process core species consumption and production rates
+    index = 1
+    for d in getfield.(sim.sims,:domain)
+        for i = index:index+size(d.rxnarray)[2]
+            if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
+                continue
+            end
+            for j = 1:3
+                if d.rxnarray[j,i] != 0
+                    corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i]
+                    corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i]
+                else
+                    break
+                end
+            end
+            for j = 4:6
+                if d.rxnarray[j,i] != 0
+                    corespeciesproductionrates[d.rxnarray[j,i]] += frts[i]
+                    corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i]
+                else
+                    break
+                end
+            end
+        end
+        index += size(d.rxnarray)[2]
+    end
+    for d in inters
+        for i = index:index+size(d.rxnarray)[2]
+            if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
+                continue
+            end
+            for j = 1:3
+                if d.rxnarray[j,i] != 0
+                    corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i]
+                    corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i]
+                else
+                    break
+                end
+            end
+            for j = 4:6
+                if d.rxnarray[j,i] != 0
+                    corespeciesproductionrates[d.rxnarray[j,i]] += frts[i]
+                    corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i]
+                else
+                    break
+                end
+            end
+        end
+        index += size(d.rxnarray)[2]
+    end
+    
+    return dydt,rts,frts,rrts,cs,corespeciesratse,charrate,edgespeciesrates,edgereactionrates,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
+end
+
+"""
+Process flux information into useful quantities for edge analysis
+"""
+function processfluxes(sim::Simulation,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
+    
+    dydt,rts,frts,rrts,cs = calcfluxes(sim)
+    
+    corespeciesrates = abs.(dydt[corespcsinds])
+    charrate = sqrt(dot(corespeciesrates,corespeciesrates))
+    edgespeciesrates = abs.(dydt[edgespcsinds])
+    edgereactionrates = rts[edgerxninds]
+    corespeciesrateratios = corespeciesrates./charrate
+    edgespeciesrateratios = edgespeciesrates./charrate
+    corereactionrates = rts[corerxninds]
+    corespeciesconcentrations = cs[corespcsinds]
+    corespeciesconsumptionrates = zeros(length(corespeciesconcentrations))
+    corespeciesproductionrates = zeros(length(corespeciesconcentrations))
+    
+    #process core species consumption and production rates
+    d = sim.domain
+    for i = 1:size(d.rxnarray)[2]
+        if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
+            continue
+        end
+        for j = 1:3
+            if d.rxnarray[j,i] != 0
+                corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i]
+                corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i]
+            else
+                break
+            end
+        end
+        for j = 4:6
+            if d.rxnarray[j,i] != 0
+                corespeciesproductionrates[d.rxnarray[j,i]] += frts[i]
+                corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i]
+            else
+                break
+            end
+        end
+    end
+    
+    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
+end
+
+export processfluxes
