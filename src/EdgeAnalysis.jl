@@ -665,3 +665,65 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
 end
 
 export identifyobjects!
+
+"""
+run edge analysis to determine objects (species/reactions) that should be added to model core
+"""
+function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
+                p,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
+                maxnumobjsperiter,tolbranchrxntocore,branchingratiomax,
+                branchingindex,terminateatmaxobjects,termination,
+                filterthreshold;
+                atol=1e-20,rtol=1e-6,solver=CVODE_BDF())
+            
+    (corespcsinds,corerxninds,edgespcsinds,edgerxninds,reactantindices,
+                productindices,coretoedgespcmap,coretoedgerxnmap) = getkeyselectioninds(coreedgedomains,coreedgeinters,domains,inters)
+    
+    unimolecularthreshold = falses(length(corespcsinds))
+    bimolecularthreshold = falses((length(corespcsinds),length(corespcsinds)))
+    trimolecularthreshold = falses((length(corespcsinds),length(corespcsinds),length(corespcsinds)))
+    maxedgespeciesrateratios = zeros(length(edgespcsinds))
+    invalidobjects = []
+    terminated = false
+    
+    if tolbranchrxntocore != 0.0
+        branchfactor = 1.0/tolbranchrxntocore
+    else
+        branchfactor = 0.0
+    end
+    
+    tf = react.ode.tspan[2]
+    inte = init(react.ode,solver,abstol=atol,reltol=rtol);
+    
+    t = inte.t
+    sim = getsim(inte,react,coreedgedomains,inters,p,coretoedgespcmap)
+    
+    y0 = sim.sol[end]
+    spcsaddindices = Array{Int64,1}()
+    firsttime = true
+    
+    n = 1
+    while t < tf
+        for i = 1:n
+            step!(inte)
+        end
+        t = inte.t
+        sim = getsim(inte,react,coreedgedomains,inters,p,coretoedgespcmap)
+        terminated,interrupt = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
+            edgerxninds,reactantindices,productindices,unimolecularthreshold,bimolecularthreshold,
+                trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
+                maxnumobjsperiter,branchfactor,branchingratiomax,
+                branchingindex,terminateatmaxobjects,termination,y0,invalidobjects,firsttime,
+                filterthreshold)
+        if firsttime
+            firsttime = false
+        end
+        if terminated || interrupt
+            break
+        end
+    end
+    return (terminated,invalidobjects,unimolecularthreshold,
+        bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios)
+end
+
+export selectspecies
