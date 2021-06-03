@@ -91,6 +91,7 @@ export MultiPdepArrhenius
 @with_kw struct ThirdBody{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractFalloffRate
     arr::Arrhenius
     efficiencies::Dict{N,K} = Dict()
+    nameefficiencies::Dict{String,K} = Dict{String,Float64}()
     unc::Q = EmptyRateUncertainty()
 end
 
@@ -101,6 +102,7 @@ export ThirdBody
     arrhigh::Arrhenius
     arrlow::Arrhenius
     efficiencies::Dict{N,K} = Dict()
+    nameefficiencies::Dict{String,K} = Dict{String,Float64}()
     unc::Q = EmptyRateUncertainty()
 end
 
@@ -120,6 +122,7 @@ export Lindemann
     T1::F
     T2::L
     efficiencies::Dict{N,K} = Dict()
+    nameefficiencies::Dict{String,K} = Dict{String,Float64}()
     unc::R = EmptyRateUncertainty()
 end
 
