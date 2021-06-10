@@ -1,0 +1,1642 @@
+Phases:
+- Species:
+  - name: Ar
+    radicalelectrons: 0
+    smiles: '[Ar]'
+    thermo:
+      polys:
+      - Tmax: 1000.0
+        Tmin: 200.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 4.37967
+        type: NASApolynomial
+      - Tmax: 6000.0
+        Tmin: 1000.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 4.37967
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: He
+    radicalelectrons: 0
+    smiles: '[He]'
+    thermo:
+      polys:
+      - Tmax: 1000.0
+        Tmin: 200.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 0.928724
+        type: NASApolynomial
+      - Tmax: 6000.0
+        Tmin: 1000.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 0.928724
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: Ne
+    radicalelectrons: 0
+    smiles: '[Ne]'
+    thermo:
+      polys:
+      - Tmax: 1000.0
+        Tmin: 200.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 3.35532
+        type: NASApolynomial
+      - Tmax: 6000.0
+        Tmin: 1000.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 3.35532
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: N2
+    radicalelectrons: 0
+    smiles: N#N
+    thermo:
+      polys:
+      - Tmax: 1000.0
+        Tmin: 200.0
+        coefs:
+        - 3.53101
+        - -0.000123661
+        - -5.02999e-07
+        - 2.43531e-09
+        - -1.40881e-12
+        - -1046.98
+        - 2.96747
+        type: NASApolynomial
+      - Tmax: 6000.0
+        Tmin: 1000.0
+        coefs:
+        - 2.95258
+        - 0.0013969
+        - -4.92632e-07
+        - 7.8601e-11
+        - -4.60755e-15
+        - -923.949
+        - 5.87189
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: ethane
+    radicalelectrons: 0
+    smiles: CC
+    thermo:
+      polys:
+      - Tmax: 954.51
+        Tmin: 100.0
+        coefs:
+        - 3.78034607
+        - -0.00324276485
+        - 5.52385525e-05
+        - -6.38587905e-08
+        - 2.28640069e-11
+        - -11620.3414
+        - 5.21029625
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 954.51
+        coefs:
+        - 4.58979444
+        - 0.0141508381
+        - -4.75965886e-06
+        - 8.60303158e-10
+        - -6.21724057e-14
+        - -12721.7503
+        - -3.61718429
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: CH4
+    radicalelectrons: 0
+    smiles: C
+    thermo:
+      polys:
+      - Tmax: 1084.12
+        Tmin: 100.0
+        coefs:
+        - 4.20541524
+        - -0.00535557362
+        - 2.51123265e-05
+        - -2.13762843e-08
+        - 5.97523937e-12
+        - -10161.9433
+        - -0.921279283
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1084.12
+        coefs:
+        - 0.908265721
+        - 0.0114540858
+        - -4.57173828e-06
+        - 8.29191671e-10
+        - -5.66314895e-14
+        - -9719.97444
+        - 13.9930944
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH3]'
+    radicalelectrons: 1
+    smiles: '[CH3]'
+    thermo:
+      polys:
+      - Tmax: 1337.63
+        Tmin: 100.0
+        coefs:
+        - 3.91546761
+        - 0.00184154323
+        - 3.4874176e-06
+        - -3.32747607e-09
+        - 8.49956882e-13
+        - 16285.6394
+        - 0.35174149
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1337.63
+        coefs:
+        - 3.54145749
+        - 0.00476786834
+        - -1.82148425e-06
+        - 3.28876586e-10
+        - -2.22545593e-14
+        - 16223.9579
+        - 1.66034967
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: C[CH2]
+    radicalelectrons: 1
+    smiles: C[CH2]
+    thermo:
+      polys:
+      - Tmax: 900.31
+        Tmin: 100.0
+        coefs:
+        - 3.82183329
+        - -0.00343357093
+        - 5.09256026e-05
+        - -6.20209847e-08
+        - 2.3707252e-11
+        - 13066.013
+        - 7.61644314
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 900.31
+        coefs:
+        - 5.15621623
+        - 0.00943121232
+        - -1.81945206e-06
+        - 2.21193866e-10
+        - -1.43479695e-14
+        - 12064.0796
+        - -2.91102815
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: H
+    radicalelectrons: 1
+    smiles: '[H]'
+    thermo:
+      polys:
+      - Tmax: 3459.6
+        Tmin: 100.0
+        coefs:
+        - 2.5
+        - 9.24384602e-15
+        - -1.36779837e-17
+        - 6.66184769e-21
+        - -1.00106912e-24
+        - 25474.2178
+        - -0.444972896
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 3459.6
+        coefs:
+        - 2.49999999
+        - 9.20455546e-12
+        - -3.58608293e-15
+        - 6.15198922e-19
+        - -3.92041801e-23
+        - 25474.2178
+        - -0.444972842
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: C=C
+    radicalelectrons: 0
+    smiles: C=C
+    thermo:
+      polys:
+      - Tmax: 940.45
+        Tmin: 100.0
+        coefs:
+        - 3.97974441
+        - -0.00757559895
+        - 5.52973238e-05
+        - -6.36221688e-08
+        - 2.31767197e-11
+        - 5077.46086
+        - 4.0462276
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 940.45
+        coefs:
+        - 5.20299386
+        - 0.00782442468
+        - -2.12683407e-06
+        - 3.79690544e-10
+        - -2.94670706e-14
+        - 3936.28131
+        - -6.62410904
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: H2
+    radicalelectrons: 0
+    smiles: '[H][H]'
+    thermo:
+      polys:
+      - Tmax: 1959.08
+        Tmin: 100.0
+        coefs:
+        - 3.43536412
+        - 0.000212710353
+        - -2.78625043e-07
+        - 3.40267167e-10
+        - -7.76031998e-14
+        - -1031.35984
+        - -3.90841732
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1959.08
+        coefs:
+        - 2.78816583
+        - 0.000587640942
+        - 1.59010417e-07
+        - -5.52739026e-11
+        - 4.34310984e-15
+        - -596.14427
+        - 0.112732655
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH]=C'
+    radicalelectrons: 1
+    smiles: '[CH]=C'
+    thermo:
+      polys:
+      - Tmax: 931.96
+        Tmin: 100.0
+        coefs:
+        - 3.90670547
+        - -0.00406241062
+        - 3.86780039e-05
+        - -4.62976404e-08
+        - 1.72900384e-11
+        - 34797.1783
+        - 6.09788968
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 931.96
+        coefs:
+        - 5.4479655
+        - 0.00498356138
+        - -1.08820775e-06
+        - 1.79837309e-10
+        - -1.45096285e-14
+        - 33829.7746
+        - -4.87808224
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH2]CC'
+    radicalelectrons: 1
+    smiles: '[CH2]CC'
+    thermo:
+      polys:
+      - Tmax: 995.41
+        Tmin: 100.0
+        coefs:
+        - 3.09191302
+        - 0.0132172474
+        - 2.75847569e-05
+        - -3.90848844e-08
+        - 1.43313303e-11
+        - 10228.4118
+        - 12.4057873
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 995.41
+        coefs:
+        - 5.69430979
+        - 0.0196033402
+        - -7.42049648e-06
+        - 1.35882956e-09
+        - -9.56214889e-14
+        - 8875.84826
+        - -4.32889887
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: C#C
+    radicalelectrons: 0
+    smiles: C#C
+    thermo:
+      polys:
+      - Tmax: 888.63
+        Tmin: 100.0
+        coefs:
+        - 3.03574736
+        - 0.0077123902
+        - 2.53493006e-06
+        - -1.08133128e-08
+        - 5.50757058e-12
+        - 25852.6443
+        - 4.54461297
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 888.63
+        coefs:
+        - 5.76204511
+        - 0.00237158782
+        - -1.49582699e-07
+        - -2.19154662e-11
+        - 2.21779207e-15
+        - 25094.4501
+        - -9.82608488
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH2]CC=C'
+    radicalelectrons: 1
+    smiles: '[CH2]CC=C'
+    thermo:
+      polys:
+      - Tmax: 1000.95
+        Tmin: 100.0
+        coefs:
+        - 2.68059468
+        - 0.0210828055
+        - 2.02114983e-05
+        - -3.64232761e-08
+        - 1.41440404e-11
+        - 22752.802
+        - 16.6009256
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1000.95
+        coefs:
+        - 7.59479951
+        - 0.0206424593
+        - -7.89782526e-06
+        - 1.4596427e-09
+        - -1.03413353e-13
+        - 20807.3058
+        - -11.9159668
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[C]=C'
+    radicalelectrons: 0
+    smiles: '[C]=C'
+    thermo:
+      polys:
+      - Tmax: 1423.26
+        Tmin: 100.0
+        coefs:
+        - 3.6925165
+        - 0.00606584723
+        - -2.11277596e-06
+        - 1.63533182e-11
+        - 1.07665581e-13
+        - 48174.1496
+        - 3.96842354
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1423.26
+        coefs:
+        - 4.43041986
+        - 0.0048775742
+        - -1.79374459e-06
+        - 3.0408541e-10
+        - -1.96652162e-14
+        - 47874.4103
+        - -0.167075241
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH]=CC'
+    radicalelectrons: 1
+    smiles: '[CH]=CC'
+    thermo:
+      polys:
+      - Tmax: 997.87
+        Tmin: 100.0
+        coefs:
+        - 3.23409465
+        - 0.0118206723
+        - 1.70311418e-05
+        - -2.64373876e-08
+        - 9.91250979e-12
+        - 30487.3059
+        - 10.3182315
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 997.87
+        coefs:
+        - 5.66465812
+        - 0.0144326998
+        - -5.46743137e-06
+        - 1.0015912e-09
+        - -7.04869894e-14
+        - 29387.1077
+        - -4.4848242
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH]=CCC'
+    radicalelectrons: 1
+    smiles: '[CH]=CCC'
+    thermo:
+      polys:
+      - Tmax: 999.92
+        Tmin: 100.0
+        coefs:
+        - 2.56532733
+        - 0.0239244964
+        - 1.3811595e-05
+        - -3.1026936e-08
+        - 1.25444431e-11
+        - 27790.054
+        - 15.6311184
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 999.92
+        coefs:
+        - 8.06557472
+        - 0.0200625202
+        - -7.60832471e-06
+        - 1.39784272e-09
+        - -9.86871188e-14
+        - 25783.1993
+        - -15.4387855
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH]=CC=C'
+    radicalelectrons: 1
+    smiles: '[CH]=CC=C'
+    thermo:
+      polys:
+      - Tmax: 935.58
+        Tmin: 100.0
+        coefs:
+        - 2.6101631
+        - 0.0204314979
+        - 2.0796108e-05
+        - -4.53910308e-08
+        - 2.00574491e-11
+        - 41074.2701
+        - 13.3868405
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 935.58
+        coefs:
+        - 11.3227703
+        - 0.00894049131
+        - -2.08006868e-06
+        - 3.3897408e-10
+        - -2.6194989e-14
+        - 38316.6548
+        - -34.0911798
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH2]C1CC1'
+    radicalelectrons: 1
+    smiles: '[CH2]C1CC1'
+    thermo:
+      polys:
+      - Tmax: 926.07
+        Tmin: 100.0
+        coefs:
+        - 3.04736554
+        - 0.00545571385
+        - 7.53308215e-05
+        - -1.02226599e-07
+        - 4.01828021e-11
+        - 25826.9388
+        - 14.0791072
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 926.07
+        coefs:
+        - 10.2346424
+        - 0.0141131644
+        - -2.99925371e-06
+        - 4.56620522e-10
+        - -3.49799664e-14
+        - 22793.3498
+        - -29.2349187
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: C=CC=C
+    radicalelectrons: 0
+    smiles: C=CC=C
+    thermo:
+      polys:
+      - Tmax: 940.95
+        Tmin: 100.0
+        coefs:
+        - 2.68205225
+        - 0.0169322825
+        - 3.73648473e-05
+        - -6.26479964e-08
+        - 2.59146511e-11
+        - 11354.6018
+        - 12.0324202
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 940.95
+        coefs:
+        - 11.0823465
+        - 0.0117735303
+        - -3.11414472e-06
+        - 5.37745823e-10
+        - -4.10623132e-14
+        - 8421.2795
+        - -35.169604
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH2][CH]C=C'
+    radicalelectrons: 2
+    smiles: '[CH2]C=C[CH2]'
+    thermo:
+      polys:
+      - Tmax: 961.83
+        Tmin: 100.0
+        coefs:
+        - 2.65638077
+        - 0.0189337507
+        - 3.00987228e-05
+        - -5.20344307e-08
+        - 2.11232146e-11
+        - 32903.8799
+        - 13.6624695
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 961.83
+        coefs:
+        - 9.92849001
+        - 0.0151088208
+        - -5.13560211e-06
+        - 9.43569819e-10
+        - -6.9273456e-14
+        - 30282.9926
+        - -27.4906163
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: C=C[CH]C
+    radicalelectrons: 1
+    smiles: '[CH2]C=CC'
+    thermo:
+      polys:
+      - Tmax: 998.56
+        Tmin: 100.0
+        coefs:
+        - 2.64214371
+        - 0.0215952609
+        - 2.09688717e-05
+        - -3.79216452e-08
+        - 1.47847719e-11
+        - 14680.9427
+        - 14.1266132
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 998.56
+        coefs:
+        - 7.82800811
+        - 0.0208400863
+        - -7.96754424e-06
+        - 1.47337839e-09
+        - -1.04525635e-13
+        - 12647.2412
+        - -15.8820365
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: C=C=CC
+    radicalelectrons: 0
+    smiles: C=C=CC
+    thermo:
+      polys:
+      - Tmax: 1063.05
+        Tmin: 100.0
+        coefs:
+        - 2.67091213
+        - 0.0238372295
+        - 3.12253865e-06
+        - -1.59972758e-08
+        - 6.48389677e-12
+        - 17696.6515
+        - 12.7978754
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1063.05
+        coefs:
+        - 6.93544552
+        - 0.0197136368
+        - -7.88231275e-06
+        - 1.45446865e-09
+        - -1.01396113e-13
+        - 16116.2804
+        - -11.2054239
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: C1=CCC1
+    radicalelectrons: 0
+    smiles: C1=CCC1
+    thermo:
+      polys:
+      - Tmax: 950.24
+        Tmin: 100.0
+        coefs:
+        - 3.39621343
+        - -0.00343725308
+        - 9.09465048e-05
+        - -1.1327452e-07
+        - 4.24110728e-11
+        - 17412.3946
+        - 10.7743991
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 950.24
+        coefs:
+        - 9.42741835
+        - 0.0139644294
+        - -4.06892046e-06
+        - 7.75033524e-10
+        - -6.20421269e-14
+        - 14334.3164
+        - -28.1799733
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH2]C1C=C1'
+    radicalelectrons: 1
+    smiles: '[CH2]C1C=C1'
+    thermo:
+      polys:
+      - Tmax: 922.39
+        Tmin: 100.0
+        coefs:
+        - 2.73381733
+        - 0.0227303683
+        - 3.27346179e-06
+        - -2.0325544e-08
+        - 9.85275484e-12
+        - 53711.4183
+        - 11.9746599
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 922.39
+        coefs:
+        - 7.72013271
+        - 0.0142822671
+        - -4.41414586e-06
+        - 7.16675938e-10
+        - -4.76705841e-14
+        - 52231.0734
+        - -14.7167968
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  name: phase
+Reactions:
+- kinetics:
+    A: 945000000.0000001
+    Ea: 564.84
+    n: -0.538
+    type: Arrhenius
+  products:
+  - ethane
+  radicalchange: -2
+  reactants:
+  - '[CH3]'
+  - '[CH3]'
+  type: ElementaryReaction
+- kinetics:
+    A: 3.5000000000000004e-05
+    Ea: 43446.656
+    n: 3.44
+    type: Arrhenius
+  products:
+  - CH4
+  - C[CH2]
+  radicalchange: 0
+  reactants:
+  - '[CH3]'
+  - ethane
+  type: ElementaryReaction
+- kinetics:
+    A: 100000000.00000001
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - ethane
+  radicalchange: -2
+  reactants:
+  - H
+  - C[CH2]
+  type: ElementaryReaction
+- kinetics:
+    A: 193000000.00000003
+    Ea: 1129.68
+    n: 0.0
+    type: Arrhenius
+  products:
+  - CH4
+  radicalchange: -2
+  reactants:
+  - H
+  - '[CH3]'
+  type: ElementaryReaction
+- kinetics:
+    A: 100000000.00000001
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - ethane
+  radicalchange: -2
+  reactants:
+  - H
+  - C[CH2]
+  type: ElementaryReaction
+- kinetics:
+    A: 462.00000000000006
+    Ea: 4225.84
+    n: 1.64
+    type: Arrhenius
+  products:
+  - C[CH2]
+  radicalchange: 0
+  reactants:
+  - H
+  - C=C
+  type: ElementaryReaction
+- kinetics:
+    A: 657000000.0000001
+    Ea: 0.0
+    n: -0.68
+    type: Arrhenius
+  products:
+  - CH4
+  - C=C
+  radicalchange: -2
+  reactants:
+  - '[CH3]'
+  - C[CH2]
+  type: ElementaryReaction
+- kinetics:
+    A: 69000000.00000001
+    Ea: 0.0
+    n: -0.35
+    type: Arrhenius
+  products:
+  - C=C
+  - ethane
+  radicalchange: -2
+  reactants:
+  - C[CH2]
+  - C[CH2]
+  type: ElementaryReaction
+- kinetics:
+    A: 115.00000000000001
+    Ea: 31505.52
+    n: 1.9
+    type: Arrhenius
+  products:
+  - H2
+  - C[CH2]
+  radicalchange: 0
+  reactants:
+  - H
+  - ethane
+  type: ElementaryReaction
+- kinetics:
+    A: 10830000.000000002
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - H2
+  - C=C
+  radicalchange: -2
+  reactants:
+  - H
+  - C[CH2]
+  type: ElementaryReaction
+- kinetics:
+    A: 0.0041
+    Ea: 36630.920000000006
+    n: 3.156
+    type: Arrhenius
+  products:
+  - H2
+  - '[CH3]'
+  radicalchange: 0
+  reactants:
+  - H
+  - CH4
+  type: ElementaryReaction
+- kinetics:
+    A: 54500.00000000001
+    Ea: 6276.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - H2
+  radicalchange: -2
+  reactants:
+  - H
+  - H
+  type: ElementaryReaction
+- kinetics:
+    A: 0.041800000000000004
+    Ea: 23555.92
+    n: 2.41
+    type: Arrhenius
+  products:
+  - '[CH2]CC'
+  radicalchange: 0
+  reactants:
+  - '[CH3]'
+  - C=C
+  type: ElementaryReaction
+- kinetics:
+    A: 121000000.00000001
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - C=C
+  radicalchange: -2
+  reactants:
+  - H
+  - '[CH]=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 2.2360000000000006e-08
+    Ea: 23848.8
+    n: 4.34
+    type: Arrhenius
+  products:
+  - '[CH3]'
+  - C=C
+  radicalchange: 0
+  reactants:
+  - CH4
+  - '[CH]=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 1.0800000000000002e-09
+    Ea: 14644.0
+    n: 4.55
+    type: Arrhenius
+  products:
+  - C=C
+  - C[CH2]
+  radicalchange: 0
+  reactants:
+  - '[CH]=C'
+  - ethane
+  type: ElementaryReaction
+- kinetics:
+    A: 0.00024000000000000003
+    Ea: 47136.944
+    n: 3.62
+    type: Arrhenius
+  products:
+  - H2
+  - '[CH]=C'
+  radicalchange: 0
+  reactants:
+  - H
+  - C=C
+  type: ElementaryReaction
+- kinetics:
+    A: 456000000.00000006
+    Ea: 0.0
+    n: -0.7
+    type: Arrhenius
+  products:
+  - C=C
+  - C=C
+  radicalchange: -2
+  reactants:
+  - '[CH]=C'
+  - C[CH2]
+  type: ElementaryReaction
+- kinetics:
+    A: 1030.0000000000002
+    Ea: 8828.24
+    n: 1.64
+    type: Arrhenius
+  products:
+  - '[CH]=C'
+  radicalchange: 0
+  reactants:
+  - H
+  - C#C
+  type: ElementaryReaction
+- kinetics:
+    A: 8.204641
+    Ea: -4665.16
+    n: 1.877
+    type: Arrhenius
+  products:
+  - C#C
+  - ethane
+  radicalchange: -2
+  reactants:
+  - '[CH]=C'
+  - C[CH2]
+  type: ElementaryReaction
+- kinetics:
+    A: 8.204641
+    Ea: -4665.16
+    n: 1.877
+    type: Arrhenius
+  products:
+  - CH4
+  - C#C
+  radicalchange: -2
+  reactants:
+  - '[CH3]'
+  - '[CH]=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 8.204641
+    Ea: -4665.16
+    n: 1.877
+    type: Arrhenius
+  products:
+  - C#C
+  - C=C
+  radicalchange: -2
+  reactants:
+  - '[CH]=C'
+  - '[CH]=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 678.8225000000001
+    Ea: -3723.76
+    n: 1.5
+    type: Arrhenius
+  products:
+  - H2
+  - C#C
+  radicalchange: -2
+  reactants:
+  - H
+  - '[CH]=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 15997080000000.0
+    Ea: 34078.68
+    n: -0.202
+    type: Arrhenius
+  products:
+  - C#C
+  radicalchange: 0
+  reactants:
+  - '[C]=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 0.028600000000000004
+    Ea: 7531.2
+    n: 2.41
+    type: Arrhenius
+  products:
+  - '[CH2]CC=C'
+  radicalchange: 0
+  reactants:
+  - '[CH]=C'
+  - C=C
+  type: ElementaryReaction
+- kinetics:
+    A: 632000000.0
+    Ea: 37237.6
+    n: 0.97
+    type: Arrhenius
+  products:
+  - '[CH2]C1CC1'
+  radicalchange: 0
+  reactants:
+  - '[CH2]CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 0.013600000000000003
+    Ea: 25940.8
+    n: 2.41
+    type: Arrhenius
+  products:
+  - '[CH]=CCC'
+  radicalchange: 0
+  reactants:
+  - C#C
+  - C[CH2]
+  type: ElementaryReaction
+- kinetics:
+    A: 111300.0
+    Ea: 44308.56
+    n: 2.23
+    type: Arrhenius
+  products:
+  - '[CH2]CC=C'
+  radicalchange: 0
+  reactants:
+  - '[CH]=CCC'
+  type: ElementaryReaction
+- kinetics:
+    A: 1720000.0
+    Ea: 113804.8
+    n: 1.99
+    type: Arrhenius
+  products:
+  - C=C[CH]C
+  radicalchange: 0
+  reactants:
+  - '[CH2]CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 18460000000.0
+    Ea: 145184.80000000002
+    n: 0.74
+    type: Arrhenius
+  products:
+  - C=C[CH]C
+  radicalchange: 0
+  reactants:
+  - '[CH]=CCC'
+  type: ElementaryReaction
+- kinetics:
+    A: 324.00000000000006
+    Ea: 10041.6
+    n: 1.64
+    type: Arrhenius
+  products:
+  - '[CH2]CC=C'
+  radicalchange: 0
+  reactants:
+  - H
+  - C=CC=C
+  type: ElementaryReaction
+- kinetics:
+    A: 462.00000000000006
+    Ea: -1966.4799999999998
+    n: 1.64
+    type: Arrhenius
+  products:
+  - C=C[CH]C
+  radicalchange: 0
+  reactants:
+  - H
+  - C=CC=C
+  type: ElementaryReaction
+- kinetics:
+    A: 36150000.00000001
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - '[CH]=C'
+  - '[CH]=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 2900000.0000000005
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - ethane
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - C[CH2]
+  - '[CH2]CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 69000000.00000001
+    Ea: 0.0
+    n: -0.35
+    type: Arrhenius
+  products:
+  - ethane
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - C[CH2]
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 20000.000000000004
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - CH4
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - '[CH3]'
+  - '[CH2]CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 150000.00000000003
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - CH4
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - '[CH3]'
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 220000.00000000003
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - C=C
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - '[CH]=C'
+  - '[CH2]CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 456000000.00000006
+    Ea: 0.0
+    n: -0.7
+    type: Arrhenius
+  products:
+  - C=C
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - '[CH]=C'
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 20000.000000000004
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - H2
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - H
+  - '[CH2]CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 1274559.0000000002
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - H2
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - H
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 499998000000.0
+    Ea: 122411.288
+    n: 0.056
+    type: Arrhenius
+  products:
+  - C1=CCC1
+  radicalchange: 0
+  reactants:
+  - C=CC=C
+  type: ElementaryReaction
+- kinetics:
+    A: 35327400.00000001
+    Ea: 0.0
+    n: 0.153
+    type: Arrhenius
+  products:
+  - '[CH2]CC=C'
+  radicalchange: -2
+  reactants:
+  - H
+  - '[CH2][CH]C=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 1314000000.0000002
+    Ea: 0.0
+    n: -0.68
+    type: Arrhenius
+  products:
+  - C=C
+  - '[CH2]CC=C'
+  radicalchange: -2
+  reactants:
+  - C[CH2]
+  - '[CH2][CH]C=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 413106.00000000006
+    Ea: 4589.848
+    n: 0.309
+    type: Arrhenius
+  products:
+  - C#C
+  - '[CH2]CC=C'
+  radicalchange: -2
+  reactants:
+  - '[CH]=C'
+  - '[CH2][CH]C=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 32519600.000000004
+    Ea: 0.0
+    n: 0.255
+    type: Arrhenius
+  products:
+  - C=C[CH]C
+  radicalchange: -2
+  reactants:
+  - H
+  - '[CH2][CH]C=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 137400000.00000003
+    Ea: -543.9200000000001
+    n: -0.35
+    type: Arrhenius
+  products:
+  - C=C
+  - C=C[CH]C
+  radicalchange: -2
+  reactants:
+  - C[CH2]
+  - '[CH2][CH]C=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 16.409280000000003
+    Ea: -4665.16
+    n: 1.877
+    type: Arrhenius
+  products:
+  - C#C
+  - C=C[CH]C
+  radicalchange: -2
+  reactants:
+  - '[CH]=C'
+  - '[CH2][CH]C=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 5800000.000000001
+    Ea: -543.9200000000001
+    n: 0.0
+    type: Arrhenius
+  products:
+  - C=CC=C
+  - C=C[CH]C
+  radicalchange: -2
+  reactants:
+  - '[CH2][CH]C=C'
+  - '[CH2]CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 137400000.00000003
+    Ea: -543.9200000000001
+    n: -0.35
+    type: Arrhenius
+  products:
+  - C=CC=C
+  - C=C[CH]C
+  radicalchange: -2
+  reactants:
+  - '[CH2][CH]C=C'
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 1620000000000.0
+    Ea: 8284.32
+    n: -0.305
+    type: Arrhenius
+  products:
+  - C1=CCC1
+  radicalchange: -2
+  reactants:
+  - '[CH2][CH]C=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 50100000.0
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - '[CH2][CH]C=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 546.0000000000001
+    Ea: 15815.519999999999
+    n: 1.64
+    type: Arrhenius
+  products:
+  - C=C[CH]C
+  radicalchange: 0
+  reactants:
+  - H
+  - C=C=CC
+  type: ElementaryReaction
+- kinetics:
+    A: 1487400000.0
+    Ea: 63400.152
+    n: 1.045
+    type: Arrhenius
+  products:
+  - C=C=CC
+  radicalchange: -2
+  reactants:
+  - '[CH2][CH]C=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 964000.0000000001
+    Ea: 25104.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - ethane
+  - C=C=CC
+  radicalchange: -2
+  reactants:
+  - C[CH2]
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 3354068.0000000005
+    Ea: 25104.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - CH4
+  - C=C=CC
+  radicalchange: -2
+  reactants:
+  - '[CH3]'
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 2410000.0000000005
+    Ea: 25104.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - C=C
+  - C=C=CC
+  radicalchange: -2
+  reactants:
+  - '[CH]=C'
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 3010000.0000000005
+    Ea: 25104.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - H2
+  - C=C=CC
+  radicalchange: -2
+  reactants:
+  - H
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 0.13380000000000003
+    Ea: 28325.679999999997
+    n: 2.41
+    type: Arrhenius
+  products:
+  - '[CH]=CC'
+  radicalchange: 0
+  reactants:
+  - '[CH3]'
+  - C#C
+  type: ElementaryReaction
+- kinetics:
+    A: 11.680000000000001
+    Ea: 22811.168
+    n: 1.997
+    type: Arrhenius
+  products:
+  - '[CH]=CC=C'
+  radicalchange: 0
+  reactants:
+  - C#C
+  - '[CH]=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 8156660000000.001
+    Ea: 0.0
+    n: -1.493
+    type: Arrhenius
+  products:
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - H
+  - '[CH]=CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 3.432000000000001e-08
+    Ea: 86650.64
+    n: 4.34
+    type: Arrhenius
+  products:
+  - CH4
+  - '[CH]=CC=C'
+  radicalchange: 0
+  reactants:
+  - '[CH3]'
+  - C=CC=C
+  type: ElementaryReaction
+- kinetics:
+    A: 0.0006320000000000001
+    Ea: 75312.0
+    n: 3.13
+    type: Arrhenius
+  products:
+  - ethane
+  - '[CH]=CC=C'
+  radicalchange: 0
+  reactants:
+  - C[CH2]
+  - C=CC=C
+  type: ElementaryReaction
+- kinetics:
+    A: 0.00024000000000000003
+    Ea: 47136.944
+    n: 3.62
+    type: Arrhenius
+  products:
+  - H2
+  - '[CH]=CC=C'
+  radicalchange: 0
+  reactants:
+  - H
+  - C=CC=C
+  type: ElementaryReaction
+- kinetics:
+    A: 456000000.00000006
+    Ea: 0.0
+    n: -0.7
+    type: Arrhenius
+  products:
+  - C=C
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - C[CH2]
+  - '[CH]=CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 3.4370000000000006e-10
+    Ea: 27526.536
+    n: 4.732
+    type: Arrhenius
+  products:
+  - C=C
+  - '[CH]=CC=C'
+  radicalchange: 0
+  reactants:
+  - '[CH]=C'
+  - C=CC=C
+  type: ElementaryReaction
+- kinetics:
+    A: 8.204641
+    Ea: -4665.16
+    n: 1.877
+    type: Arrhenius
+  products:
+  - C#C
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - '[CH]=C'
+  - '[CH]=CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 220000.00000000003
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - C=CC=C
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - '[CH]=CC=C'
+  - '[CH2]CC=C'
+  type: ElementaryReaction
+- kinetics:
+    A: 456000000.00000006
+    Ea: 0.0
+    n: -0.7
+    type: Arrhenius
+  products:
+  - C=CC=C
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - '[CH]=CC=C'
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 2410000.0000000005
+    Ea: 25104.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - C=C=CC
+  - C=CC=C
+  radicalchange: -2
+  reactants:
+  - '[CH]=CC=C'
+  - C=C[CH]C
+  type: ElementaryReaction
+- kinetics:
+    A: 25400000000.0
+    Ea: 105311.28000000001
+    n: 0.69
+    type: Arrhenius
+  products:
+  - '[CH2]C1C=C1'
+  radicalchange: 0
+  reactants:
+  - '[CH]=CC=C'
+  type: ElementaryReaction
+Units: {}
