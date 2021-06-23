@@ -640,7 +640,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
                 @info "At time $t sec, reached target termination rate ratio $ratio"
             end
         else isa(term, TerminationConversion)
-            index = findfirst(isequal(term.species),sim.species)
+            index = findfirst(isequal(term.species.name),sim.names)
             conversion = 1 - (y[index] / y0[index])
             name = sim.species[index].name
             if conversion >= term.conversion
@@ -653,7 +653,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     if terminated
         for term in termination
             if isa(term, TerminationConversion)
-                index = findfirst(isequal(term.species),sim.species)
+                index = findfirst(isequal(term.species.name),sim.names)
                 conversion = 1 - (y[index] / y0[index])
                 name = sim.species[index].name
                 @info "$name conversion: $conversion"
