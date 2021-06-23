@@ -687,6 +687,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
     invalidobjects = []
     terminated = false
     conversion = 0.0
+    code = :Success
     
     if tolbranchrxntocore != 0.0
         branchfactor = 1.0/tolbranchrxntocore
@@ -705,10 +706,11 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
     firsttime = true
     
     n = 1
-    while t < tf
+    while t < tf && code == :Success
         for i = 1:n
             step!(inte)
         end
+        code = check_error(inte)
         t = inte.t
         sim = getsim(inte,react,coreedgedomains,inters,coreedgep,coretoedgespcmap)
         terminated,interrupt,conversion = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
@@ -724,8 +726,21 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
             break
         end
     end
-    return (terminated,invalidobjects,unimolecularthreshold,
-        bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios)
+
+    if code == :Success
+        return (terminated,false,invalidobjects,unimolecularthreshold,
+            bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios,t,conversion)
+    else
+        @error "Solver failed with code $code resurrecting job"
+        dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,
+        corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,
+        corespeciesproductionrates,corespeciesconsumptionrates = processfluxes(sim,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
+        ind = edgespcsinds[argmax(edgespeciesrates)]
+        invalidobjects = [sim.species[ind]]
+        return (terminated,true,invalidobjects,unimolecularthreshold,
+            bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios,t,conversion)
+    end
+        
 end
 
 export selectobjects
