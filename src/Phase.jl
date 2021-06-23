@@ -39,7 +39,8 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
         productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,reversible=rxn.reversible,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
-    M,Nrp = getstoichmatrix(species,rxns)
+    rxnarray = getreactionindices(species,rxns)
+    M,Nrp = getstoichmatrix(rxnarray,species)
     echangevec = getfield.(rxns,:electronchange)
     if all(echangevec .== 0)
         electronchange = nothing
@@ -47,7 +48,6 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
         electronchange = convert(echangevec,Array{Float64,1})
     end
     reversibility = getfield.(rxns,:reversible)
-    rxnarray = getreactionindices(species,rxns)
     return IdealGas(species=species,reactions=rxns,name=name,
         spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple, 
         veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns, electronchange=electronchange, 
@@ -79,7 +79,8 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
         productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,reversible=rxn.reversible,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
-    M,Nrp = getstoichmatrix(species,rxns)
+    rxnarray = getreactionindices(species,rxns)
+    M,Nrp = getstoichmatrix(rxnarray,species)
     echangevec = getfield.(rxns,:electronchange)
     if all(echangevec .== 0)
         electronchange = nothing
@@ -87,7 +88,7 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
         electronchange = convert(echangevec,Array{Float64,1})
     end
     reversibility = getfield.(rxns,:reversible)
-    rxnarray = getreactionindices(species,rxns)
+
     return IdealDiluteSolution(species=species,reactions=rxns,solvent=solvent,name=name,
         spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
         veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,
@@ -119,7 +120,8 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
         productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,electronchange=rxn.electronchange,reversible=rxn.reversible,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
-    M,Nrp = getstoichmatrix(species,rxns)
+    rxnarray = getreactionindices(species,rxns)
+    M,Nrp = getstoichmatrix(rxnarray,species)
     echangevec = getfield.(rxns,:electronchange).*F
     if all(echangevec .== 0)
         electronchange = nothing
@@ -127,7 +129,6 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
         electronchange = convert(typeof(Nrp),echangevec)
     end
     reversibility = getfield.(rxns,:reversible)
-    rxnarray = getreactionindices(species,rxns)
     return IdealSurface(species=species,reactions=rxns,name=name,
         spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
         veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,
@@ -138,17 +139,23 @@ export IdealSurface
 """
 construct the stochiometric matrix for the reactions and the reaction molecule # change
 """
-function getstoichmatrix(spcs,rxns)
-    M = spzeros(length(rxns),length(spcs))
-    Nrp = zeros(length(rxns))
-    for (i,rxn) in enumerate(rxns)
-        Nrp[i] = Float64(length(rxn.productinds) - length(rxn.reactantinds))
-        for ind in rxn.reactantinds
-            M[i,ind] += 1.0
+function getstoichmatrix(rxnarray,spcs)
+    M = spzeros(size(rxnarray)[2],length(spcs))
+    Nrp = zeros(size(rxnarray)[2])
+    for i in 1:size(rxnarray)[2]
+        n = 0.0
+        for (j,ind) in enumerate(rxnarray[:,i])
+            if ind == 0
+                continue
+            elseif j > 3
+                M[i,ind] -= 1.0
+                n += 1.0
+            else
+                M[i,ind] += 1.0
+                n -= 1.0
+            end
         end
-        for ind in rxn.productinds
-            M[i,ind] -= 1.0
-        end
+        Nrp[i] = n
     end
     return M,Nrp
 end
