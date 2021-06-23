@@ -96,7 +96,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     rxnarray = getreactionindices(phase)
-    return ConstantTPDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+    return ConstantTPDomain(phase,[1,length(phase.species),length(phase.species)+1],[1,length(phase.species)+length(phase.reactions)],constspcinds,
         T,P,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,false,MVector(false),MVector(0.0),p, Dict("V"=>phase.species[end].index+1)), y0, p
 end
 export ConstantTPDomain
@@ -164,7 +164,7 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
         jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     end
     rxnarray = getreactionindices(phase)
-    return ConstantVDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+    return ConstantVDomain(phase,[1,length(phase.species),length(phase.species)+1,length(phase.species)+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
     V,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict("T"=>phase.species[end].index+1,"P"=>phase.species[end].index+2)), y0, p
 end
 export ConstantVDomain
@@ -232,7 +232,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
         jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     end
     rxnarray = getreactionindices(phase)
-    return ConstantPDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+    return ConstantPDomain(phase,[1,length(phase.species),length(phase.species)+1,length(phase.species)+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
     P,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict("T"=>phase.species[end].index+1,"V"=>phase.species[end].index+2)), y0, p
 end
 export ConstantPDomain
@@ -313,7 +313,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
         jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedTPDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+    return ParametrizedTPDomain(phase,[1,length(phase.species),length(phase.species)+1],[1,length(phase.species)+length(phase.reactions)],constspcinds,
     Tfcn,Pfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict("V"=>phase.species[end].index+1)), y0, p
 end
 export ParametrizedTPDomain
@@ -390,7 +390,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
         jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedVDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+    return ParametrizedVDomain(phase,[1,length(phase.species),length(phase.species)+1,length(phase.species)+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
     Vfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict("T"=>phase.species[end].index+1,"P"=>phase.species[end].index+2)), y0, p
 end
 export ParametrizedVDomain
@@ -467,7 +467,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
         jacobian=zeros(typeof(T),length(phase.species)+2,length(phase.species)+2)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedPDomain(phase,[phase.species[1].index,phase.species[end].index,phase.species[end].index+1,phase.species[end].index+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+    return ParametrizedPDomain(phase,[1,length(phase.species),length(phase.species)+1,length(phase.species)+2],[1,length(phase.species)+length(phase.reactions)],constspcinds,
     Pfcn,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict("T"=>phase.species[end].index+1,"V"=>phase.species[end].index+2)), y0, p
 end
 export ParametrizedPDomain
@@ -550,7 +550,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     rxnarray = getreactionindices(phase)
-    return ConstantTVDomain(phase,[phase.species[1].index,phase.species[end].index],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+    return ConstantTVDomain(phase,[1,length(phase.species)],[1,length(phase.species)+length(phase.reactions)],constspcinds,
         T,V,kfs,krevs,kfsnondiff,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,false,MVector(false),MVector(0.0),p,Dict{String,Int64}()), y0, p
 end
 export ConstantTVDomain
@@ -620,7 +620,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
         jacobian=zeros(typeof(V),length(phase.species)+1,length(phase.species)+1)
     end
     rxnarray = getreactionindices(phase)
-    return ParametrizedTConstantVDomain(phase,[phase.species[1].index,phase.species[end].index],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+    return ParametrizedTConstantVDomain(phase,[1,length(phase.species)],[1,length(phase.species)+length(phase.reactions)],constspcinds,
     Tfcn,V,efficiencyinds,rxnarray,jacobian,sensitivity,MVector(false),MVector(0.0),p,Dict{String,Int64}()), y0, p
 end
 export ParametrizedTConstantVDomain
@@ -697,7 +697,7 @@ function ConstantTAPhiDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     rxnarray = getreactionindices(phase)
-    return ConstantTAPhiDomain(phase,[phase.species[1].index,phase.species[end].index],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+    return ConstantTAPhiDomain(phase,[1,length(phase.species)],[1,length(phase.species)+length(phase.reactions)],constspcinds,
         T,A,phi,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,Array{Float64,1}(),jacobian,sensitivity,false,MVector(false),MVector(0.0),p,Dict{String,Int64}()), y0, p
 end
 export ConstantTAPhiDomain
