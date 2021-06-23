@@ -482,6 +482,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     numcorerxns = length(corerxninds)
     invalidobjectsprintboolean = true
     terminated = false
+    conversion = 0.0
     
     (dydt,rts,frts,rrts,cs,corespeciesratse,charrate,edgespeciesrates,
     edgereactionrates,corespeciesrateratios,edgespeciesrateratios,
@@ -661,7 +662,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         end
     end
     
-    return (terminated,interrupt) 
+    return (terminated,interrupt,conversion) 
 end
 
 export identifyobjects!
@@ -685,6 +686,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
     maxedgespeciesrateratios = zeros(length(edgespcsinds))
     invalidobjects = []
     terminated = false
+    conversion = 0.0
     
     if tolbranchrxntocore != 0.0
         branchfactor = 1.0/tolbranchrxntocore
@@ -709,7 +711,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
         end
         t = inte.t
         sim = getsim(inte,react,coreedgedomains,inters,p,coretoedgespcmap)
-        terminated,interrupt = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
+        terminated,interrupt,conversion = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             edgerxninds,reactantindices,productindices,unimolecularthreshold,bimolecularthreshold,
                 trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,branchfactor,branchingratiomax,
