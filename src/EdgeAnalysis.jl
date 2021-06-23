@@ -671,7 +671,7 @@ export identifyobjects!
 run edge analysis to determine objects (species/reactions) that should be added to model core
 """
 function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
-                p,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
+                corep,coreedgep,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,tolbranchrxntocore,branchingratiomax,
                 branchingindex,terminateatmaxobjects,termination,
                 filterthreshold;
@@ -698,7 +698,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
     inte = init(react.ode,solver,abstol=atol,reltol=rtol);
     
     t = inte.t
-    sim = getsim(inte,react,coreedgedomains,inters,p,coretoedgespcmap)
+    sim = getsim(inte,react,coreedgedomains,inters,corep,coretoedgespcmap)
     
     y0 = sim.sol[end]
     spcsaddindices = Array{Int64,1}()
@@ -710,7 +710,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
             step!(inte)
         end
         t = inte.t
-        sim = getsim(inte,react,coreedgedomains,inters,p,coretoedgespcmap)
+        sim = getsim(inte,react,coreedgedomains,inters,coreedgep,coretoedgespcmap)
         terminated,interrupt,conversion = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             edgerxninds,reactantindices,productindices,unimolecularthreshold,bimolecularthreshold,
                 trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
