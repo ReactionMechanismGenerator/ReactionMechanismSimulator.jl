@@ -728,7 +728,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
         bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios)
 end
 
-export selectspecies
+export selectobjects
 
 """
 calculate threshold rate constants for different numbers of reactants
