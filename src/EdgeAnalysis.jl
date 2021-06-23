@@ -746,4 +746,4 @@ function getthresholdrateconstants(sim::Simulation,phase::IdealDiluteSolution,fi
     return 2.08366122e10*T,22.2*T/mu,0.11*T/mu
 end
 
-export getthresholdrateeconstant
+export getthresholdrateconstants
