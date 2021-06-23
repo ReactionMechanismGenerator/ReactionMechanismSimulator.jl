@@ -596,10 +596,10 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             invalidobjectsprintboolean = false
         end
         num = maxnumobjsperiter - length(invalidobjects)
-        newobjects = newobjects[:num]
-        newobjectinds = newobjectinds[:num]
-        newobjectvals = newobjectvals[:num]
-        newobjecttype = newobjecttype[:num]
+        newobjects = newobjects[1:num]
+        newobjectinds = newobjectinds[1:num]
+        newobjectvals = newobjectvals[1:num]
+        newobjecttype = newobjecttype[1:num]
     end
     
     if terminateatmaxobjects && length(invalidobjects) + length(newobjects) >= maxnumobjsperiter
