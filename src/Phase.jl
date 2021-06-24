@@ -49,7 +49,7 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
     end
     reversibility = getfield.(rxns,:reversible)
     return IdealGas(species=species,reactions=rxns,name=name,
-        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple, 
+        spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple, 
         veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns, electronchange=electronchange, 
         reversibility=reversibility,diffusionlimited=diffusionlimited,)
 end
@@ -90,7 +90,7 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
     reversibility = getfield.(rxns,:reversible)
 
     return IdealDiluteSolution(species=species,reactions=rxns,solvent=solvent,name=name,
-        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
+        spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
         veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,
         reversibility=reversibility,diffusionlimited=diffusionlimited)
 end
@@ -130,7 +130,7 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
     end
     reversibility = getfield.(rxns,:reversible)
     return IdealSurface(species=species,reactions=rxns,name=name,
-        spcdict=Dict([sp.name=>sp.index for sp in species]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
+        spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
         veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,
         reversibility=reversibility,sitedensity=sitedensity,diffusionlimited=diffusionlimited)
 end
