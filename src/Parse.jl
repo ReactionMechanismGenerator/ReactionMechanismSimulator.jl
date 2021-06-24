@@ -160,7 +160,7 @@ export getatomdictinchi
 getatomdictadjlist(adjlist) = getatomdictfromrmg(molecule.Molecule().from_adjacency_list(adjlist))
 export getatomdictadjlist
 
-function getspeciesradius(atomdict::Dict{String,Int64},nbonds::Int64)
+function getspeciesradius(atomdict,nbonds::Int64)
     """
     estimates the McGowan radius by calculating the McGowan Volume
     from the number of each type of atom and the number of bonds

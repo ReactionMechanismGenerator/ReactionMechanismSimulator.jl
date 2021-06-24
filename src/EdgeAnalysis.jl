@@ -482,6 +482,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     numcorerxns = length(corerxninds)
     invalidobjectsprintboolean = true
     terminated = false
+    conversion = 0.0
     
     (dydt,rts,frts,rrts,cs,corespeciesratse,charrate,edgespeciesrates,
     edgereactionrates,corespeciesrateratios,edgespeciesrateratios,
@@ -596,10 +597,10 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             invalidobjectsprintboolean = false
         end
         num = maxnumobjsperiter - length(invalidobjects)
-        newobjects = newobjects[:num]
-        newobjectinds = newobjectinds[:num]
-        newobjectvals = newobjectvals[:num]
-        newobjecttype = newobjecttype[:num]
+        newobjects = newobjects[1:num]
+        newobjectinds = newobjectinds[1:num]
+        newobjectvals = newobjectvals[1:num]
+        newobjecttype = newobjecttype[1:num]
     end
     
     if terminateatmaxobjects && length(invalidobjects) + length(newobjects) >= maxnumobjsperiter
@@ -640,7 +641,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
                 @info "At time $t sec, reached target termination rate ratio $ratio"
             end
         else isa(term, TerminationConversion)
-            index = findfirst(isequal(term.species),sim.species)
+            index = findfirst(isequal(term.species.name),sim.names)
             conversion = 1 - (y[index] / y0[index])
             name = sim.species[index].name
             if conversion >= term.conversion
@@ -653,7 +654,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     if terminated
         for term in termination
             if isa(term, TerminationConversion)
-                index = findfirst(isequal(term.species),sim.species)
+                index = findfirst(isequal(term.species.name),sim.names)
                 conversion = 1 - (y[index] / y0[index])
                 name = sim.species[index].name
                 @info "$name conversion: $conversion"
@@ -661,7 +662,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         end
     end
     
-    return (terminated,interrupt) 
+    return (terminated,interrupt,conversion) 
 end
 
 export identifyobjects!
@@ -670,7 +671,7 @@ export identifyobjects!
 run edge analysis to determine objects (species/reactions) that should be added to model core
 """
 function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
-                p,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
+                corep,coreedgep,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,tolbranchrxntocore,branchingratiomax,
                 branchingindex,terminateatmaxobjects,termination,
                 filterthreshold;
@@ -685,6 +686,8 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
     maxedgespeciesrateratios = zeros(length(edgespcsinds))
     invalidobjects = []
     terminated = false
+    conversion = 0.0
+    code = :Success
     
     if tolbranchrxntocore != 0.0
         branchfactor = 1.0/tolbranchrxntocore
@@ -696,20 +699,21 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
     inte = init(react.ode,solver,abstol=atol,reltol=rtol);
     
     t = inte.t
-    sim = getsim(inte,react,coreedgedomains,inters,p,coretoedgespcmap)
+    sim = getsim(inte,react,coreedgedomains,inters,corep,coretoedgespcmap)
     
     y0 = sim.sol[end]
     spcsaddindices = Array{Int64,1}()
     firsttime = true
     
     n = 1
-    while t < tf
+    while t < tf && code == :Success
         for i = 1:n
             step!(inte)
         end
+        code = check_error(inte)
         t = inte.t
-        sim = getsim(inte,react,coreedgedomains,inters,p,coretoedgespcmap)
-        terminated,interrupt = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
+        sim = getsim(inte,react,coreedgedomains,inters,coreedgep,coretoedgespcmap)
+        terminated,interrupt,conversion = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             edgerxninds,reactantindices,productindices,unimolecularthreshold,bimolecularthreshold,
                 trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,branchfactor,branchingratiomax,
@@ -722,11 +726,24 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
             break
         end
     end
-    return (terminated,invalidobjects,unimolecularthreshold,
-        bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios)
+
+    if code == :Success
+        return (terminated,false,invalidobjects,unimolecularthreshold,
+            bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios,t,conversion)
+    else
+        @error "Solver failed with code $code resurrecting job"
+        dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,
+        corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,
+        corespeciesproductionrates,corespeciesconsumptionrates = processfluxes(sim,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
+        ind = edgespcsinds[argmax(edgespeciesrates)]
+        invalidobjects = [sim.species[ind]]
+        return (terminated,true,invalidobjects,unimolecularthreshold,
+            bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios,t,conversion)
+    end
+        
 end
 
-export selectspecies
+export selectobjects
 
 """
 calculate threshold rate constants for different numbers of reactants
@@ -746,4 +763,4 @@ function getthresholdrateconstants(sim::Simulation,phase::IdealDiluteSolution,fi
     return 2.08366122e10*T,22.2*T/mu,0.11*T/mu
 end
 
-export getthresholdrateeconstant
+export getthresholdrateconstants

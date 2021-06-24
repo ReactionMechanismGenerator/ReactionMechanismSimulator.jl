@@ -49,13 +49,13 @@ using Sundials
     initialconds = Dict(["T"=>1350.0,"P"=>1.0e5,"ethane"=>1.0]);
     spc = coregas.species[5] #ethane
     termination = [TerminationConversion(spc,0.9),TerminationTime(1e6)];
-    coredomain,y0,p = ConstantTPDomain(phase=coregas,initialconds=initialconds);
-    react = Reactor(coredomain,y0,(0.0,1e6);p=p);
+    coredomain,y0,corep = ConstantTPDomain(phase=coregas,initialconds=initialconds);
+    react = Reactor(coredomain,y0,(0.0,1e6);p=corep);
     coreedgedomain,coreedgey0,coreedgep = ConstantTPDomain(phase=coreedgegas,initialconds=initialconds);
     
-    (terminated,invalidobjects,unimolecularthreshold,bimolecularthreshold,
+    (terminated,resurrected,invalidobjects,unimolecularthreshold,bimolecularthreshold,
     trimolecularthreshold,maxedgespeciesrateratios) = selectobjects(react,coreedgedomain,[],coredomain,
-        [],p,0.03,0.03,false,true,5,0.005,1.0,1.0,true,termination,1.0e8)
+        [],corep,coreedgep,0.03,0.03,false,true,5,0.005,1.0,1.0,true,termination,1.0e8)
         
     @test terminated == false
     @test invalidobjects[1].name == "[CH2]CCC"
