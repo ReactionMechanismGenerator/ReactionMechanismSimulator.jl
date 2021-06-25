@@ -2,6 +2,7 @@ using Parameters
 using SpecialFunctions
 using LinearAlgebra
 using Tracker
+using ReverseDiff
 using RecursiveArrayTools
 
 @inline function calcgibbs(ph::U,T::W) where {U<:IdealPhase,W<:Real}
@@ -56,7 +57,7 @@ end
 export getkf
 
 @inline function getkfs(ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4,phi) where {U,W1,W2,W3,W4<:Real,Q<:AbstractArray}
-    kfs = zeros(Q.parameters[1],length(ph.reactions))
+    kfs = similar(ns,length(ph.reactions))
     i = 1
     oldind = 1
     ind = 0
@@ -71,6 +72,7 @@ export getkf
     end
     return kfs
 end
+
 export getkfs
 
 """
