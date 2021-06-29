@@ -16,7 +16,7 @@ export AbstractConstantKDomain
 abstract type AbstractVariableKDomain <: AbstractDomain end
 export AbstractVariableKDomain
 
-@with_kw mutable struct ConstantTPDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
+mutable struct ConstantTPDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
@@ -28,16 +28,17 @@ export AbstractVariableKDomain
     efficiencyinds::Array{I,1}
     Gs::Array{W,1}
     rxnarray::Array{Int64,2}
-    mu::W = 0.0
-    diffusivity::Array{W,1} = Array{Float64,1}()
-    jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
-    sensitivity::Bool = false
-    alternativepformat::Bool=false
-    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
-    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    mu::W
+    diffusivity::Array{W,1}
+    jacobian::Array{W,2}
+    sensitivity::Bool
+    alternativepformat::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
 end
+
 function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::Array{X3,1}=Array{String,1}(),
     sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,E2<:AbstractPhase,Q<:AbstractInterface,W<:Real,X,X2,X3}
     #set conditions and initialconditions
@@ -101,7 +102,7 @@ function ConstantTPDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::A
 end
 export ConstantTPDomain
 
-@with_kw struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
+struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
@@ -110,9 +111,9 @@ export ConstantTPDomain
     efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
-    sensitivity::Bool = false
-    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
-    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    sensitivity::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
 end
@@ -169,7 +170,7 @@ function ConstantVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
 end
 export ConstantVDomain
 
-@with_kw struct ConstantPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
+struct ConstantPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
@@ -178,9 +179,9 @@ export ConstantVDomain
     efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
-    sensitivity::Bool = false
-    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
-    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    sensitivity::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
 end
@@ -237,7 +238,7 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
 end
 export ConstantPDomain
 
-@with_kw struct ParametrizedTPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
+struct ParametrizedTPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
@@ -247,9 +248,9 @@ export ConstantPDomain
     efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
-    sensitivity::Bool = false
-    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
-    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    sensitivity::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
 end
@@ -318,7 +319,7 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
 end
 export ParametrizedTPDomain
 
-@with_kw struct ParametrizedVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
+struct ParametrizedVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
@@ -327,9 +328,9 @@ export ParametrizedTPDomain
     efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
-    sensitivity::Bool = false
-    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
-    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    sensitivity::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
 end
@@ -395,7 +396,7 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
 end
 export ParametrizedVDomain
 
-@with_kw struct ParametrizedPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
+struct ParametrizedPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
@@ -404,9 +405,9 @@ export ParametrizedVDomain
     efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
-    sensitivity::Bool = false
-    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
-    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    sensitivity::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
 end
@@ -472,7 +473,7 @@ function ParametrizedPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
 end
 export ParametrizedPDomain
 
-@with_kw mutable struct ConstantTVDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
+mutable struct ConstantTVDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
@@ -485,13 +486,13 @@ export ParametrizedPDomain
     efficiencyinds::Array{I,1}
     Gs::Array{W,1}
     rxnarray::Array{Int64,2}
-    mu::W = 0.0
-    diffusivity::Array{W,1} = Array{Float64,1}()
-    jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
-    sensitivity::Bool = false
-    alternativepformat::Bool=false
-    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
-    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    mu::W
+    diffusivity::Array{W,1}
+    jacobian::Array{W,2}
+    sensitivity::Bool
+    alternativepformat::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
 end
@@ -555,7 +556,7 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
 end
 export ConstantTVDomain
 
-@with_kw struct ParametrizedTConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
+struct ParametrizedTConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
@@ -565,9 +566,9 @@ export ConstantTVDomain
     efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
-    sensitivity::Bool = false
-    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
-    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    sensitivity::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
 end
@@ -625,7 +626,7 @@ function ParametrizedTConstantVDomain(;phase::IdealDiluteSolution,initialconds::
 end
 export ParametrizedTConstantVDomain
 
-@with_kw mutable struct ConstantTAPhiDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
+mutable struct ConstantTAPhiDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
@@ -638,13 +639,13 @@ export ParametrizedTConstantVDomain
     efficiencyinds::Array{I,1}
     Gs::Array{W,1}
     rxnarray::Array{Int64,2}
-    mu::W = 0.0
-    diffusivity::Array{W,1} = Array{Float64,1}()
-    jacobian::Array{W,2} = Array{Float64,2}(undef,(0,0))
-    sensitivity::Bool = false
-    alternativepformat::Bool=false
-    jacuptodate::MArray{Tuple{1},Bool,1,1}=MVector(false)
-    t::MArray{Tuple{1},W2,1,1}=MVector(0.0)
+    mu::W
+    diffusivity::Array{W,1}
+    jacobian::Array{W,2}
+    sensitivity::Bool
+    alternativepformat::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
 end
