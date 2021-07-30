@@ -21,14 +21,14 @@ RMS has been used in many applications:
 * Pyrolysis of heavy oils
 
 ## Features
-Ideal gas, dilute liquid and ideal surface phases. 
-Wide selection of domains including but not limited to constant temperature and pressure, constant volume, parameterized volume, constant temperature and volume and constant temperature, potential and area. All of these have analytic jacobians! Easy to add more!
-Domains can be coupled to fixed interfaces such as inlets and oulets and also to dynamic interfaces such as a surface-gas reactive interface between surface and gas phase domains.
-Diffusion limited rates.
-Forward and adjoint sensitivity analysis for all reactors.  
-Flux diagrams with molecular images (if molecular information is provided).  
-Handy plotting and other solution analysis tools.  
-Easy to add new phases, domains, interfaces and other new features. 
+* Ideal gas, dilute liquid and ideal surface phases. 
+* Wide selection of domains including but not limited to constant temperature and pressure, constant volume, parameterized volume, constant temperature and volume and constant temperature, potential and area. All of these have analytic jacobians! Easy to add more!
+* Domains can be coupled to fixed interfaces such as inlets and outlets and also to dynamic interfaces such as surface-gas reactive interfaces between surface and gas phase domains.
+* Diffusion limited rates.
+* Forward and adjoint sensitivity analysis for all reactors.  
+* Flux diagrams with molecular images (if molecular information is provided).  
+* Handy plotting and other solution analysis tools.  
+* Easy to add new phases, domains, interfaces and other new features. 
 
 ## Installation
 
