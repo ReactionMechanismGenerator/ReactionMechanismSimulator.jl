@@ -1,7 +1,7 @@
 name = "ReactionMechanismSimulator"
 uuid = "c2d78dd2-25c4-5b79-bebc-be6c69dd440f"
 authors = ["Matt Johnson <mjohnson541@gmail.com>"]
-version = "0.3.2"
+version = "0.4.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
