@@ -134,7 +134,7 @@ function plotrops(bsol::Y,name::X,t::Z;N=0,tol=0.01) where {Y<:Simulation, X<:Ab
     xs = Array{Float64,1}(1:length(inds))
     barh(xs,reverse(rop[inds]))
     yticks(xs,reverse(getrxnstr.(bsol.domain.phase.reactions[inds])))
-    xlabel("Production/Loss Rate mol/(m^3*s)")
+    xlabel("Production/Loss Rate mol/s")
     return
 end
 
@@ -165,7 +165,7 @@ function plotrops(ssys::Y,name::X,t::Z;N=0,tol=0.01) where {Y<:SystemSimulation,
     xs = Array{Float64,1}(1:length(inds))
     barh(xs,reverse(rop[inds]))
     yticks(xs,reverse(getrxnstr.(ssys.reactions[inds])))
-    xlabel("Production/Loss Rate mol/(m^3*s)")
+    xlabel("Production/Loss Rate mol/s")
     return
 end
 
