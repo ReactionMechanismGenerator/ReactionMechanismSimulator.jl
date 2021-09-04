@@ -170,13 +170,14 @@ export calcfluxes
 """
 Precalculate important indices and maps for use in edge analysis
 """
-function getkeyselectioninds(coreeedgedomains,coreedgeinters,domains,inters)
-    corespcsinds = flatten([coreedgedomains[i].indexes[1]:coreedgedomains[i].indexes[1]+domains[i].indexes[2]-domains[i].indexes[1] for i = 1:length(domains)])
-    edgespcsinds = flatten([coreedgedomains[i].indexes[1]+domains[i].indexes[2]-domains[i].indexes[1]:coreedgedomains[i].indexes[2] for i = 1:length(domains)])
+function getkeyselectioninds(coreedgedomains,coreedgeinters,domains,inters)
+    corespcsinds = collect(flatten([coreedgedomains[i].indexes[1]:coreedgedomains[i].indexes[1]+domains[i].indexes[2]-domains[i].indexes[1] for i = 1:length(domains)]))
+    edgespcsinds = collect(flatten([coreedgedomains[i].indexes[1]+domains[i].indexes[2]-domains[i].indexes[1]+1:coreedgedomains[i].indexes[2] for i = 1:length(domains)]))
     corerxninds = Array{Int64,1}()
     edgerxninds = Array{Int64,1}()
-    reactantindices = zeros(Int64,(3,length(corerxninds)))
-    productindices  = zeros(Int64,(3,length(corerxninds)))
+    Nrxns = sum(length(d.phase.reactions) for d in coreedgedomains)
+    reactantindices = zeros(Int64,(3,Nrxns))
+    productindices  = zeros(Int64,(3,Nrxns))
     coretoedgespcmap = Dict{Int64,Int64}()
     coretoedgerxnmap = Dict{Int64,Int64}()
     spcindexcore = 0
@@ -195,18 +196,18 @@ function getkeyselectioninds(coreeedgedomains,coreedgeinters,domains,inters)
         for (j,rxn) in enumerate(coreedgedomains[i].phase.reactions)
             coreind = findfirst(isequal(rxn),domains[i].phase.reactions)
             if coreind === nothing
-                push!(edgerxninds,j+indexedge)
-            else 
-                coretoedgerxnmap[coreind+indexcore] = j+indexedge
-                push!(corerxninds,j+indexedge)
+                push!(edgerxninds,j+rxnindexedge)
+            else
+                coretoedgerxnmap[coreind+rxnindexcore] = j+rxnindexedge
+                push!(corerxninds,j+rxnindexedge)
             end
         end
         spcindexcore += length(domains[i].phase.species)
         spcindexedge += length(coreedgedomains[i].phase.species)
         rxnindexcore += length(domains[i].phase.reactions)
         rxnindexedge += length(coreedgedomains[i].phase.reactions)
-        
-        indend = length(domains[i].reactions)
+
+        indend = length(domains[i].phase.reactions)
         reactantindices[:,ind:ind+indend-1] = domains[i].rxnarray[1:3,:]
         productindices[:,ind:ind+indend-1] = domains[i].rxnarray[4:6,:]
         ind += indend
@@ -224,10 +225,7 @@ function getkeyselectioninds(coreeedgedomains,coreedgeinters,domains,inters)
             ind += indend
         end
     end
-    corerxninds = flatten(corerxnrangearray)
-    edgerxninds = flatten(edgerxnrangearray)
-    
-    return corespcsinds,corerxninds,edgespcsinds,edgerxninds,reactantindices,productindices,coretoedgespcmap,coretoedgerxnmap
+    return corespcsinds,collect(flatten(corerxninds)),edgespcsinds,collect(flatten(edgerxninds)),reactantindices,productindices,coretoedgespcmap,coretoedgerxnmap
 end
 
 """
