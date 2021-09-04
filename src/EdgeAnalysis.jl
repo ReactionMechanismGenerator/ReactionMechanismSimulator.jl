@@ -6,6 +6,7 @@ using Logging
 using Sundials
 using SparseArrays
 using DiffEqBase: build_solution
+using Base.Iterators: flatten
 
 abstract type AbstractTerminationCriterion end
 
