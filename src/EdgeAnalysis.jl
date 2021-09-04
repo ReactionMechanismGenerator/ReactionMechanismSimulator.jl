@@ -315,8 +315,8 @@ function processfluxes(sim::SystemSimulation,
         end
         index += size(d.rxnarray)[2]
     end
-    
-    return dydt,rts,frts,rrts,cs,corespeciesratse,charrate,edgespeciesrates,edgereactionrates,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
+
+    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
 end
 
 """
