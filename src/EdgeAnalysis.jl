@@ -163,7 +163,7 @@ Calculate key flux and concentration related quantities for edge analysis
     for (i,domain) in enumerate(domains)
         calcdomainderivatives!(domain,dydt,interfaces;t=t,T=vT[i],P=vP[i],Us=vUs[i],Hs=vHs[i],V=vV[i],C=vC[i],ns=vns[i],N=vN[i],Cvave=vCvave[i])
     end
-    return dydt,rtsall,frtsall,rrtsall,cstot
+    return dydt,collect(flatten(rtsall)),collect(flatten(frtsall)),collect(flatten(rrtsall)),cstot
 end
 export calcfluxes
 
