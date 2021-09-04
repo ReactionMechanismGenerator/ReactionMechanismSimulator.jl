@@ -268,22 +268,22 @@ function processfluxes(sim::SystemSimulation,
     #process core species consumption and production rates
     index = 1
     for d in getfield.(sim.sims,:domain)
-        for i = index:index+size(d.rxnarray)[2]
+        for i = 1:size(d.rxnarray)[2]
             if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
                 continue
             end
             for j = 1:3
                 if d.rxnarray[j,i] != 0
-                    corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i]
-                    corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i]
+                    corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
+                    corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
                 else
                     break
                 end
             end
             for j = 4:6
                 if d.rxnarray[j,i] != 0
-                    corespeciesproductionrates[d.rxnarray[j,i]] += frts[i]
-                    corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i]
+                    corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
+                    corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
                 else
                     break
                 end
@@ -291,23 +291,23 @@ function processfluxes(sim::SystemSimulation,
         end
         index += size(d.rxnarray)[2]
     end
-    for d in inters
-        for i = index:index+size(d.rxnarray)[2]
+    for d in sim.interfaces
+        for i = 1:size(d.rxnarray)[2]
             if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
                 continue
             end
             for j = 1:3
                 if d.rxnarray[j,i] != 0
-                    corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i]
-                    corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i]
+                    corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
+                    corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
                 else
                     break
                 end
             end
             for j = 4:6
                 if d.rxnarray[j,i] != 0
-                    corespeciesproductionrates[d.rxnarray[j,i]] += frts[i]
-                    corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i]
+                    corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
+                    corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
                 else
                     break
                 end
