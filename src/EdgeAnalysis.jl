@@ -130,7 +130,7 @@ Calculate key flux and concentration related quantities for edge analysis
     vcpdivR[1] = cpdivR
     vphi = Array{Any,1}(undef,length(domains))
     vphi[1] = phi
-    rtsall,frtsall,rrtsall = addreactionratecontributionsforwardreverse!(dydt,domain.rxnarray,cstot,kfs,krevs,V)
+    rts,frts,rrts = addreactionratecontributionsforwardreverse!(dydt,domain.rxnarray,cstot,kfs,krevs,V)
     rtsall = [rts]
     frtsall = [frts]
     rrtsall = [rrts]
