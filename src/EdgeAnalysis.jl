@@ -698,8 +698,8 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
     inte = init(react.ode,solver,abstol=atol,reltol=rtol);
     
     t = inte.t
-    sim = getsim(inte,react,coreedgedomains,inters,corep,coretoedgespcmap)
-    
+    sim = getsim(inte,react,coreedgedomains,coreedgeinters,corep,coretoedgespcmap)
+
     y0 = sim.sol[end]
     spcsaddindices = Array{Int64,1}()
     firsttime = true
@@ -711,7 +711,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
         end
         code = check_error(inte)
         t = inte.t
-        sim = getsim(inte,react,coreedgedomains,inters,coreedgep,coretoedgespcmap)
+        sim = getsim(inte,react,coreedgedomains,coreedgeinters,coreedgep,coretoedgespcmap)
         terminated,interrupt,conversion = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             edgerxninds,reactantindices,productindices,unimolecularthreshold,bimolecularthreshold,
                 trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
