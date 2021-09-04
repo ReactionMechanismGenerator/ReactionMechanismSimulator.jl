@@ -92,6 +92,12 @@ function ReactiveInternalInterfaceConstantTPhi(domain1,domain2,reactions,T,A,phi
     krevs = kfs./Kc
     M,Nrp1,Nrp2 = getstoichmatrix(domain1,domain2,reactions)
     reversibility = Array{Bool,1}(getfield.(reactions,:reversible))
+    if isa(reactions,Vector{Any})
+        reactions = convert(Vector{ElementaryReaction},reactions)
+    end
+    if isa(kfs,Vector{Any})
+        kfs = convert(Vector{Float64},kfs)
+    end
     return ReactiveInternalInterfaceConstantTPhi(domain1,domain2,reactions,
             rxnarray,M,Nrp1,Nrp2,kfs,krevs,T,A,[1,length(reactions)],
             [0,1],kfs[1:end],reversibility),kfs[1:end]
