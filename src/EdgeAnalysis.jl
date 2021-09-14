@@ -292,28 +292,30 @@ function processfluxes(sim::SystemSimulation,
         index += size(d.rxnarray)[2]
     end
     for d in sim.interfaces
-        for i = 1:size(d.rxnarray)[2]
-            if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
-                continue
-            end
-            for j = 1:3
-                if d.rxnarray[j,i] != 0
-                    corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
-                    corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
-                else
-                    break
+        if hasproperty(d,:rxnarray)
+            for i = 1:size(d.rxnarray)[2]
+                if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
+                    continue
+                end
+                for j = 1:3
+                    if d.rxnarray[j,i] != 0
+                        corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
+                        corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
+                    else
+                        break
+                    end
+                end
+                for j = 4:6
+                    if d.rxnarray[j,i] != 0
+                        corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
+                        corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
+                    else
+                        break
+                    end
                 end
             end
-            for j = 4:6
-                if d.rxnarray[j,i] != 0
-                    corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
-                    corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
-                else
-                    break
-                end
-            end
+            index += size(d.rxnarray)[2]
         end
-        index += size(d.rxnarray)[2]
     end
 
     return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
