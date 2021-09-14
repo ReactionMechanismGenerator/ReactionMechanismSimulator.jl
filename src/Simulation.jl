@@ -455,7 +455,11 @@ end
 function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2,W3}
     @assert target in bsol.names || target in ["T","V","P"]
     if target in ["T","V","P"]
-        ind = bsol.domain.indexes[end]
+        if haskey(bsol.domain.thermovariabledict, target)
+            ind = bsol.domain.thermovariabledict[target]
+        else
+            throw(error("$(bsol.domain) doesn't have $target in its thermovariables"))
+        end
     else
         ind = findfirst(isequal(target),bsol.names)+bsol.domain.indexes[1]-1
     end
