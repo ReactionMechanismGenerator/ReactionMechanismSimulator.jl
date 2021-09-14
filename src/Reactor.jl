@@ -69,6 +69,12 @@ function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqB
                 domain.rxnarray[i,j] += k-1
             end
         end
+        for i in 1:length(domain.constantspeciesinds)
+            domain.constantspeciesinds[i] += k-1
+        end
+        for (thermovar,ind) in domain.thermovariabledict
+            domain.thermovariabledict[thermovar] += k-1
+        end
         domain.indexes[1] = k
         k += Nspcs
         domain.indexes[2] = k-1
