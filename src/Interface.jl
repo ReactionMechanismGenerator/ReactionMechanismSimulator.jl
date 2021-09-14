@@ -92,6 +92,12 @@ function ReactiveInternalInterfaceConstantTPhi(domain1,domain2,reactions,T,A,phi
     krevs = kfs./Kc
     M,Nrp1,Nrp2 = getstoichmatrix(domain1,domain2,reactions)
     reversibility = Array{Bool,1}(getfield.(reactions,:reversible))
+    if isa(reactions,Vector{Any})
+        reactions = convert(Vector{ElementaryReaction},reactions)
+    end
+    if isa(kfs,Vector{Any})
+        kfs = convert(Vector{Float64},kfs)
+    end
     return ReactiveInternalInterfaceConstantTPhi(domain1,domain2,reactions,
             rxnarray,M,Nrp1,Nrp2,kfs,krevs,T,A,[1,length(reactions)],
             [0,1],kfs[1:end],reversibility),kfs[1:end]
@@ -192,16 +198,19 @@ function upgradekinetics(rxns,domain1,domain2)
     elseif domain2surf
         surfdomain = domain2
     end
+    newrxns = Array{ElementaryReaction,1}(undef,length(rxns))
     for (i,rxn) in enumerate(rxns)
         if isa(rxn.kinetics,StickingCoefficient)
             spc = [spc for spc in rxn.reactants if !(spc in surfdomain.phase.species)]
             @assert length(spc) == 1
             kin = stickingcoefficient2arrhenius(rxn.kinetics,surfdomain.phase.sitedensity,length(rxn.reactants)-1,spc[1].molecularweight)
-            rxns[i] = ElementaryReaction(index=rxn.index,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
+            newrxns[i] = ElementaryReaction(index=rxn.index,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
                 productinds=rxn.productinds,kinetics=kin,radicalchange=rxn.radicalchange,reversible=rxn.reversible,pairs=rxn.pairs)
+        else
+            newrxns[i] = rxn
         end
     end
-    return rxns
+    return [rxn for rxn in newrxns]
 end
 
 function stickingcoefficient2arrhenius(sc,sitedensity,N,mw;Tmin=300.0,Tmax=2000.0)

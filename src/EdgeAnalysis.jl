@@ -6,6 +6,7 @@ using Logging
 using Sundials
 using SparseArrays
 using DiffEqBase: build_solution
+using Base.Iterators: flatten
 
 abstract type AbstractTerminationCriterion end
 
@@ -129,7 +130,7 @@ Calculate key flux and concentration related quantities for edge analysis
     vcpdivR[1] = cpdivR
     vphi = Array{Any,1}(undef,length(domains))
     vphi[1] = phi
-    rtsall,frtsall,rrtsall = addreactionratecontributionsforwardreverse!(dydt,domain.rxnarray,cstot,kfs,krevs,V)
+    rts,frts,rrts = addreactionratecontributionsforwardreverse!(dydt,domain.rxnarray,cstot,kfs,krevs,V)
     rtsall = [rts]
     frtsall = [frts]
     rrtsall = [rrts]
@@ -162,20 +163,21 @@ Calculate key flux and concentration related quantities for edge analysis
     for (i,domain) in enumerate(domains)
         calcdomainderivatives!(domain,dydt,interfaces;t=t,T=vT[i],P=vP[i],Us=vUs[i],Hs=vHs[i],V=vV[i],C=vC[i],ns=vns[i],N=vN[i],Cvave=vCvave[i])
     end
-    return dydt,rtsall,frtsall,rrtsall,cstot
+    return dydt,collect(flatten(rtsall)),collect(flatten(frtsall)),collect(flatten(rrtsall)),cstot
 end
 export calcfluxes
 
 """
 Precalculate important indices and maps for use in edge analysis
 """
-function getkeyselectioninds(coreeedgedomains,coreedgeinters,domains,inters)
-    corespcsinds = flatten([coreedgedomains[i].indexes[1]:coreedgedomains[i].indexes[1]+domains[i].indexes[2]-domains[i].indexes[1] for i = 1:length(domains)])
-    edgespcsinds = flatten([coreedgedomains[i].indexes[1]+domains[i].indexes[2]-domains[i].indexes[1]:coreedgedomains[i].indexes[2] for i = 1:length(domains)])
+function getkeyselectioninds(coreedgedomains,coreedgeinters,domains,inters)
+    corespcsinds = collect(flatten([coreedgedomains[i].indexes[1]:coreedgedomains[i].indexes[1]+domains[i].indexes[2]-domains[i].indexes[1] for i = 1:length(domains)]))
+    edgespcsinds = collect(flatten([coreedgedomains[i].indexes[1]+domains[i].indexes[2]-domains[i].indexes[1]+1:coreedgedomains[i].indexes[2] for i = 1:length(domains)]))
     corerxninds = Array{Int64,1}()
     edgerxninds = Array{Int64,1}()
-    reactantindices = zeros(Int64,(3,length(corerxninds)))
-    productindices  = zeros(Int64,(3,length(corerxninds)))
+    Nrxns = sum(length(d.phase.reactions) for d in coreedgedomains)
+    reactantindices = zeros(Int64,(3,Nrxns))
+    productindices  = zeros(Int64,(3,Nrxns))
     coretoedgespcmap = Dict{Int64,Int64}()
     coretoedgerxnmap = Dict{Int64,Int64}()
     spcindexcore = 0
@@ -194,18 +196,18 @@ function getkeyselectioninds(coreeedgedomains,coreedgeinters,domains,inters)
         for (j,rxn) in enumerate(coreedgedomains[i].phase.reactions)
             coreind = findfirst(isequal(rxn),domains[i].phase.reactions)
             if coreind === nothing
-                push!(edgerxninds,j+indexedge)
-            else 
-                coretoedgerxnmap[coreind+indexcore] = j+indexedge
-                push!(corerxninds,j+indexedge)
+                push!(edgerxninds,j+rxnindexedge)
+            else
+                coretoedgerxnmap[coreind+rxnindexcore] = j+rxnindexedge
+                push!(corerxninds,j+rxnindexedge)
             end
         end
         spcindexcore += length(domains[i].phase.species)
         spcindexedge += length(coreedgedomains[i].phase.species)
         rxnindexcore += length(domains[i].phase.reactions)
         rxnindexedge += length(coreedgedomains[i].phase.reactions)
-        
-        indend = length(domains[i].reactions)
+
+        indend = length(domains[i].phase.reactions)
         reactantindices[:,ind:ind+indend-1] = domains[i].rxnarray[1:3,:]
         productindices[:,ind:ind+indend-1] = domains[i].rxnarray[4:6,:]
         ind += indend
@@ -223,10 +225,7 @@ function getkeyselectioninds(coreeedgedomains,coreedgeinters,domains,inters)
             ind += indend
         end
     end
-    corerxninds = flatten(corerxnrangearray)
-    edgerxninds = flatten(edgerxnrangearray)
-    
-    return corespcsinds,corerxninds,edgespcsinds,edgerxninds,reactantindices,productindices,coretoedgespcmap,coretoedgerxnmap
+    return corespcsinds,collect(flatten(corerxninds)),edgespcsinds,collect(flatten(edgerxninds)),reactantindices,productindices,coretoedgespcmap,coretoedgerxnmap
 end
 
 """
@@ -269,22 +268,22 @@ function processfluxes(sim::SystemSimulation,
     #process core species consumption and production rates
     index = 1
     for d in getfield.(sim.sims,:domain)
-        for i = index:index+size(d.rxnarray)[2]
+        for i = 1:size(d.rxnarray)[2]
             if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
                 continue
             end
             for j = 1:3
                 if d.rxnarray[j,i] != 0
-                    corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i]
-                    corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i]
+                    corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
+                    corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
                 else
                     break
                 end
             end
             for j = 4:6
                 if d.rxnarray[j,i] != 0
-                    corespeciesproductionrates[d.rxnarray[j,i]] += frts[i]
-                    corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i]
+                    corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
+                    corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
                 else
                     break
                 end
@@ -292,32 +291,34 @@ function processfluxes(sim::SystemSimulation,
         end
         index += size(d.rxnarray)[2]
     end
-    for d in inters
-        for i = index:index+size(d.rxnarray)[2]
-            if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
-                continue
-            end
-            for j = 1:3
-                if d.rxnarray[j,i] != 0
-                    corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i]
-                    corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i]
-                else
-                    break
+    for d in sim.interfaces
+        if hasproperty(d,:rxnarray)
+            for i = 1:size(d.rxnarray)[2]
+                if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
+                    continue
+                end
+                for j = 1:3
+                    if d.rxnarray[j,i] != 0
+                        corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
+                        corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
+                    else
+                        break
+                    end
+                end
+                for j = 4:6
+                    if d.rxnarray[j,i] != 0
+                        corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
+                        corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
+                    else
+                        break
+                    end
                 end
             end
-            for j = 4:6
-                if d.rxnarray[j,i] != 0
-                    corespeciesproductionrates[d.rxnarray[j,i]] += frts[i]
-                    corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i]
-                else
-                    break
-                end
-            end
+            index += size(d.rxnarray)[2]
         end
-        index += size(d.rxnarray)[2]
     end
-    
-    return dydt,rts,frts,rrts,cs,corespeciesratse,charrate,edgespeciesrates,edgereactionrates,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
+
+    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
 end
 
 """
@@ -699,8 +700,8 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
     inte = init(react.ode,solver,abstol=atol,reltol=rtol);
     
     t = inte.t
-    sim = getsim(inte,react,coreedgedomains,inters,corep,coretoedgespcmap)
-    
+    sim = getsim(inte,react,coreedgedomains,coreedgeinters,corep,coretoedgespcmap)
+
     y0 = sim.sol[end]
     spcsaddindices = Array{Int64,1}()
     firsttime = true
@@ -712,7 +713,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
         end
         code = check_error(inte)
         t = inte.t
-        sim = getsim(inte,react,coreedgedomains,inters,coreedgep,coretoedgespcmap)
+        sim = getsim(inte,react,coreedgedomains,coreedgeinters,coreedgep,coretoedgespcmap)
         terminated,interrupt,conversion = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             edgerxninds,reactantindices,productindices,unimolecularthreshold,bimolecularthreshold,
                 trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
