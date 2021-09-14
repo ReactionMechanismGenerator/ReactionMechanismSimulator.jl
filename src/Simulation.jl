@@ -452,7 +452,7 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
     return dpadj
 end
 
-function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2,W3}
+function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2,W3}
     @assert target in bsol.names || target in ["T","V","P"]
     if target in ["T","V","P"]
         ind = bsol.domain.indexes[end]
