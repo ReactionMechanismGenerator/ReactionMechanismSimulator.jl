@@ -365,9 +365,7 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
         end
     else
         ind = findfirst(isequal(target),bsol.names)
-        if !isempty(bsol.interfaces)
-            nothing
-        else
+        if isempty(bsol.interfaces)
             sensdomain,sensspcnames,senstooriginspcind,senstooriginrxnind = getsensdomain(bsol.domain,ind)
             if :thermovariabledict in fieldnames(typeof(bsol.domain))
                 yinds = vcat(senstooriginspcind,collect(values(bsol.domain.thermovariabledict)))
