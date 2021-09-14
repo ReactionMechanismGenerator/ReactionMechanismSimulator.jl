@@ -326,7 +326,8 @@ export addreactionratecontributionsforwardreverse!
     return dydt
 end
 @inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:Tuple}    
-    cstot = zeros(typeof(y).parameters[1],length(y))
+    cstot = similar(y)
+    cstot .= 0.0
     dydt .= 0.0
     domain = domains[1]
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,p)
