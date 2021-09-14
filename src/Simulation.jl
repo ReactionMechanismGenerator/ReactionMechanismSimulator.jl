@@ -462,19 +462,19 @@ function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sen
     domains = Tuple([x.domain for x in syssim.sims])
     function g(y::X,p::Array{Y,1},t::Z) where {Q,V,X,Y<:Float64,Z} 
         dy = similar(y,length(y))
-        return dydtreactor!(dy,y,t,domains,[],p=p)[ind]
+        return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
     end
     function g(y::Array{X,1},p::Y,t::Z) where {Q,V,X<:Float64,Y,Z} 
         dy = similar(p,length(y))
-        return dydtreactor!(dy,y,t,domains,[],p=p)[ind]
+        return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
     end
     function g(y::Array{Float64,1},p::Array{Float64,1},t::Z) where {Q,V,Z} 
         dy = similar(p,length(y))
-        return dydtreactor!(dy,y,t,domains,[],p=p)[ind]
+        return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
     end
     function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z} 
         dy = similar(y,length(y))
-        return dydtreactor!(dy,y,t,domains,[],p=p)[ind]
+        return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
     end
     dgdu(out, y, p, t) = ForwardDiff.gradient!(out, y -> g(y, p, t), y)
     dgdp(out, y, p, t) = ForwardDiff.gradient!(out, p -> g(y, p, t), p)
