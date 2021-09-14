@@ -238,13 +238,13 @@ function ConstantPDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arra
 end
 export ConstantPDomain
 
-struct ParametrizedTPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
+struct ParametrizedTPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray,FT<:Function,FP<:Function} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
     constantspeciesinds::Array{S,1}
-    T::Function
-    P::Function
+    T::FT
+    P::FP
     efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
@@ -319,12 +319,12 @@ function ParametrizedTPDomain(;phase::Z,initialconds::Dict{X,Any},constantspecie
 end
 export ParametrizedTPDomain
 
-struct ParametrizedVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
+struct ParametrizedVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray,FV<:Function} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
     constantspeciesinds::Array{S,1}
-    V::Function
+    V::FV
     efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
@@ -396,12 +396,12 @@ function ParametrizedVDomain(;phase::Z,initialconds::Dict{X,Any},constantspecies
 end
 export ParametrizedVDomain
 
-struct ParametrizedPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
+struct ParametrizedPDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray,FP<:Function} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
     constantspeciesinds::Array{S,1}
-    P::Function
+    P::FP
     efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}
     jacobian::Array{W,2}
@@ -556,12 +556,12 @@ function ConstantTVDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Arr
 end
 export ConstantTVDomain
 
-struct ParametrizedTConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
+struct ParametrizedTConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray,FT<:Function} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
     parameterindexes::Q
     constantspeciesinds::Array{S,1}
-    T::Function
+    T::FT
     V::W
     efficiencyinds::Array{I,1}
     rxnarray::Array{Int64,2}

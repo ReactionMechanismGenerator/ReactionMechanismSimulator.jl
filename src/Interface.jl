@@ -227,16 +227,16 @@ function stickingcoefficient2arrhenius(sc,sitedensity,N,mw;Tmin=300.0,Tmax=2000.
     return Arrhenius(;A=p[1],n=p[2],Ea=p[3])
 end
 
-struct Inlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real} <: AbstractBoundaryInterface
+struct Inlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real,FF<:Function} <: AbstractBoundaryInterface
     domain::S
     y::V
-    F::Function
+    F::FF
     T::U
     P::X
     H::Q
 end
 
-function Inlet(domain::V,conddict::Dict{String,X},F::Function) where {V,X<:Real,B<:Real}
+function Inlet(domain::V,conddict::Dict{String,X},F::FF) where {V,X<:Real,B<:Real,FF<:Function}
     y = makespcsvector(domain.phase,conddict)
     T = conddict["T"]
     P = conddict["P"]
@@ -247,8 +247,8 @@ end
 
 export Inlet
 
-struct Outlet{V} <: AbstractBoundaryInterface
+struct Outlet{V,FF<:Function} <: AbstractBoundaryInterface
     domain::V
-    F::Function
+    F::FF
 end
 export Outlet
