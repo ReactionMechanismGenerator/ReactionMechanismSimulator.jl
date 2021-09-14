@@ -326,7 +326,7 @@ end;
     
     react,y0,p = Reactor((domainV1,domainV2),(y0V1,y0V2),(0.0,0.037),[],(pV1,pV2));
     sol = solve(react.ode,CVODE_BDF(),abstol=1e-16,reltol=1e-6);
-    sysim = SystemSimulation(sol,(domainV1,domainV2),p);
+    sysim = SystemSimulation(sol,(domainV1,domainV2),[],p);
     
     t = 0.03
     @test sol(t)[1:length(spcs)] ≈ solV(t)[1:end-2] rtol=1e-5
