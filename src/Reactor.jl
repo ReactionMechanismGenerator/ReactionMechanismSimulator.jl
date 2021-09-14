@@ -241,7 +241,7 @@ export getrates
 end
 
 @inline function addreactionratecontributions!(dydt::Q,rarray::Array{W2,2},cs::W,kfs::Z,krevs::Y,V) where {Q,Z,Y,T,W,W2}
-    @inbounds for i = 1:size(rarray)[2]
+    @inbounds @simd for i = 1:size(rarray)[2]
         if @inbounds rarray[2,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
         elseif @inbounds rarray[3,i] == 0
