@@ -354,6 +354,9 @@ based alternative algorithm is slower, but avoids this concern.
 """
 function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2}
     @assert target in bsol.names || target in ["T","V","P"]
+
+    pethane = 160
+
     if target in ["T","V","P"]
         if haskey(bsol.domain.thermovariabledict, target)
             ind = bsol.domain.thermovariabledict[target]
@@ -362,14 +365,16 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
         end
     else
         ind = findfirst(isequal(target),bsol.names)
-        sensdomain,sensspcnames,senstooriginspcind,senstooriginrxnind = getsensdomain(bsol.domain,ind)
-        if :thermovariabledict in fieldnames(typeof(bsol.domain))
-            yinds = vcat(senstooriginspcind,collect(values(bsol.domain.thermovariabledict)))
-        else
-            yinds = vcat(senstooriginspcind)
+        if isempty(bsol.interfaces)
+            sensdomain,sensspcnames,senstooriginspcind,senstooriginrxnind = getsensdomain(bsol.domain,ind)
+            if :thermovariabledict in fieldnames(typeof(bsol.domain))
+                yinds = vcat(senstooriginspcind,collect(values(bsol.domain.thermovariabledict)))
+            else
+                yinds = vcat(senstooriginspcind)
+            end
+            pinds = vcat(senstooriginspcind,length(bsol.domain.phase.species).+senstooriginrxnind)
+            ind = findfirst(isequal(target),sensspcnames)
         end
-        pinds = vcat(senstooriginspcind,length(bsol.domain.phase.species).+senstooriginrxnind)
-        ind = findfirst(isequal(target),sensspcnames)
     end
     
     function sensg(y::X,p::Array{Y,1},t::Z) where {Q,V,X,Y<:Float64,Z}
@@ -399,19 +404,19 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
     
     function g(y::X,p::Array{Y,1},t::Z) where {Q,V,X,Y<:Float64,Z} 
         dy = similar(y,length(y))
-        return dydtreactor!(dy,y,t,bsol.domain,[],p=p)[ind]
+        return dydtreactor!(dy,y,t,bsol.domain,bsol.interfaces,p=p)[ind]
     end
     function g(y::Array{X,1},p::Y,t::Z) where {Q,V,X<:Float64,Y,Z} 
         dy = similar(p,length(y))
-        return dydtreactor!(dy,y,t,bsol.domain,[],p=p)[ind]
+        return dydtreactor!(dy,y,t,bsol.domain,bsol.interfaces,p=p)[ind]
     end
     function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:Float64,Y<:Float64,Z} 
         dy = zeros(length(y))
-        return dydtreactor!(dy,y,t,bsol.domain,[],p=p)[ind]
+        return dydtreactor!(dy,y,t,bsol.domain,bsol.interfaces,p=p)[ind]
     end
     function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z} 
         dy = similar(y,length(y))
-        return dydtreactor!(dy,y,t,bsol.domain,[],p=p)[ind]
+        return dydtreactor!(dy,y,t,bsol.domain,bsol.interfaces,p=p)[ind]
     end
 
     dsensgdu(out, y, p, t) = ForwardDiff.gradient!(out, y -> sensg(y, p, t), y)
@@ -423,23 +428,64 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
     dgdurevdiff(out, y, p, t) = ReverseDiff.gradient!(out, y -> g(y, p, t), y)
     dgdprevdiff(out, y, p, t) = ReverseDiff.gradient!(out, p -> g(y, p, t), p)
     
-    pethane = 160
     if length(bsol.domain.p)<= pethane
-        if target in ["T","V","P"]
+        if target in ["T","V","P"] || !isempty(bsol.interfaces)
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,g,nothing,(dgdu,dgdp);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
         else
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,sensg,nothing,(dsensgdu,dsensgdp);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
         end
     else
-        if target in ["T","V","P"]
+        if target in ["T","V","P"] || !isempty(bsol.interfaces)
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,g,nothing,(dgdurevdiff,dgdprevdiff);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
         else
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,sensg,nothing,(dsensgdurevdiff,dsensgdprevdiff);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
         end
     end
     dpadj[length(bsol.domain.phase.species)+1:end] .*= bsol.domain.p[length(bsol.domain.phase.species)+1:end]
-    if !(target in ["T","V","P"])
+    if !(target in ["T","V","P"]) && isempty(bsol.interfaces)
         dpadj ./= bsol.sol(bsol.sol.t[end])[senstooriginspcind[ind]]
+    elseif !(target in ["T","V","P"]) && !isempty(bsol.interfaces)
+        dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
+    end
+    return dpadj
+end
+
+function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2,W3}
+    @assert target in bsol.names || target in ["T","V","P"]
+    if target in ["T","V","P"]
+        if haskey(bsol.domain.thermovariabledict, target)
+            ind = bsol.domain.thermovariabledict[target]
+        else
+            throw(error("$(bsol.domain) doesn't have $target in its thermovariables"))
+        end
+    else
+        ind = findfirst(isequal(target),bsol.names)+bsol.domain.indexes[1]-1
+    end
+    domains = Tuple([x.domain for x in syssim.sims])
+    function g(y::X,p::Array{Y,1},t::Z) where {Q,V,X,Y<:Float64,Z} 
+        dy = similar(y,length(y))
+        return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
+    end
+    function g(y::Array{X,1},p::Y,t::Z) where {Q,V,X<:Float64,Y,Z} 
+        dy = similar(p,length(y))
+        return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
+    end
+    function g(y::Array{Float64,1},p::Array{Float64,1},t::Z) where {Q,V,Z} 
+        dy = similar(p,length(y))
+        return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
+    end
+    function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z} 
+        dy = similar(y,length(y))
+        return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
+    end
+    dgdu(out, y, p, t) = ForwardDiff.gradient!(out, y -> g(y, p, t), y)
+    dgdp(out, y, p, t) = ForwardDiff.gradient!(out, p -> g(y, p, t), p)
+    du0,dpadj = adjoint_sensitivities(syssim.sol,solver,g,nothing,(dgdu,dgdp);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
+    for domain in domains
+       dpadj[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]] .*= syssim.p[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]]
+    end
+    if !(target in ["T","V","P"])
+       dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
     end
     return dpadj
 end

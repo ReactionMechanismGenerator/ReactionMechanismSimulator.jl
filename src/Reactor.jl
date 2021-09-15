@@ -69,6 +69,12 @@ function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqB
                 domain.rxnarray[i,j] += k-1
             end
         end
+        for i in 1:length(domain.constantspeciesinds)
+            domain.constantspeciesinds[i] += k-1
+        end
+        for (thermovar,ind) in domain.thermovariabledict
+            domain.thermovariabledict[thermovar] += k-1
+        end
         domain.indexes[1] = k
         k += Nspcs
         domain.indexes[2] = k-1
@@ -241,7 +247,7 @@ export getrates
 end
 
 @inline function addreactionratecontributions!(dydt::Q,rarray::Array{W2,2},cs::W,kfs::Z,krevs::Y,V) where {Q,Z,Y,T,W,W2}
-    @inbounds for i = 1:size(rarray)[2]
+    @inbounds @simd for i = 1:size(rarray)[2]
         if @inbounds rarray[2,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
         elseif @inbounds rarray[3,i] == 0
@@ -326,7 +332,8 @@ export addreactionratecontributionsforwardreverse!
     return dydt
 end
 @inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:Tuple}    
-    cstot = zeros(typeof(y).parameters[1],length(y))
+    cstot = similar(y)
+    cstot .= 0.0
     dydt .= 0.0
     domain = domains[1]
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,p)

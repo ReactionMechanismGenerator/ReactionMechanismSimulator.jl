@@ -113,7 +113,7 @@ function evaluate(ri::ReactiveInternalInterfaceConstantTPhi,dydt,domains,T1,T2,p
 end
 
 function evaluate(ri::ReactiveInternalInterfaceConstantTPhi,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p)
-    if all(p[ri.parameterindexes[1]:ri.parameterindexes[2]] .== ri.kfs)
+    if p[ri.parameterindexes[1]:ri.parameterindexes[2]] == ri.kfs
         kfs = ri.kfs
     else 
         kfs = p[ri.parameterindexes[1]:ri.parameterindexes[2]]
