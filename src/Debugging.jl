@@ -139,3 +139,96 @@ function analyzecrash(sim::SystemSimulation;tol=1e6)
     return DebugMech(spcs,rxns)
 end
 export analyzecrash
+
+function getdebugmechstring(mech::DebugMech)
+    s = "Crash Analysis Report\n"
+    for rxn in mech.rxns
+        s *= getdebugrxnstring(rxn)
+    end
+    for spc in mech.spcs
+        s *= getdebugspeciesstring(spc)
+    end
+    return s
+end
+
+export getdebugmechstring
+
+function getdebugrxnstring(rxn)
+    s = ""
+    rt = rxn.rt
+    tol = rxn.tol
+    ratio = rxn.ratio
+    kf = rxn.kf
+    krev = rxn.krev
+    index = rxn.index
+    if isnan(rt)
+        s *= "NaN for Reaction:\n"
+    elseif ratio > tol
+        s *= "rt/rmedian > $tol, rt=$rt, rt/rmedian=$ratio \nReaction:\n"
+    end
+    s *= "Index: $index\n"
+    s *= rxn.rxnstring * "\n"
+    if length(rxn.reactants) == 1
+        kunitsf = "s^-1"
+    elseif length(rxn.reactants) == 2
+        kunitsf = "m^3/(mol*s)"
+    elseif length(rxn.reactants) == 3
+        kunitsf = "m^6/(mol^2*s)"
+    else
+        error("cannot accomodate reactants>3")
+    end
+    if length(rxn.products) == 1
+        kunitsr = "s^-1"
+    elseif length(rxn.products) == 2
+        kunitsr = "m^3/(mol*s)"
+    elseif length(rxn.products) == 3
+        kunitsr = "m^6/(mol^2*s)"
+    else
+        error("cannot accomodate products>3")
+    end
+    s *= "kf: $kf $kunitsf\n"
+    s *= "krev: $krev $kunitsr\n"
+    s *= "Reactants: \n"
+    for reactant in rxn.reactants
+        s *= getdebugspeciesstring(reactant)
+    end
+    s *= "Products: \n"
+    for product in rxn.products
+        s *= getdebugspeciesstring(product)
+    end
+    return s
+end
+
+export getdebugreactionstring
+
+function getdebugspeciesstring(spc)
+    s = ""
+    dy = spc.dy
+    ratio = spc.ratio
+    tol = spc.tol
+    index = spc.index
+    if isnan(dy)
+        s *= "NaN for Species net flux:\n"
+    elseif ratio> tol
+        s *= "dydt/dydtmedian > $tol, dydt=$dy, dydt/dydtmedian=$ratio \nSpecies:\n"
+    end
+    if index != 0
+        s *= "Index: $index\n"
+    end
+    G = spc.G/4184.0
+    name = spc.name
+    s *= "\t$name G(T): $G kcal/mol\n"
+    return s
+end
+
+export getdebugspeciesstring
+
+function printcrashanalysis(mech::DebugMech)
+    println(getdebugmechstring(mech))
+end
+
+function printcrashanalysis(sim::Simulation;tol=1e6)
+    printcrashanalysis(analyzecrash(sim;tol=tol))
+end
+
+export printcrashanalysis
