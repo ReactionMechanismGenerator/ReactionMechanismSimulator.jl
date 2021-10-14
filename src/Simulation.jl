@@ -28,6 +28,9 @@ function Simulation(sol::Q,domain::W,interfaces=[],p=nothing) where {Q<:Abstract
     end
     N = HermiteInterpolation(sol.interp.t,Ns,Nderivs)
     F(t::T) where {T<:Real} = N(t,nothing,Val{0},sol.prob.p,:left)
+    if p === nothing
+        p = domain.p
+    end
     return Simulation(sol,domain,interfaces,names,F,Ns,domain.phase.species,domain.phase.reactions,p)
 end
 
