@@ -355,7 +355,8 @@ By default uses the InterpolatingAdjoint algorithm with vector Jacobian products
 this assumes no changes in code branching during simulation, if that were to become no longer true, the Tracker 
 based alternative algorithm is slower, but avoids this concern. 
 """
-function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2}
+function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
+    abstol::Float64=1e-6,reltol::Float64=1e-3,normalize=true,kwargs...) where {Q,W,W2}
     @assert target in bsol.names || target in ["T","V","P"]
     if target in ["T","V","P"]
         if haskey(bsol.domain.thermovariabledict, target)
@@ -440,9 +441,11 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,sensg,nothing,(dsensgdurevdiff,dsensgdprevdiff);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
         end
     end
-    dpadj[length(bsol.domain.phase.species)+1:end] .*= bsol.domain.p[length(bsol.domain.phase.species)+1:end]
-    if !(target in ["T","V","P"])
-        dpadj ./= bsol.sol(bsol.sol.t[end])[senstooriginspcind[ind]]
+    if normalize
+        dpadj[length(bsol.domain.phase.species)+1:end] .*= bsol.domain.p[length(bsol.domain.phase.species)+1:end]
+        if !(target in ["T","V","P"])
+            dpadj ./= bsol.sol(bsol.sol.t[end])[senstooriginspcind[ind]]
+        end
     end
     return dpadj
 end
