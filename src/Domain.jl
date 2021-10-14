@@ -1880,20 +1880,38 @@ export jacobiany!
 @inline function jacobianpnsderiv!(jacp::Q,y::U,p::W,t::Z,domain::D,rxnarray::Array{Int64,2},cs::Array{Float64,1},T::Float64,V::Float64,kfs::Array{Float64,1},krevs::Array{Float64,1},Nspcs::Int64,Nrxns::Int64) where {Q3<:AbstractArray,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantTPDomain,ConstantTAPhiDomain}}
     @fastmath  RTinv = 1.0/(R*T)
     @simd for rxnind = 1:Nrxns
-        if @inbounds rxnarray[2,rxnind] == 0
-            @inbounds fderiv = cs[rxnarray[1,rxnind]]
-        elseif @inbounds  rxnarray[3,rxnind] == 0
-            @fastmath @inbounds fderiv = cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]
-        else
-            @fastmath @inbounds fderiv = cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]
-        end
+        if rxnind in domain.efficiencyinds
+            if @inbounds rxnarray[2,rxnind] == 0
+                @fastmath @inbounds fderiv = kfs[rxnind]*cs[rxnarray[1,rxnind]]
+            elseif @inbounds rxnarray[3,rxnind] == 0
+                @fastmath @inbounds fderiv = kfs[rxnind]*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]
+            else
+                @fastmath @inbounds fderiv = kfs[rxnind]*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]
+            end
 
-        if @inbounds rxnarray[5,rxnind] == 0
-            @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]
-        elseif @inbounds rxnarray[6,rxnind] == 0
-            @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]
+            if @inbounds rxnarray[5,rxnind] == 0
+                @fastmath @inbounds rderiv = krevs[rxnind]*cs[rxnarray[4,rxnind]]
+            elseif @inbounds rxnarray[6,rxnind] == 0
+                @fastmath @inbounds rderiv = krevs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]
+            else
+                @fastmath @inbounds rderiv = krevs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]
+            end
         else
-            @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]
+            if @inbounds rxnarray[2,rxnind] == 0
+                @inbounds fderiv = cs[rxnarray[1,rxnind]]
+            elseif @inbounds  rxnarray[3,rxnind] == 0
+                @fastmath @inbounds fderiv = cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]
+            else
+                @fastmath @inbounds fderiv = cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]
+            end
+
+            if @inbounds rxnarray[5,rxnind] == 0
+                @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]
+            elseif @inbounds rxnarray[6,rxnind] == 0
+                @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]
+            else
+                @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]
+            end
         end
 
         flux = fderiv-rderiv
