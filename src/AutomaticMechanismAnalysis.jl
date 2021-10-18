@@ -383,3 +383,68 @@ function eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=0.9
 end
 export eliminatereasons
 
+"""
+Generate a string report from the analysis objects
+"""
+function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
+    spcname = sim.names[ra.spcind]
+    rstr = getrxnstr(sim.domain.phase.reactions[ra.rxnind])
+    sens = ra.sens
+    s = "Analyzing $spcname sensitivity to $rstr at a value of $sens \n"
+    s *= "\n"
+    for branch in ra.branchings
+        sname = sim.names[branch.spcind]
+        s *= "Key branching for $sname \n"
+        for i = 1:length(branch.rxninds)+1
+            br = branch.branchingratios[i]
+            if br < branchingcutoff
+                break
+            else
+                rstr = getrxnstr(sim.reactions[branch.rxninds[i]])
+                s *= "$rstr had a branching ratio of $br \n"
+            end
+        end
+        s *= "\n"
+    end
+
+    for rp in ra.paths
+        spname = sim.names[rp.spcind]
+        forward = rp.forward
+        if rp.forward
+            s *= "Associated key reaction path in $spname loss direction \n"
+            for i = 1:length(rp.rxninds)
+                rstr = getrxnstr(sim.reactions[rp.rxninds[i]])
+                br = rp.branchfracts[i]
+                s *= "$rstr at path branching of $br \n"
+            end
+        else
+            s *= "Associated key reaction path in $spname production direction \n"
+            revinds = reverse(rp.rxninds)
+            for i = 1:length(rp.rxninds)
+                rstr = getrxnstr(sim.reactions[revinds[i]])
+                br = rp.branchfracts[i]
+                s *= "$rstr at path step branching of $br \n"
+            end
+        end
+        s *= "\n"
+    end
+    if abs(ra.radprodlossfract) > radbranchfract
+        radfract = abs(ra.radprodlossfract)
+        if ra.radprodlossfract > 0
+            s *= "Reaction accounts for $radfract of the net radical production \n"
+        else
+            s *= "Reaction accounts for $radfract of the net radical loss \n"
+        end
+    end
+    s *= "\n"
+    return s
+end
+export getrxnanalysisstring
+
+"""
+Print out a string report from the analysis objects
+"""
+function printrxnanalysis(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
+    return println(getrxnanalysisstring(sim,ra;branchingcutoff=branchingcutoff,radbranchfract=radbranchfract))
+end
+export printrxnanalysis
