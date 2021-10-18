@@ -91,6 +91,35 @@ function getfluxdiagram(bsol,t,rp::ReactionPath; radius=0, kwargs...)
     return getdiagram(fd,1)
 end
 
+"""
+Generates and returns a flux diagram representing the branching the Branching
+object contains
+"""
+function getfluxdiagram(bsol,t,b::Branching; branchtol=1.0e-2, kwargs...)
+    spcname = bsol.names[b.spcind]
+    spclist = [bsol.names[b.spcind]]
+    for (i,rind) in enumerate(b.rxninds)
+        br = b.branchingratios[i]
+        if br > branchtol
+            rxn = bsol.reactions[rind]
+            if length(rxn.pairs[1]) > 1
+                pairs = rxn.pairs
+            else
+                pairs = getpairs(rxn)
+            end
+            for (reactant,product) in pairs
+                if reactant == spcname
+                    push!(spclist,product)
+                elseif product == spcname
+                    push!(spclist,reactant)
+                end
+            end
+        end
+    end
+    fd = makefluxdiagrams(bsol,[t]; centralspecieslist=spclist, radius=0, kwargs...)
+    return getdiagram(fd,1)
+end
+
 export getfluxdiagram
 
 """
