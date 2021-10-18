@@ -30,7 +30,7 @@ jobs:
             julia -e 'ENV["PYTHON"]="/home/runner/.julia/conda/3/bin/python"; using Pkg; Pkg.add("PyCall"); Pkg.build("PyCall")'
       - name: Build
         run: |
-            julia -e 'using Pkg; Pkg.add(PackageSpec("StochasticDiffEq",version="6.36.0")); Pkg.develop(PackageSpec(path="../ReactionMechanismSimulator.jl"));'
+            julia -e 'using Pkg; Pkg.add(PackageSpec(name="StochasticDiffEq",version="6.36.0")); Pkg.develop(PackageSpec(path="../ReactionMechanismSimulator.jl"));'
       - name: Run tests
         run: |
             julia -e 'using Pkg; Pkg.test("ReactionMechanismSimulator";coverage=true)'
