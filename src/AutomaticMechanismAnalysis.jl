@@ -288,3 +288,20 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
 end
 export analyzespc
 
+"""
+Calculate the fraction of the radical production or loss
+attributable to the given reaction
+"""
+function getradprodlossfract(sim,rxnind,rts)
+    radrops = rts.*getfield.(sim.reactions,:radicalchange)
+    radprod = sum(r for r in radrops if r>0.0)
+    radloss = sum(r for r in radrops if r<0.0)
+    radflux = radrops[rxnind]
+    if radflux > 0.0
+        return radflux/radprod
+    else
+        return radflux/radloss
+    end
+end
+export getradprodlossfract
+
