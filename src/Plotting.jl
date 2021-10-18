@@ -453,6 +453,7 @@ function plotrateadjointsensitivities(bsol::Y,name::X,dps::Z;N=0,tol=0.01) where
     return
 end
 export plotrateadjointsensitivities
+
 function plottimescales(sim,t;taumax=1e6,taumin=1e-18,taures=10.0^0.5,usediag=true)
     Jy = jacobiany(sim.sol(t),sim.domain.p,t,sim.domain,[]);
     return plottimescales(Jy;taumax=taumax,taumin=taumin,taures=taures,usediag=usediag)
@@ -471,3 +472,95 @@ function plottimescales(Jy;taumax=1e6,taumin=1e-18,taures=10.0^0.5,usediag=true)
 end
 export plottimescales
 
+function plotrxntransitorysensitivities(bsol,name,t;dSdt=nothing,tau=nothing,tol=1e-3,N=0,rxntol=1e-6)
+    if !(name in getfield.(bsol.domain.phase.species,:name))
+        error("Species $name not in domain")
+    elseif !isnothing(dSdt) && (sum(dim > 1 for dim in size(dSdt)) > 1 || maximum(size(dSdt)) != length(bsol.p))
+        error("dSdt must be a vector of length number of parameters")
+    end
+
+    ind = findfirst(isequal(name),bsol.names)
+
+    rts = rates(bsol,t)
+    Rchar = norm(rts)
+    Rthresh = rxntol*Rchar
+
+    if dSdt === nothing
+        if tau === nothing
+            dSdt = transitorysensitivitiesfulltrapezoidal(bsol,t)[ind,length(bsol.names)+1:end]
+        else
+            dSdt = transitorysensitivitiesfulltrapezoidal(bsol,t,tau)[ind,length(bsol.names)+1:end]
+        end
+    else
+        dSdt = dSdt[length(bsol.names)+1:end]
+    end
+
+    inds = reverse(sortperm(abs.(dSdt)))
+    minval = 0.0
+    dSdtmax = maximum(abs.(dSdt))
+    maxthresh = dSdtmax*tol
+
+    inds = [i for i in inds if abs(rts[i]) > Rthresh] #weak filter based on reaction flux
+
+    if N == 0
+        N = length(inds)
+    elseif N > length(inds)
+        N = length(inds)
+    end
+    inds = inds[1:N]
+    mval = abs(dSdt[inds[1]])
+    minval = mval*tol
+    k = 1
+    while k < length(inds) && abs(dSdt[inds[k]]) >= minval
+        k += 1
+    end
+    inds = inds[1:k]
+    xs = Array{Float64,1}(1:length(inds))
+    barh(xs,reverse(dSdt[inds]))
+    yticks(xs,reverse(getrxnstr.(bsol.domain.phase.reactions[inds])))
+    xlabel("d/dt dLn([$name])/d(Ln(k_i))")
+    xscale("symlog")
+    return
+end
+export plotrxntransitorysensitivities
+
+function plotthermotransitorysensitivities(bsol,name,t;dSdt=nothing,tau=nothing,tol=1e-3,N=0)
+    if !(name in getfield.(bsol.domain.phase.species,:name))
+        error("Species $name not in domain")
+    end
+    ind = findfirst(isequal(name),bsol.names)
+
+    if dSdt === nothing
+        if tau === nothing
+            dSdt = transitorysensitivitiesfulltrapezoidal(bsol,t)[ind,1:length(bsol.names)]
+        else
+            dSdt = transitorysensitivitiesfulltrapezoidal(bsol,t,tau)[ind,1:length(bsol.names)]
+        end
+    else
+        dSdt = dSdt[1:length(bsol.names)]
+    end
+
+    inds = reverse(sortperm(abs.(dSdt)))
+    dSdtmax = maximum(abs.(dSdt))
+    maxthresh = dSdtmax*tol
+
+    if N == 0
+        N = length(inds)
+    elseif N > length(inds)
+        N = length(inds)
+    end
+    inds = inds[1:N]
+    mval = abs(dSdt[inds[1]])
+    minval = mval*tol
+    k = 1
+    while k < length(inds) && abs(dSdt[inds[k]]) >= minval
+        k += 1
+    end
+    inds = inds[1:k]
+    xs = Array{Float64,1}(1:length(inds))
+    barh(xs,reverse(dSdt[inds]))
+    yticks(xs,reverse(getfield.(bsol.domain.phase.species[inds],:name)))
+    xlabel("Normalized Transitory Sensitivities for $name")
+    return
+end
+export plotthermotransitorysensitivities
