@@ -108,9 +108,9 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         mkdir(outputdirectory)
     end
 
-    concs = concentrations(bsol)
-    
-    reactionrates = rates(bsol)
+    concs = reduce(vcat,[concentrations(bsol,t) for t in ts])
+
+    reactionrates = reduce(vcat,[rates(bsol,t) for t in ts])
 
     drawspecies(specieslist)
     speciesdirectory = joinpath(pwd(),"species")
@@ -133,7 +133,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
 
     speciesrates = zeros(numspecies,numspecies,length(ts))
     for (index,reaction) in enumerate(reactionlist)
-        rate = reactionrates[index]
+        rate = reactionrates[index,:]
         if length(reaction.pairs[1]) > 1
             pairs = reaction.pairs
         else
