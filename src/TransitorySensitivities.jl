@@ -145,3 +145,59 @@ end
 function jacobianp(sol,t,p,ind)
    return ForwardDiff.jacobian(pv->sol.prob.f(sol(t),hcat(p[1:ind-1],[pv],p[ind+1:end]),t),p[ind])
 end
+
+function normalizefulltransitorysensitivities!(dSdt,sim::Simulation,t)
+    y = sim.sol(t)
+    ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
+    dSdt .*= sim.domain.p'
+    dSdt[1:sim.domain.indexes[2],:] ./= ns
+    return dSdt
+end
+
+function normalizefulltransitorysensitivities!(dSdt,ssys::SystemSimulation,t)
+    y = ssys.sol(t)
+    dSdt .*= ssys.p'
+    for sim in ssys.sims
+        ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
+        dSdt[sim.domain.indexes[1]:sim.domain.indexes[2],:] ./= ns
+    end
+    return dSdt
+end
+
+function normalizeparamtransitorysensitivities!(dSdt,sim::Simulation,t,ind)
+    y = sim.sol(t)
+    ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
+    dSdt .*= sim.domain.p[ind]
+    dSdt[1:length(sim.domain.phase.species)] ./= ns
+    return dSdt
+end
+
+function normalizeparamtransitorysensitivities!(dSdt,ssys::SystemSimulation,t,ind)
+    y = ssys.sol(t)
+    for sim in ssys.sims
+        ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
+        dSdt .*= ssys.domain.p[ind]
+        dSdt[sim.domain.indexes[1]:sim.domain.indexes[2]] ./= ns
+    end
+    return dSdt
+end
+
+function normalizeadjointtransitorysensitivities!(dSdt,sim::Simulation,t,ind)
+    y = sim.sol(t)
+    dSdt .*= sim.domain.p'
+    if ind <= sim.domain.indexes[2]
+        dSdt ./= y[ind]
+    end
+    return dSdt
+end
+
+function normalizeadjointtransitorysensitivities!(dSdt,ssys::SystemSimulation,t,ind)
+    y = ssys.sol(t)
+    for sim in ssys.sims
+        dSdt[sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]] .*= ssys.domain.p[sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]]
+        if ind >= sim.domain.indexes[1] && ind <= sim.domain.indexes[2]
+            dSdt ./= y[ind]
+        end
+    end
+    return dSdt
+end
