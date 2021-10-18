@@ -134,3 +134,32 @@ function follow(sim,rxnind,spcind,ropp,ropl,rts,forward;steptol=1e-2,branchtol=5
 end
 export follow
 
+"""
+expand a ReactionPath object out a single step
+"""
+function extendpath(rp,sim,ropp,ropl,rts;i=0,steptol=1e-2)
+    rxnind,spcinds = stepnetwork(sim,rp.spcsinds[end],ropp,ropl,rts,forward=rp.forward,i=i,steptol=steptol)
+    if rxnind == 0
+        sind = rp.spcsinds[end]
+        name = sim.names[sind]
+        forward = rp.forward
+        return Array{ReactionPath,1}()
+    else
+        rps = Array{ReactionPath,1}()
+        for spcind in spcinds
+            rpnew = deepcopy(rp)
+            push!(rpnew.rxninds,rxnind)
+            push!(rpnew.spcsinds,spcind)
+            push!(rpnew.branchind,i)
+            if rpnew.forward
+                push!(rpnew.branchfracts,ropl[rxnind,rp.spcsinds[end]]/sum(ropl[:,rp.spcsinds[end]]))
+            else
+                push!(rpnew.branchfracts,ropp[rxnind,rp.spcsinds[end]]/sum(ropp[:,rp.spcsinds[end]]))
+            end
+            rpnew.branchfract[1] = rp.branchfract[1]*rpnew.branchfracts[end]
+            push!(rps,rpnew)
+        end
+        return rps
+    end
+end
+
