@@ -162,8 +162,28 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     if !superimpose && length(centralspecieslist) != 0
         for centralspeciesindex in centralspeciesindices
             push!(nodes,centralspeciesindex)
-            addadjacentnodes!(centralspeciesindex,nodes,edges,reactionlist,
-                maxreactionrates,maxspeciesrates,centralreactioncount,radius,Array{Int64,1}(),speciesnamelist)
+
+            if radius == 0
+                for reaction in reactionlist
+                    if length(reaction.pairs[1]) > 1
+                        pairs = reaction.pairs
+                    else
+                        pairs = getpairs(reaction)
+                    end
+                    for (reactant,product) in pairs
+                        rindex = findfirst(y->y==reactant,speciesnamelist)
+                        pindex = findfirst(y->y==product,speciesnamelist)
+                        if rindex in nodes && pindex in nodes
+                            if !((rindex,pindex) in edges) && !((pindex,rindex) in edges)
+                                push!(edges,(rindex,pindex))
+                            end
+                        end
+                    end
+                end
+            else
+                addadjacentnodes!(centralspeciesindex,nodes,edges,reactionlist,
+                    maxreactionrates,maxspeciesrates,centralreactioncount,radius,Array{Int64,1}(),speciesnamelist)
+            end
         end
     else
         for i = 1:numspecies^2
