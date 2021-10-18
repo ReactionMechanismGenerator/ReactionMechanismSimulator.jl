@@ -377,3 +377,93 @@ function transitorysensitivitiesparamexact(ssys::SystemSimulation,t,ind;tau=NaN,
     end
 end
 export transitorysensitivitiesparamexact
+
+"""
+compute exact transitory sensitivities using adjoint sensitivity analysis
+abstol and reltol are for the adjoint simulation
+appreciable speed up with minimal accuracy reduction can be achieved by
+loosening these tolerances
+does not run any jacobian computations if tau != 0, tau != NaN  is supplied and
+the solver is jacobian free
+"""
+function transitorysensitivitiesadjointexact(sim::Simulation,t,name;tau=NaN,
+        normalized=true,solver=DifferentialEquations.CVODE_BDF(),sensalg=InterpolatingAdjoint(),
+        abstol=1e-16,reltol=1e-6)
+
+    @assert name in sim.names || name in ["T","V","P"]
+    if name in ["T","V","P"]
+        if haskey(sim.domain.thermovariabledict, name)
+            ind = sim.domain.thermovariabledict[name]
+        else
+            throw(error("$(sim.domain) doesn't have $name in its thermovariables"))
+        end
+    else
+        ind = findfirst(isequal(name),sim.names)
+    end
+
+    if isnan(tau)
+        Jy = jacobiany(sim.sol,t,sim.p);
+        tau = getdividingtimescale(Jy);
+    end
+
+    if tau == 0.0
+        dSdt = jacobianp(sim.sol,t,sim.p)[ind,:];
+    else
+        prob = remake(sim.sol.prob;u0=sim.sol(t),tspan=(0.0,tau));
+        soladj = solve(prob,solver,reltol=reltol,abstol=abstol);
+        simadj = Simulation(soladj,sim.domain);
+        dSdt = getadjointsensitivities(simadj,name,solver;sensalg=sensalg,abstol=abstol,
+            reltol=reltol,normalize=false)./tau;
+    end
+
+    if normalized
+        return normalizeadjointtransitorysensitivities!(dSdt,sim,t,ind);
+    else
+        return dSdt
+    end
+end
+
+"""
+compute exact transitory sensitivities using adjoint sensitivity analysis
+abstol and reltol are for the adjoint simulation
+appreciable speed up with minimal accuracy reduction can be achieved by
+loosening these tolerances
+does not run any jacobian computations if tau != 0, tau != NaN  is supplied and
+the solver is jacobian free
+"""
+function transitorysensitivitiesadjointexact(ssys::SystemSimulation,t,name;tau=NaN,
+        normalized=true,solver=DifferentialEquations.CVODE_BDF(),sensalg=InterpolatingAdjoint(),
+        abstol=1e-6,reltol=1e-3)
+
+    @assert name in sim.names || name in ["T","V","P"]
+    if name in ["T","V","P"]
+        if haskey(sim.domain.thermovariabledict, name)
+            ind = sim.domain.thermovariabledict[name]
+        else
+            throw(error("$(sim.domain) doesn't have $name in its thermovariables"))
+        end
+    else
+        ind = findfirst(isequal(name),sim.names)
+    end
+
+    if isnan(tau)
+        Jy = jacobianysparse(ssys.sol,t,ssys.p);
+        tau = getdividingtimescale(Jy);
+    end
+
+    if tau == 0.0
+        dSdt = jacobianp(ssys.sol,t,ssys.p)[ind,:];
+    else
+        prob = remake(ssys.sol.prob;u0=sim.sol(t),tspan=(0.0,tau));
+        soladj = solve(prob,solver,reltol=reltol,abstol=abstol);
+        ssysadj = SystemSimulation(soladj,[sim.domain for sim in ssys.sims],ssys.interfaces,ssys.p);
+        dSdt = getadjointsensitivities(ssysadj,name,solver;sensalg=sensalg,abstol=abstol,reltol=reltol)./tau;
+    end
+
+    if normalized
+        return normalizeadjointtransitorysensitivities!(dSdt,ssys,t,ind)
+    else
+        return dSdt
+    end
+end
+export transitorysensitivitiesadjointexact
