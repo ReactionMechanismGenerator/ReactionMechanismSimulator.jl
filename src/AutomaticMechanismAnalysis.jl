@@ -163,3 +163,37 @@ function extendpath(rp,sim,ropp,ropl,rts;i=0,steptol=1e-2)
     end
 end
 
+struct Branching
+    spcind::Int64
+    rxninds::Array{Int64,1}
+    branchingratios::Array{Float64,1}
+end
+export Branching
+
+"""
+Identifies calculates and stores the reactions and
+branching ratios associated with the "reactants" for the input reaction
+defined by rxnind as defined by the direction the reaction is occuring in
+"""
+function getbranching(sim,rxnind,ropl,rts)
+    rt = rts[rxnind]
+    if rt > 0
+        spcs = sim.reactions[rxnind].reactants
+    else
+        spcs = sim.reactions[rxnind].products
+    end
+    spcsinds = [findfirst(isequal(spc.name),sim.names) for spc in spcs]
+    boospcs = falses(length(spcsinds))
+    branches = Array{Branching,1}()
+    for (i,spc) in enumerate(spcs)
+        ind = findfirst(isequal(spc.name),sim.names)
+        rinds = reverse(sortperm(ropl[:,ind]))
+        rvals = (ropl[:,ind]/sum(ropl[:,ind]))[rinds]
+        indend = findfirst(isequal(0.0),rvals)
+        rinds = rinds[1:indend]
+        rvals = rvals[1:indend]
+        push!(branches,Branching(ind,rinds,rvals))
+    end
+    return branches
+end
+export getbranching
