@@ -305,3 +305,29 @@ function getradprodlossfract(sim,rxnind,rts)
 end
 export getradprodlossfract
 
+"""
+Identify species coupled to the target species whose pathways could
+be important to the target species even if their pathways don't overlap
+If the species has non-unimolecular loss reactions with branching greater
+than branchtol the other species involved are considered coupled
+"""
+function getcoupledspecies(sim,spcind,rxnind,ropp,ropl,rts;branchtol=0.2)
+    spcsinds = Array{Int64,1}()
+    totflux = sum(ropl[:,spcind])
+    inds = reverse(sortperm(ropl[:,spcind]))
+    i = 1
+    ind = inds[i]
+    for ind in inds
+        if ropl[ind,spcind]/totflux < branchtol
+            break
+        elseif length(sim.reactions[ind].reactants) > 1
+            for rind in sim.reactions[ind].reactantinds
+                if rind != spcind && rind > 0 && !(rind in spcsinds)
+                    push!(spcsinds,rind)
+                end
+            end
+        end
+    end
+    return spcsinds
+end
+
