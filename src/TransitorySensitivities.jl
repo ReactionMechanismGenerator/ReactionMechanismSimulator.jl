@@ -117,3 +117,31 @@ function getdividingtimescale(sim,t;taumax=1e6,taumin=1e-18,taures=10.0^0.5,used
     getdividingtimescale(Jy,taumax=taumax,taumin=taumin,taures=taures,usediag=usediag)
 end
 export getdividingtimescale
+
+function jacobiany(sol,t,p)
+    Jy = zeros(length(sol.prob.u0),length(sol.prob.u0))
+    sol.prob.f.jac(Jy,sol(t),p,t)
+    return Jy
+end
+
+function jacobianp(sol,t,p)
+    Jp = zeros(length(sol.prob.u0),length(p))
+    sol.prob.f.paramjac(Jp,sol(t),p,t)
+    return Jp
+end
+
+function jacobianysparse(sol,t,p)
+    Jy = spzeros(length(sol.prob.u0),length(sol.prob.u0))
+    sol.prob.f.jac(Jy,sol(t),p,t)
+    return Jy
+end
+
+function jacobianpsparse(sol,t,p)
+    Jp = spzeros(length(sol.prob.u0),length(p))
+    sol.prob.f.paramjac(Jp,sol(t),p,t)
+    return Jp
+end
+
+function jacobianp(sol,t,p,ind)
+   return ForwardDiff.jacobian(pv->sol.prob.f(sol(t),hcat(p[1:ind-1],[pv],p[ind+1:end]),t),p[ind])
+end
