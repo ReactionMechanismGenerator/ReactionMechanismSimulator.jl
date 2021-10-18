@@ -331,3 +331,21 @@ function getcoupledspecies(sim,spcind,rxnind,ropp,ropl,rts;branchtol=0.2)
     return spcsinds
 end
 
+"""
+Run branching and pathway analysis for a give species and reaction
+"""
+function getbranchpathinfo(sim,spcind,rxnind,ropp,ropl,rts;steptol=1e-2,branchtol=5e-2,couplingbranchtol=0.2)
+    branches = getbranching(sim,rxnind,ropl,rts)
+    targetinds = [spcind]
+    append!(targetinds,getcoupledspecies(sim,spcind,rxnind,ropp,ropl,rts;branchtol=couplingbranchtol))
+    rps = Array{ReactionPath,1}()
+    for spind in targetinds
+        for forward in [true,false]
+            rp = follow(sim,rxnind,spcind,ropp,ropl,rts,forward;steptol=steptol,branchtol=branchtol)
+            if rp.branchfract != 0 && length(rp.spcsinds) > 0
+                push!(rps,rp)
+            end
+        end
+    end
+    return branches,rps
+end
