@@ -467,3 +467,135 @@ function transitorysensitivitiesadjointexact(ssys::SystemSimulation,t,name;tau=N
     end
 end
 export transitorysensitivitiesadjointexact
+
+function lmprod(lm,x,p,t,f)
+    dy = similar(x,length(x))
+    return dot(lm,f(dy,x,p,t))
+end
+
+function dlmdt(lm,p,t,f,gu,sol)
+    return gu.-ReverseDiff.gradient(x->lmprod(lm,x,p,t,f),sol(t))
+end
+
+"""
+Compute approximate transitory sensitivities using adjoint sensitivity analysis
+solver, abstol and reltol are for the main ode simulation while solveradj,
+abstoadj and reltoladj are for the adjoint simulation
+Npoints is the number of quadrature points to use
+does not run any jacobian computations if tau != 0, tau != NaN is supplied and
+the solver is jacobian free
+"""
+function transitorysensitivitiesadjointapprox(sim::Simulation,t,name;tau=NaN,
+        normalized=true,solver=DifferentialEquations.CVODE_BDF(),
+        solveradj=DifferentialEquations.CVODE_BDF(linear_solver=:GMRES),
+        abstol=1e-16,reltol=1e-6,abstoladj=1e0,reltoladj=1e0,Npoints=8)
+
+    @assert name in sim.names || name in ["T","V","P"]
+    if name in ["T","V","P"]
+        if haskey(sim.domain.thermovariabledict, name)
+            ind = sim.domain.thermovariabledict[name]
+        else
+            throw(error("$(sim.domain) doesn't have $name in its thermovariables"))
+        end
+    else
+        ind = findfirst(isequal(name),sim.names)
+    end
+
+    if isnan(tau)
+        Jy = jacobiany(sim.sol,t,sim.p);
+        tau = getdividingtimescale(Jy);
+    end
+
+    if tau == 0.0
+        dSdt = jacobianp(sim.sol,t,sim.ps)[ind,:];
+    else
+        prob = remake(sim.sol.prob;u0=sim.sol(t),tspan=(0.0,tau));
+        soladj = solve(prob,solver,reltol=reltol,abstol=abstol);
+        simadj = Simulation(soladj,sim.domain);
+
+        lm0 = zeros(length(sim.sol.prob.u0))
+        function f1(x)
+            dy = similar(x,length(x))
+            return soladj.prob.f(dy,x,soladj.prob.p,0.0)[ind]
+        end
+        gu = ReverseDiff.gradient(f1,soladj.prob.u0)
+        dlm(lm,p,t) = dlmdt(lm,simadj.sol.prob.p,t,simadj.sol.prob.f,gu,soladj)
+        ode = ODEProblem(dlm,lm0,(tau,0.0))
+        lmsol = solve(ode,solveradj,reltol=reltoladj,abstola=abstoladj);
+
+        function G1(p,t)
+            dy = similar(p,length(soladj.prob.u0))
+            return soladj.prob.f(dy,soladj(t),p,t)[ind]
+        end
+        function G2(p,t)
+            dy = similar(p,length(soladj.prob.u0))
+            return soladj.prob.f(dy,soladj(t),p,t)
+        end
+        gp = ReverseDiff.gradient(x->G1(x,0.0),soladj.prob.p)
+        G(t) = ReverseDiff.gradient(x->dot(lmsol(t),G2(x,t)),soladj.prob.p) .+ gp
+        nodes,weights = gausslegendre(Npoints);
+        Gvals = G.((nodes.+1.0).*tau./2.0)
+        dSdt = reduce(hcat,Gvals)*weights
+    end
+    if normalized
+        return normalizeadjointtransitorysensitivities!(dSdt',sim,t,ind)
+    else
+        return dSdt
+    end
+end
+
+"""
+Compute approximate transitory sensitivities using adjoint sensitivity analysis
+solver, abstol and reltol are for the main ode simulation while solveradj,
+abstoadj and reltoladj are for the adjoint simulation
+Npoints is the number of quadrature points to use
+does not run any jacobian computations if tau != 0, tau != NaN is supplied and
+the solver is jacobian free
+"""
+function transitorysensitivitiesadjointapprox(ssys::SystemSimulation,t,name;tau=NaN,
+        normalized=true,solver=DifferentialEquations.CVODE_BDF(),
+        solveradj=DifferentialEquations.CVODE_BDF(linear_solver=:GMRES),
+        abstol=1e-16,reltol=1e-6,abstoladj=1e0,reltoladj=1e0,Nquadpoints=8)
+
+    @assert name in sim.names || name in ["T","V","P"]
+    if name in ["T","V","P"]
+        if haskey(sim.domain.thermovariabledict, name)
+            ind = sim.domain.thermovariabledict[name]
+        else
+            throw(error("$(sim.domain) doesn't have $name in its thermovariables"))
+        end
+    else
+        ind = findfirst(isequal(name),sim.names)
+    end
+
+    if isnan(tau)
+        Jy = jacobiany(ssys.sol,t,ssys.p);
+        tau = getdividingtimescale(Jy);
+    end
+
+    if tau == 0.0
+        dSdt = jacobianp(ssys.sol,t,ssys.p)[ind,:];
+    else
+        prob = remake(ssys.sol.prob;u0=sim.sol(t),tspan=(0.0,tau));
+        soladj = solve(prob,solver,reltol=reltol,abstol=abstol);
+        ssysadj = SystemSimulation(soladj,[sim.domain for sim in ssys.sims],ssys.interfaces,ssys.p);
+
+        lm0 = zeros(length(sim.sol.prob.u0))
+        gu = ReverseDiff.gradient(x->soladj.prob.f(x,soladj.prob.p,0.0)[ind],soladj.prob.u0)
+        dlm(lm,p,t) = dlmdt(lm,p,t,simadj.sol.prob.f,gu,soladj)
+        ode = ODEProblem(dlm,lm0,(tau,0.0))
+        lmsol = solve(ode,solveradj,reltol=reltoladj,abstol=abstoladj);
+
+        gp = ReverseDiff.gradient(p->soladj.prob.f(soladj.prob.u0,p,0.0)[ind],soladj.prob.p)
+        G(t) = ReverseDiff.gradient(p->soladj.prob.f(soladj.prob.u0,p,t)[ind],lmsol(t)) .+ gp
+        nodes,weights = gausslegendre(Nquadpoints);
+        Gvals = G.((nodes.+1.0).*tau./2.0)
+        dSdt = reduce(hcat,Gvals)*weights
+    end
+
+    if normalized
+        return normalizeadjointtransitorysensitivities!(dSdt,ssys,t,ind)
+    else
+        return dSdt
+    end
+end
