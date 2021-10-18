@@ -81,6 +81,16 @@ function getfluxdiagram(bsol,t;centralspecieslist=Array{String,1}(),superimpose=
 
     return getdiagram(fd,1)
 end
+
+"""
+Generates and returns a flux diagram following the given ReactionPath object
+"""
+function getfluxdiagram(bsol,t,rp::ReactionPath; radius=0, kwargs...)
+    fd = makefluxdiagrams(bsol,[t]; centralspecieslist=bsol.names[rp.spcsinds],
+        radius=0, kwargs...)
+    return getdiagram(fd,1)
+end
+
 export getfluxdiagram
 
 """
