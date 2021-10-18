@@ -49,3 +49,88 @@ function stepnetwork(sim,statespcind,ropp,ropl,rts;forward=true,i=0,steptol=1e-2
         return rxnind,spcinds
     end
 end
+
+"""
+Starting from a given species indicated by spcind attempt to follow the fluxes
+in the forward or reverse direction to find a reaction indicated by rxnind
+it will follow in all directions until the flux tracked reaches branchtol fraction
+of the original flux, the flux stops (based on steptol) or it finds the reaction
+if it finds the reaction it will then follow the flux past that reaction using
+a flux pairs algorithm until the flux stops
+"""
+function follow(sim,rxnind,spcind,ropp,ropl,rts,forward;steptol=1e-2,branchtol=5e-2)
+
+    rps = [ReactionPath(forward,[spcind],Array{Int64,1}(),spcind,Array{Float64,1}(),
+                    Array{Float64,1}([1.0]),Array{Int64,1}())]
+    boo = true
+    boo2 = true
+    i = 0
+    rpouts = Array{ReactionPath,1}()
+    newrps = Array{ReactionPath,1}()
+    while boo #extend off the center species
+        newrps = extendpath(rps[1],sim,ropp,ropl,rts,i=i,steptol=steptol)
+        if length(newrps) == 0
+            return ReactionPath(forward,Array{Int64,1}(),Array{Int64,1}(),spcind,Array{Float64,1}(),
+                    Array{Float64,1}(),Array{Int64,1}())
+        elseif newrps[1].rxninds[1] == rxnind
+            rpouts = newrps
+            boo2 = false
+            break
+        end
+        if newrps[1].branchfract[1] < branchtol
+            boo = false
+        else
+            append!(rps,newrps)
+            i += 1
+        end
+    end
+    deleteat!(rps,1)
+
+    while boo2
+        ind = argmax([rp.branchfract[1] for rp in rps])
+        rp = rps[ind]
+        if rp.branchfract[1] < branchtol
+            return ReactionPath(forward,Array{Int64,1}(),Array{Int64,1}(),spcind,Array{Float64,1}(),
+                    Array{Float64,1}(),Array{Int64,1})
+        end
+        boo3 = true
+        i = 0
+        while boo3 #extend off the center species
+            newrps = extendpath(rp,sim,ropp,ropl,rts,i=i,steptol=steptol)
+            if length(newrps) == 0
+                deleteat!(rps,ind)
+                break
+            end
+            if newrps[1].rxninds[end] == rxnind
+                rpouts = newrps
+                boo2 = false
+                break
+            end
+            if newrps[1].branchfract[1] < branchtol
+                deleteat!(rps,ind)
+                boo3 = false
+            else
+                deleteat!(rps,ind)
+                append!(rps,newrps)
+                i += 1
+            end
+        end
+        if length(rps) == 0
+            return ReactionPath(forward,Array{Int64,1}(),Array{Int64,1}(),spcind,Array{Float64,1}(),
+                    Array{Float64,1}(),Array{Int64,1}())
+        end
+    end
+
+    rpout = newrps[argmax([getsimilarity(sim.species[nrp.spcsinds[end-1]],sim.species[nrp.spcsinds[end]]) for nrp in rpouts])]
+    while true
+        newrps = extendpath(rpout,sim,ropp,ropl,rts,i=0,steptol=steptol)
+        if length(newrps) == 0 || newrps[1].branchfract[1] < branchtol
+            return rpout
+        else
+            rpout = newrps[argmax([getsimilarity(sim.species[rpout.spcsinds[end]],
+                            sim.domain.phase.species[nrp.spcsinds[end]]) for nrp in newrps])]
+        end
+    end
+end
+export follow
+
