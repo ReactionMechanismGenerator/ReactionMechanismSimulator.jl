@@ -349,3 +349,37 @@ function getbranchpathinfo(sim,spcind,rxnind,ropp,ropl,rts;steptol=1e-2,branchto
     end
     return branches,rps
 end
+
+"""
+Attempt to remove importance hypotheses that don't make sense
+if the reaction constitutes more than branchthreshold fraction of the flux we
+consider it to not be sensitive due to branching
+If the sensitivity is >0 increasing the rate coefficient increases concentration
+so it can't be rate limited downstream so forward reaction paths don't make sense
+Same for sensitivity <0 for reverse paths
+"""
+function eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=0.9,pathbranchthreshold=0.2)
+    branchesout = Array{Branching,1}()
+    for branch in branches
+        ind = findfirst(isequal(rxnind),branch.rxninds)
+        if branch.branchingratios[ind] < branchthreshold
+            push!(branchesout,branch)
+        end
+    end
+    rpouts = Array{ReactionPath,1}()
+    for rp in rps
+        if rp.forward && dSdtspc[rxnind] > 0 #increasing forward (loss) paths should decrease spc concentration
+            continue
+        elseif !rp.forward && dSdtspc[rxnind] < 0 #increasing reverse (production) paths should increase spc concentration
+            continue
+        else
+            rind = findfirst(isequal(rxnind),rp.rxninds)
+            if rp.branchfracts[rind] > pathbranchthreshold
+                push!(rpouts,rp)
+            end
+        end
+    end
+    return branchesout,rpouts
+end
+export eliminatereasons
+
