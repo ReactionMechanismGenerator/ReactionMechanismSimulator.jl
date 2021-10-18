@@ -312,3 +312,68 @@ function transitorysensitivitiesparamtrapezoidal(sim,t,ind;tau=NaN,normalized=tr
     end
 end
 export transitorysensitivitiesparamtrapezoidal
+
+"""
+Compute exact transitory sensitivities with respect to one parameter
+using forward sensitivity analysis
+"""
+function transitorysensitivitiesparamexact(sim::Simulation,t,ind;tau=NaN,
+        normalized=true,solver=DifferentialEquations.CVODE_BDF(linear_solver=:GMRES),
+        abstol=1e-16,reltol=1e-6)
+
+    if isnan(tau)
+        Jy = jacobiany(sim.sol,t,sim.p);
+        tau = getdividingtimescale(Jy);
+    end
+
+    if tau == 0.0
+        dSdt = jacobianp(sim.sol,t,sim.p,ind);
+    else
+        tspan = (0.0,tau)
+        react = Reactor(sim.domain,sim.sol(t),tspan,sim.interfaces;p=sim.sol.prob.p,forwardsensitivities=true);
+        fparam(u,p,t) = react.ode.f(u,hcat(sim.p[1:ind-1],[sim.p[ind]],sim.p[ind+1:end]),t)
+        jacparam(u,p,tn) = jacobianp(sol,t+tn,p,ind)
+        odeparam = remake(react.ode,f=fparam,paramjac=jacparam)
+        sol = solve(odeparam,solver,abstol=abstol,reltol=reltol)
+        dSdt = reduce(hcat,DiffEqSensitivity.extract_local_sensitivities(sol,tau)[2])./tau
+    end
+
+    if normalized
+        return normalizeparamtransitorysensitivities!(dSdt,sim,t)
+    else
+        return dSdt
+    end
+end
+
+"""
+Compute exact transitory sensitivities with respect to one parameter
+using forward sensitivity analysis
+"""
+function transitorysensitivitiesparamexact(ssys::SystemSimulation,t,ind;tau=NaN,
+        normalized=true,solver=DifferentialEquations.CVODE_BDF(linear_solver=:GMRES),
+        abstol=1e-16,reltol=1e-6)
+
+    if isnan(tau)
+        Jy = jacobiany(ssys.sol,t,ssys.p);
+        tau = getdividingtimescale(Jy);
+    end
+
+    if tau == 0.0
+        dSdt = jacobianp(ssys.sol,ssys.p,t,ind);
+    else
+        tspan = (0.0,tau)
+        react = Reactor(ssys.domains,sim.sol(t),tspan,ssys.interfaces;p=ssys.p,forwardsensitivities=true);
+        fparam(u,p,t) = react.ode.f(u,hcat(sim.sol.prob.p[1:ind-1],[sim.sol.prob.p[ind]],sim.sol.prob.p[ind+1:end]),t)
+        jacparam(u,p,tn) = jacobianp(sol,t+tn,p,ind)
+        odeparam = remake(react.ode,f=fparam,paramjac=jacparam)
+        sol = solve(odeparam,solver,abstol=abstol,reltol=reltol)
+        dSdt = reduce(hcat,DiffEqSensitivity.extract_local_sensitivities(sol,tau)[2])./tau
+    end
+
+    if normalized
+        return normalizeparamtransitorysensitivities!(dSdt,sim,t)
+    else
+        return dSdt
+    end
+end
+export transitorysensitivitiesparamexact
