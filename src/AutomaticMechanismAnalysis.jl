@@ -197,3 +197,15 @@ function getbranching(sim,rxnind,ropl,rts)
     return branches
 end
 export getbranching
+
+struct ReactionAnalysis
+    branchings::Array{Branching,1}
+    paths::Array{ReactionPath,1}
+    radprodlossfract::Float64
+    spcind::Int64
+    spcname::String
+    rxnind::Int64
+    sens::Float64
+end
+export ReactionAnalysis
+
