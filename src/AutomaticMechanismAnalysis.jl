@@ -209,3 +209,82 @@ struct ReactionAnalysis
 end
 export ReactionAnalysis
 
+"""
+Calculate Transitory Sensitivities for analysis
+"""
+function gettransitoryadjoint(sim,t,spcname,spcind,transitorysensitivitymethod)
+    if applicable(transitorysensitivitymethod,sim,t,spcname)
+        return transitorysensitivitymethod(sim,t,spcname)
+    else
+        dSdt = transitorysensitivitymethod(sim,t)
+        return dSdt[spcind,:]
+    end
+end
+
+"""
+At a given timepoint t targeting a species spcname run transitory sensitivity
+analysis to identify important reactions for that species and then run
+reaction path, branching, radical rop and other analyses to provide the information
+necessary to identify why the reaction is important and flesh out important
+pathways in the mechanism
+Returns a list of ReactionAnalysis objects associated with each reaction
+"""
+function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
+        pathbranchthreshold=0.2,branchtol=1e-2,steptol=1e-2,
+        transitorysensitivitymethod=transitorysensitivitiesfulltrapezoidal,
+        eliminate=true
+        )
+
+    spcind = findfirst(isequal(spcname),sim.names)
+    dSdt = gettransitoryadjoint(sim,t,spcname,spcind,transitorysensitivitymethod)
+
+    rop = rops(sim,t)
+    ropp = zeros(size(rop))
+    for i in eachindex(rop)
+        if rop[i] > 0
+            ropp[i] = rop[i]
+        end
+    end
+    ropl = zeros(size(rop))
+    for i in eachindex(rop)
+        if rop[i] < 0
+            ropl[i] = abs(rop[i])
+        end
+    end
+    rts = rates(sim,t)
+
+    dSdtspc = dSdt[length(sim.names)+1:end]
+
+    #find sensitive reactions
+    inds = reverse(sortperm(abs.(dSdtspc)))
+    dSdtmax = maximum(abs.(dSdtspc))
+    maxthresh = dSdtmax*tol
+
+    if N == 0
+        N = length(inds)
+    elseif N > length(inds)
+        N = length(inds)
+    end
+    inds = inds[1:N]
+    mval = abs(dSdtspc[inds[1]])
+    minval = mval*tol
+    k = 1
+    while k < length(inds) && abs(dSdtspc[inds[k]]) >= minval
+        k += 1
+    end
+    sensinds = inds[1:k]
+
+    #Run analyses
+    rxnanalysis = Array{ReactionAnalysis,1}()
+    for rxnind in sensinds
+        branches,rps = getbranchpathinfo(sim,spcind,rxnind,ropp,ropl,rts;steptol=steptol,branchtol=branchtol)
+        radprodlossfract = getradprodlossfract(sim,rxnind,rts)
+        if eliminate
+            branches,rps = eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=branchthreshold,pathbranchthreshold=pathbranchthreshold)
+        end
+        push!(rxnanalysis,ReactionAnalysis(branches,rps,radprodlossfract,spcind,spcname,rxnind,dSdtspc[rxnind]))
+    end
+    return rxnanalysis
+end
+export analyzespc
+
