@@ -453,3 +453,21 @@ function plotrateadjointsensitivities(bsol::Y,name::X,dps::Z;N=0,tol=0.01) where
     return
 end
 export plotrateadjointsensitivities
+function plottimescales(sim,t;taumax=1e6,taumin=1e-18,taures=10.0^0.5,usediag=true)
+    Jy = jacobiany(sim.sol(t),sim.domain.p,t,sim.domain,[]);
+    return plottimescales(Jy;taumax=taumax,taumin=taumin,taures=taures,usediag=usediag)
+end
+
+function plottimescales(Jy;taumax=1e6,taumin=1e-18,taures=10.0^0.5,usediag=true)
+    if usediag
+        taus = 1.0./abs.(diag(Jy))
+    else
+        taus = 1.0./abs.(eigvals(Jy))
+    end
+    PyPlot.hist([x==Inf ? 0.0 : x for x in taus],bins=10.0.^(log10(taumin):log10(taures):log10(taumax)))
+    xscale("log")
+    xlabel("Species Time Scale [sec]")
+    ylabel("Counts")
+end
+export plottimescales
+
