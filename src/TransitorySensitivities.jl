@@ -285,3 +285,30 @@ function transitorysensitivitiesfulltrapezoidal(sim,t;tau=NaN,normalized=true)
     end
 end
 export transitorysensitivitiesfulltrapezoidal
+
+"""
+Compute approximate transitory sensitivities with respect to one parameter
+Assumes constant jacobian y and p and then uses trapezoidal rule to
+approximate the solution to the resulting forward sensitivity equations
+requires one evaluation of both jacobiany and jacobianp
+"""
+function transitorysensitivitiesparamtrapezoidal(sim,t,ind;tau=NaN,normalized=true)
+    if tau == 0.0
+        dSdt = jacobianp(sol,t,sim.p,ind);
+    elseif isnan(tau)
+        Jy = jacobiany(sim.sol,t,sim.p);
+        tau = getdividingtimescale(Jy);
+        Jp = jacobianp(sim.sol,t,sim.p,ind);
+        dSdt = (Jp .+ exp(tau*Jy)*Jp)./2.0
+    else
+        Jy = jacobiany(sim.sol,t,sim.p);
+        Jp = jacobianp(sim.sol,t,sim.p,ind);
+        dSdt = (Jp .+ exp(tau*Jy)*Jp)./2.0
+    end
+    if normalized
+        return normalizeparamtransitorysensitivities!(dSdt,sim,t)
+    else
+        return dSdt
+    end
+end
+export transitorysensitivitiesparamtrapezoidal
