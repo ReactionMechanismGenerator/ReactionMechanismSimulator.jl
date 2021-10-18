@@ -54,6 +54,7 @@ module ReactionMechanismSimulator
     include("Parse.jl")
     include("Reactor.jl")
     include("Simulation.jl")
+    include("TransitorySensitivities.jl")
     include("EdgeAnalysis.jl")
     include("fluxdiagrams.jl")
     include("Plotting.jl")
