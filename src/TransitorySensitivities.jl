@@ -1,5 +1,5 @@
 #Time scale analysis
-using DifferentialEquations
+using Sundials
 using FastGaussQuadrature
 
 function getfractionbelow(histo,n,N)
@@ -206,7 +206,7 @@ end
 Compute exact transitory sensitivities using Forward Sensitivity Analysis
 """
 function transitorysensitivitiesfullexact(sim::Simulation,t;tau=NaN,
-        normalized=true,solver=DifferentialEquations.CVODE_BDF(linear_solver=:GMRES),
+        normalized=true,solver=Sundials.CVODE_BDF(linear_solver=:GMRES),
         abstol=1e-16,reltol=1e-6)
 
     if isnan(tau)
@@ -234,7 +234,7 @@ end
 Compute exact transitory sensitivities using Forward Sensitivity Analysis
 """
 function transitorysensitivitiesfullexact(ssys::SystemSimulation,t;tau=NaN,
-        normalized=true,solver=DifferentialEquations.CVODE_BDF(linear_solver=:GMRES),
+        normalized=true,solver=Sundials.CVODE_BDF(linear_solver=:GMRES),
         abstol=1e-16,reltol=1e-6)
 
     if isnan(tau)
@@ -318,7 +318,7 @@ Compute exact transitory sensitivities with respect to one parameter
 using forward sensitivity analysis
 """
 function transitorysensitivitiesparamexact(sim::Simulation,t,ind;tau=NaN,
-        normalized=true,solver=DifferentialEquations.CVODE_BDF(linear_solver=:GMRES),
+        normalized=true,solver=Sundials.CVODE_BDF(linear_solver=:GMRES),
         abstol=1e-16,reltol=1e-6)
 
     if isnan(tau)
@@ -350,7 +350,7 @@ Compute exact transitory sensitivities with respect to one parameter
 using forward sensitivity analysis
 """
 function transitorysensitivitiesparamexact(ssys::SystemSimulation,t,ind;tau=NaN,
-        normalized=true,solver=DifferentialEquations.CVODE_BDF(linear_solver=:GMRES),
+        normalized=true,solver=Sundials.CVODE_BDF(linear_solver=:GMRES),
         abstol=1e-16,reltol=1e-6)
 
     if isnan(tau)
@@ -387,7 +387,7 @@ does not run any jacobian computations if tau != 0, tau != NaN  is supplied and
 the solver is jacobian free
 """
 function transitorysensitivitiesadjointexact(sim::Simulation,t,name;tau=NaN,
-        normalized=true,solver=DifferentialEquations.CVODE_BDF(),sensalg=InterpolatingAdjoint(),
+        normalized=true,solver=Sundials.CVODE_BDF(),sensalg=InterpolatingAdjoint(),
         abstol=1e-16,reltol=1e-6)
 
     @assert name in sim.names || name in ["T","V","P"]
@@ -432,7 +432,7 @@ does not run any jacobian computations if tau != 0, tau != NaN  is supplied and
 the solver is jacobian free
 """
 function transitorysensitivitiesadjointexact(ssys::SystemSimulation,t,name;tau=NaN,
-        normalized=true,solver=DifferentialEquations.CVODE_BDF(),sensalg=InterpolatingAdjoint(),
+        normalized=true,solver=Sundials.CVODE_BDF(),sensalg=InterpolatingAdjoint(),
         abstol=1e-6,reltol=1e-3)
 
     @assert name in sim.names || name in ["T","V","P"]
@@ -486,8 +486,8 @@ does not run any jacobian computations if tau != 0, tau != NaN is supplied and
 the solver is jacobian free
 """
 function transitorysensitivitiesadjointapprox(sim::Simulation,t,name;tau=NaN,
-        normalized=true,solver=DifferentialEquations.CVODE_BDF(),
-        solveradj=DifferentialEquations.CVODE_BDF(linear_solver=:GMRES),
+        normalized=true,solver=Sundials.CVODE_BDF(),
+        solveradj=Sundials.CVODE_BDF(linear_solver=:GMRES),
         abstol=1e-16,reltol=1e-6,abstoladj=1e0,reltoladj=1e0,Npoints=8)
 
     @assert name in sim.names || name in ["T","V","P"]
@@ -553,8 +553,8 @@ does not run any jacobian computations if tau != 0, tau != NaN is supplied and
 the solver is jacobian free
 """
 function transitorysensitivitiesadjointapprox(ssys::SystemSimulation,t,name;tau=NaN,
-        normalized=true,solver=DifferentialEquations.CVODE_BDF(),
-        solveradj=DifferentialEquations.CVODE_BDF(linear_solver=:GMRES),
+        normalized=true,solver=Sundials.CVODE_BDF(),
+        solveradj=Sundials.CVODE_BDF(linear_solver=:GMRES),
         abstol=1e-16,reltol=1e-6,abstoladj=1e0,reltoladj=1e0,Nquadpoints=8)
 
     @assert name in sim.names || name in ["T","V","P"]
