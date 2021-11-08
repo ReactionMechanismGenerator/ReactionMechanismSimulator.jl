@@ -53,7 +53,7 @@ function getpairs(rxn::T) where {T<:AbstractReaction}
         return choosepairs(rxn)
     end
 end
-
+export getpairs
 
 """
 returns a negative number representing compositional similarity between two species

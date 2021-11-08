@@ -28,6 +28,9 @@ function Simulation(sol::Q,domain::W,interfaces=[],p=nothing) where {Q<:Abstract
     end
     N = HermiteInterpolation(sol.interp.t,Ns,Nderivs)
     F(t::T) where {T<:Real} = N(t,nothing,Val{0},sol.prob.p,:left)
+    if p === nothing
+        p = domain.p
+    end
     return Simulation(sol,domain,interfaces,names,F,Ns,domain.phase.species,domain.phase.reactions,p)
 end
 
@@ -352,7 +355,8 @@ By default uses the InterpolatingAdjoint algorithm with vector Jacobian products
 this assumes no changes in code branching during simulation, if that were to become no longer true, the Tracker 
 based alternative algorithm is slower, but avoids this concern. 
 """
-function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2}
+function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
+    abstol::Float64=1e-6,reltol::Float64=1e-3,normalize=true,kwargs...) where {Q,W,W2}
     @assert target in bsol.names || target in ["T","V","P"]
 
     pethane = 160
@@ -441,16 +445,19 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,sensg,nothing,(dsensgdurevdiff,dsensgdprevdiff);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
         end
     end
-    dpadj[length(bsol.domain.phase.species)+1:end] .*= bsol.domain.p[length(bsol.domain.phase.species)+1:end]
-    if !(target in ["T","V","P"]) && isempty(bsol.interfaces)
-        dpadj ./= bsol.sol(bsol.sol.t[end])[senstooriginspcind[ind]]
-    elseif !(target in ["T","V","P"]) && !isempty(bsol.interfaces)
-        dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
+    if normalize
+        dpadj[length(bsol.domain.phase.species)+1:end] .*= bsol.domain.p[length(bsol.domain.phase.species)+1:end]
+        if !(target in ["T","V","P"]) && isempty(bsol.interfaces)
+            dpadj ./= bsol.sol(bsol.sol.t[end])[senstooriginspcind[ind]]
+        elseif !(target in ["T","V","P"]) && !isempty(bsol.interfaces)
+            dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
+        end
     end
     return dpadj
 end
 
-function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol::Float64=1e-6,reltol::Float64=1e-3,kwargs...) where {Q,W,W2,W3}
+function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
+    abstol::Float64=1e-6,reltol::Float64=1e-3,normalize=true,kwargs...) where {Q,W,W2,W3}
     @assert target in bsol.names || target in ["T","V","P"]
     if target in ["T","V","P"]
         if haskey(bsol.domain.thermovariabledict, target)
@@ -481,11 +488,13 @@ function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sen
     dgdu(out, y, p, t) = ForwardDiff.gradient!(out, y -> g(y, p, t), y)
     dgdp(out, y, p, t) = ForwardDiff.gradient!(out, p -> g(y, p, t), p)
     du0,dpadj = adjoint_sensitivities(syssim.sol,solver,g,nothing,(dgdu,dgdp);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
-    for domain in domains
-       dpadj[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]] .*= syssim.p[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]]
-    end
-    if !(target in ["T","V","P"])
-       dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
+    if normalize
+        for domain in domains
+           dpadj[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]] .*= syssim.p[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]]
+        end
+        if !(target in ["T","V","P"])
+            dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
+        end
     end
     return dpadj
 end

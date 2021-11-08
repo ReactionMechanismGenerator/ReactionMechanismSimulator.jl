@@ -724,7 +724,7 @@ end
     if !d.alternativepformat
         @views kfps = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         @views nothermochg= d.Gs == p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
-    else 
+    else
         kfps = d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         nothermochg= d.Gs == d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
     end
@@ -737,7 +737,7 @@ end
     elseif nothermochg
         d.kfs = kfps
         for ind in d.efficiencyinds #efficiency related rates may have changed
-            d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity,V,0.0;f=kfps[ind]) 
+            d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity,V,0.0;f=kfps[ind])
         end
         return ns,cs,d.T,d.P,V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
     else #need to handle thermo changes
@@ -764,7 +764,7 @@ end
     if !d.alternativepformat
         kfs = convert(typeof(y),p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
         Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
-    else 
+    else
         kfs = convert(typeof(y),d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
         Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
     end
@@ -784,11 +784,33 @@ end
     if !d.alternativepformat
         kfs = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
-    else 
+    else
         kfs = d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
     end
     krevs = getkfkrevs(d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V,0.0;kfs=kfs)[2]
+    for ind in d.efficiencyinds #efficiency related rates may have changed
+        kfs[ind],krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V,0.0;f=kfs[ind])
+    end
+    return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Autodiff p
+    ns = y[d.indexes[1]:d.indexes[2]]
+    V = y[d.indexes[3]]
+    N = d.P*V/(R*d.T)
+    cs = ns./V
+    C = N/V
+    kfs = similar(y,length(d.phase.reactions))
+    krevs = similar(y,length(d.phase.reactions))
+    if !d.alternativepformat
+        kfs .= p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
+        Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+    else
+        kfs .= d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
+        Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+    end
+    krevs .= getkfkrevs(d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V,0.0;kfs=kfs)[2]
     for ind in d.efficiencyinds #efficiency related rates may have changed
         kfs[ind],krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V,0.0;f=kfs[ind])
     end
@@ -804,7 +826,24 @@ end
     if !d.alternativepformat
         Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V,0.0)[1]*p[d.parameterindexes[1]-1+length(d.phase.species)+ind] : p[d.parameterindexes[1]-1+length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
-    else 
+    else
+        Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+        kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V,0.0)[1]*d.p[length(d.phase.species)+ind]*p[d.parameterindexes[1]-1+length(d.phase.species)+ind] : p[d.parameterindexes[1]-1+length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
+    end
+    krevs = getkfkrevs(d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V,0.0;kfs=kfs)[2]
+    return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W2=DiffEqBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Tracker/reversediff
+    ns = y[d.indexes[1]:d.indexes[2]]
+    V = y[d.indexes[3]]
+    N = d.P*V/(R*d.T)
+    cs = ns./V
+    C = N/V
+    if !d.alternativepformat
+        Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+        kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V,0.0)[1]*p[d.parameterindexes[1]-1+length(d.phase.species)+ind] : p[d.parameterindexes[1]-1+length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
+    else
         Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,Gs,d.diffusivity,V,0.0)[1]*d.p[length(d.phase.species)+ind]*p[d.parameterindexes[1]-1+length(d.phase.species)+ind] : p[d.parameterindexes[1]-1+length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
     end
@@ -1292,7 +1331,7 @@ end
             d.kfs,d.krevs = getkfkrevs(d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,0.0;kfs=d.kfsnondiff)
             return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
         end
-    else 
+    else
         @views nothermochg = d.Gs == d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         @views nokfchg = d.kfsnondiff == d.p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         if nothermochg && nokfchg
@@ -1308,7 +1347,7 @@ end
             return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
         end
     end
-        
+
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y},y::Array{W2,1},t::Q,p::Q2=DiffEqBase.NullParameters()) where {W2<:ForwardDiff.Dual,Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff y
@@ -1320,7 +1359,7 @@ end
     if !d.alternativepformat
         Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         kfsnondiff = convert(typeof(y),p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
-    else 
+    else
         Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         kfsnondiff = convert(typeof(y),d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
     end
@@ -1337,9 +1376,9 @@ end
     if !d.alternativepformat
         Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         kfsnondiff = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
-    else 
+    else
         Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
-        kfsnondiff = d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]    
+        kfsnondiff = d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
     end
     kfs,krevs = getkfkrevs(d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0;kfs=kfsnondiff)
     return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
@@ -1370,7 +1409,7 @@ end
             d.krevs = getkfkrevs(d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,d.phi;kfs=d.kfs)[2]
             return ns,cs,d.T,P,d.A,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),d.Gs,Array{Float64,1}(),0.0,Array{Float64,1}(),d.phi
         end
-    else 
+    else
         @views nothermochg = d.Gs == d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         if nothermochg
             return ns,cs,d.T,P,d.A,C,N,d.mu,d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)],d.krevs,Array{Float64,1}(),Array{Float64,1}(),d.Gs,0.0,Array{Float64,1}(),d.phi
@@ -1392,7 +1431,7 @@ end
     if !d.alternativepformat
         Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         kfs = convert(typeof(y),p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
-    else 
+    else
         Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         kfs = convert(typeof(y),d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
     end
@@ -1409,7 +1448,7 @@ end
     if !d.alternativepformat
         Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         kfs = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
-    else 
+    else
         Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         kfs = d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
     end
@@ -1483,7 +1522,7 @@ end
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*flow
             dTdt = flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
             dydt[d.indexes[3]] += dTdt
-            dydt[d.indexes[4]] += flow*R*T/P + dTdt*V/T 
+            dydt[d.indexes[4]] += flow*R*T/P + dTdt*V/T
         elseif isa(inter,Outlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
@@ -1538,7 +1577,7 @@ end
     @fastmath Cpave = Cvave+R
     dPdt = Calculus.derivative(d.P,t)
     @views @fastmath @inbounds dydt[d.indexes[3]] = (-dot(Hs,dydt[d.indexes[1]:d.indexes[2]])+V*dPdt)/(N*Cpave) #divide by V to cancel ωV to ω
-    @views @fastmath @inbounds dydt[d.indexes[4]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/P + dydt[d.indexes[3]]*V/T - dPdt*V/P 
+    @views @fastmath @inbounds dydt[d.indexes[4]] = sum(dydt[d.indexes[1]:d.indexes[2]])*R*T/P + dydt[d.indexes[3]]*V/T - dPdt*V/P
     for ind in d.constantspeciesinds #make dydt zero for constant species
         @inbounds dydt[ind] = 0.0
     end
@@ -1614,16 +1653,16 @@ end
 @inline function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ConstantTPDomain}
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
     jacobianynsderiv!(jac,domain,domain.rxnarray,domain.efficiencyinds,cs,kfs,krevs,T,V,C)
-    
+
     @simd for i in domain.indexes[1]:domain.indexes[2]
         @views @inbounds @fastmath jac[domain.indexes[3],i] = sum(jac[domain.indexes[1]:domain.indexes[2],i])*R*T/P
     end
     @views @inbounds @fastmath jac[domain.indexes[3],domain.indexes[3]] = sum(jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]])*R*T/P
-          
+
     @simd for ind in domain.constantspeciesinds
         @inbounds jac[ind,:] .= 0.
     end
-    
+
     @simd for inter in interfaces
         if isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
@@ -1648,11 +1687,11 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
         @views @inbounds @fastmath jac[domain.indexes[3],i] = -dot(Us,jac[domain.indexes[1]:domain.indexes[2],i])/(N*Cvave)+dot(Us,dydt[domain.indexes[1]:domain.indexes[2]])/(N*Cvave*Cvave)*dCvavedni
         @views @inbounds @fastmath jac[domain.indexes[4],i] = sum(jac[domain.indexes[1]:domain.indexes[2],i])*R*T/V + P/T*jac[domain.indexes[3],i]
     end
-    
+
     @simd for ind in domain.constantspeciesinds
         @inbounds jac[ind,:] .= 0.
     end
-    
+
     for inter in interfaces
         if isa(inter,Inlet) && domain == inter.domain
             flow = inter.F(t)
@@ -1675,7 +1714,7 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
             end
         end
     end
-    
+
     @inbounds jacobianytherm!(jac,y,p,t,domain,interfaces,domain.indexes[3],T,colorvec)
     @inbounds jacobianytherm!(jac,y,p,t,domain,interfaces,domain.indexes[4],P,colorvec)
 
@@ -1685,11 +1724,11 @@ end
 function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ConstantPDomain}
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
     jacobianynsderiv!(jac,domain,domain.rxnarray,domain.efficiencyinds,cs,kfs,krevs,T,V,C)
-    
+
     dydt = zeros(size(y))
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
-    
+
     @fastmath Cpave = Cvave+R
     @views @inbounds @fastmath dTdt = -dot(Hs,dydt[domain.indexes[1]:domain.indexes[2]])/(N*Cpave)
     @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -1699,11 +1738,11 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
     end
     @views @inbounds @fastmath jac[domain.indexes[3],domain.indexes[4]] = -dot(Hs,jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]])/(N*Cpave)
     @views @inbounds @fastmath jac[domain.indexes[4],domain.indexes[4]] = sum(jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]])*R*T/P + dTdt/T + V/T*jac[domain.indexes[3],domain.indexes[4]]
-    
+
     @simd for ind in domain.constantspeciesinds
         @inbounds jac[ind,:] .= 0.
     end
-    
+
     @simd for inter in interfaces
         if isa(inter,Inlet) && domain == inter.domain
             flow = inter.F(t)
@@ -1725,25 +1764,25 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
             end
         end
     end
-    
+
     @inbounds jacobianytherm!(jac,y,p,t,domain,interfaces,domain.indexes[3],T,colorvec)
-    
+
     return jac
 end
 
 function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ParametrizedTPDomain}
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
     jacobianynsderiv!(jac,domain,domain.rxnarray,domain.efficiencyinds,cs,kfs,krevs,T,V,C)
-    
+
     @simd for i in domain.indexes[1]:domain.indexes[2]
         @views @inbounds @fastmath jac[domain.indexes[3],i] = sum(jac[domain.indexes[1]:domain.indexes[2],i])*R*T/P
     end
     @views @inbounds @fastmath jac[domain.indexes[3],domain.indexes[3]] = sum(jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]])*R*T/P + Calculus.derivative(domain.T,t)/T - Calculus.derivative(domain.P,t)/P
-    
+
     @simd for ind in domain.constantspeciesinds
         @inbounds jac[ind,:] .= 0.
     end
-    
+
     @simd for inter in interfaces
         if isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
@@ -1752,29 +1791,29 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
             end
         end
     end
-    
+
     return jac
 end
 
 function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ParametrizedVDomain}
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
     jacobianynsderiv!(jac,domain,domain.rxnarray,domain.efficiencyinds,cs,kfs,krevs,T,V,C)
-    
+
     dydt = zeros(size(y))
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
-    
+
     dVdt = Calculus.derivative(domain.V,t)
     @simd for i in domain.indexes[1]:domain.indexes[2]
         @fastmath @inbounds dCvavedni = cpdivR[i]*R/N
         @views @inbounds @fastmath jac[domain.indexes[3],i] = -dot(Us,jac[domain.indexes[1]:domain.indexes[2],i])/(N*Cvave)-(-dot(Us,dydt[domain.indexes[1]:domain.indexes[2]])-P*dVdt)/(N*Cvave*Cvave)*dCvavedni
         @views @inbounds @fastmath jac[domain.indexes[4],i] = sum(jac[domain.indexes[1]:domain.indexes[2],i])*R*T/V + P/T*jac[domain.indexes[3],i]
     end
-    
+
     @simd for ind in domain.constantspeciesinds
         @inbounds jac[ind,:] .= 0.
     end
-    
+
     @simd for inter in interfaces
         if isa(inter,Inlet) && domain == inter.domain
             flow = inter.F(t)
@@ -1797,7 +1836,7 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
             end
         end
     end
-    
+
     @inbounds jacobianytherm!(jac,y,p,t,domain,interfaces,domain.indexes[3],T,colorvec)
     @inbounds jacobianytherm!(jac,y,p,t,domain,interfaces,domain.indexes[4],P,colorvec)
 
@@ -1807,11 +1846,11 @@ end
 function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ParametrizedPDomain}
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
     jacobianynsderiv!(jac,domain,domain.rxnarray,domain.efficiencyinds,cs,kfs,krevs,T,V,C)
-    
+
     dydt = zeros(size(y))
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
-    
+
     @fastmath Cpave = Cvave+R
     dPdt = Calculus.derivative(domain.P,t)
     @views @inbounds @fastmath dTdt = (-dot(Hs,dydt[domain.indexes[1]:domain.indexes[2]])+V*dPdt)/(N*Cpave)
@@ -1821,12 +1860,12 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
         @views @inbounds @fastmath jac[domain.indexes[4],i] = sum(jac[domain.indexes[1]:domain.indexes[2],i])*R*T/P + V/T*jac[domain.indexes[3],i]
     end
     @views @inbounds @fastmath jac[domain.indexes[3],domain.indexes[4]] = (-dot(Hs,jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]])+dPdt)/(N*Cpave)
-    @views @inbounds @fastmath jac[domain.indexes[4],domain.indexes[4]] = sum(jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]])*R*T/P + dTdt/T + V/T*jac[domain.indexes[3],domain.indexes[4]]-dPdt/P 
-    
+    @views @inbounds @fastmath jac[domain.indexes[4],domain.indexes[4]] = sum(jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]])*R*T/P + dTdt/T + V/T*jac[domain.indexes[3],domain.indexes[4]]-dPdt/P
+
     @simd for ind in domain.constantspeciesinds
         @inbounds jac[ind,:] .= 0.
     end
-    
+
     @simd for inter in interfaces
         if isa(inter,Inlet) && domain == inter.domain
             flow = inter.F(t)
@@ -1849,20 +1888,20 @@ function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=
             @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]] .-= -flow.*ns./N/V
         end
     end
-    
+
     @inbounds jacobianytherm!(jac,y,p,t,domain,interfaces,domain.indexes[3],T,colorvec)
-    
+
     return jac
 end
 
 function jacobiany!(jac::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantTVDomain,ConstantTAPhiDomain,ParametrizedTConstantVDomain}}
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,phi = calcthermo(domain,y,t,p)
     jacobianynsderiv!(jac,domain,domain.rxnarray,domain.efficiencyinds,cs,kfs,krevs,T,V,C)
-    
+
     @simd for ind in domain.constantspeciesinds
         @inbounds jac[ind,:] .= 0.
     end
-    
+
     @simd for inter in interfaces
         if isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
@@ -1880,26 +1919,44 @@ export jacobiany!
 @inline function jacobianpnsderiv!(jacp::Q,y::U,p::W,t::Z,domain::D,rxnarray::Array{Int64,2},cs::Array{Float64,1},T::Float64,V::Float64,kfs::Array{Float64,1},krevs::Array{Float64,1},Nspcs::Int64,Nrxns::Int64) where {Q3<:AbstractArray,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantTPDomain,ConstantTAPhiDomain}}
     @fastmath  RTinv = 1.0/(R*T)
     @simd for rxnind = 1:Nrxns
-        if @inbounds rxnarray[2,rxnind] == 0
-            @inbounds fderiv = cs[rxnarray[1,rxnind]]
-        elseif @inbounds  rxnarray[3,rxnind] == 0
-            @fastmath @inbounds fderiv = cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]
-        else
-            @fastmath @inbounds fderiv = cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]
-        end
+        if rxnind in domain.efficiencyinds
+            if @inbounds rxnarray[2,rxnind] == 0
+                @fastmath @inbounds fderiv = kfs[rxnind]*cs[rxnarray[1,rxnind]]
+            elseif @inbounds rxnarray[3,rxnind] == 0
+                @fastmath @inbounds fderiv = kfs[rxnind]*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]
+            else
+                @fastmath @inbounds fderiv = kfs[rxnind]*cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]
+            end
 
-        if @inbounds rxnarray[5,rxnind] == 0
-            @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]
-        elseif @inbounds rxnarray[6,rxnind] == 0
-            @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]
+            if @inbounds rxnarray[5,rxnind] == 0
+                @fastmath @inbounds rderiv = krevs[rxnind]*cs[rxnarray[4,rxnind]]
+            elseif @inbounds rxnarray[6,rxnind] == 0
+                @fastmath @inbounds rderiv = krevs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]
+            else
+                @fastmath @inbounds rderiv = krevs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]
+            end
         else
-            @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]
+            if @inbounds rxnarray[2,rxnind] == 0
+                @inbounds fderiv = cs[rxnarray[1,rxnind]]
+            elseif @inbounds  rxnarray[3,rxnind] == 0
+                @fastmath @inbounds fderiv = cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]
+            else
+                @fastmath @inbounds fderiv = cs[rxnarray[1,rxnind]]*cs[rxnarray[2,rxnind]]*cs[rxnarray[3,rxnind]]
+            end
+
+            if @inbounds rxnarray[5,rxnind] == 0
+                @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]
+            elseif @inbounds rxnarray[6,rxnind] == 0
+                @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]
+            else
+                @fastmath @inbounds rderiv = krevs[rxnind]/kfs[rxnind]*cs[rxnarray[4,rxnind]]*cs[rxnarray[5,rxnind]]*cs[rxnarray[6,rxnind]]
+            end
         end
 
         flux = fderiv-rderiv
         _spreadreactantpartials!(jacp,flux,rxnarray,rxnind,Nspcs+rxnind)
         _spreadproductpartials!(jacp,-flux,rxnarray,rxnind,Nspcs+rxnind)
-        
+
         @fastmath @inbounds gderiv = rderiv*kfs[rxnind]*RTinv
 
         @inbounds jacp[rxnarray[1,rxnind],rxnarray[1,rxnind]] -= gderiv
@@ -1935,7 +1992,7 @@ export jacobiany!
                 @inbounds _spreadproductpartials!(jacp,gderiv,rxnarray,rxnind,rxnarray[6,rxnind])
             end
         end
-        
+
     end
     jacp .*= V
 end
@@ -1962,7 +2019,7 @@ end
         @fastmath flux = fderiv-rderiv
         _spreadreactantpartials!(jacp,flux,rxnarray,rxnind,Nspcs+rxnind)
         _spreadproductpartials!(jacp,-flux,rxnarray,rxnind,Nspcs+rxnind)
-        
+
         @fastmath gderiv = rderiv*RTinv
 
         @inbounds jacp[rxnarray[1,rxnind],rxnarray[1,rxnind]] -= gderiv
@@ -2024,7 +2081,7 @@ end
         @fastmath flux = fderiv-rderiv
         _spreadreactantpartials!(jacp,flux,rxnarray,rxnind,Nspcs+rxnind)
         _spreadproductpartials!(jacp,-flux,rxnarray,rxnind,Nspcs+rxnind)
-        
+
         @fastmath @inbounds gderiv = rderiv*(p[Nspcs+rxnind]*p[Nspcs+rxnind])/kfs[rxnind]*RTinv
 
         @inbounds jacp[rxnarray[1,rxnind],rxnarray[1,rxnind]] -= gderiv
@@ -2067,16 +2124,16 @@ end
 function jacobianp!(jacp::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantTPDomain,ParametrizedTPDomain}}
     jacp.=0.0
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
-    
+
     Nspcs=length(cs)
     Nrxns = size(domain.rxnarray)[2]
-    
+
     jacobianpnsderiv!(jacp,y,p,t,domain,domain.rxnarray,cs,T,V,kfs,krevs,Nspcs,Nrxns)
-    
+
     @simd for i in 1:length(p)
         @views @inbounds @fastmath jacp[domain.indexes[3],i] = sum(jacp[domain.indexes[1]:domain.indexes[2],i])*R*T/P
     end
-    
+
     @simd for ind in domain.constantspeciesinds
         @inbounds jacp[ind,:] .= 0.
     end
@@ -2088,7 +2145,7 @@ function jacobianp!(jacp::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2
 
     Nspcs = length(cs)
     Nrxns = size(domain.rxnarray)[2]
-    
+
     dydt = zeros(size(y))
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
@@ -2108,7 +2165,7 @@ function jacobianp!(jacp::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2
     @simd for ind in domain.constantspeciesinds
         @inbounds jacp[ind,:] .= 0.
     end
-    
+
     @simd for inter in interfaces
         if isa(inter,Inlet) && domain == inter.domain
             flow = inter.F(t)
@@ -2124,16 +2181,16 @@ end
 function jacobianp!(jacp::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantPDomain,ParametrizedPDomain}}
     jacp.=0.0
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
-    
+
     Nspcs = length(cs)
     Nrxns = size(domain.rxnarray)[2]
-    
+
     dydt = zeros(size(y))
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
-    
+
     jacobianpnsderiv!(jacp,y,p,t,domain,domain.rxnarray,cs,T,V,kfs,krevs,Nspcs,Nrxns)
-    
+
     @fastmath Cpave = Cvave+R
     @simd for i in 1:Nspcs
         @views @fastmath @inbounds jacp[domain.indexes[3],i] = -(dot(Hs,jacp[domain.indexes[1]:domain.indexes[2],i])+dydt[i])/(N*Cpave) #divide by V to cancel ωV to ω
@@ -2144,18 +2201,18 @@ function jacobianp!(jacp::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2
         @views @fastmath @inbounds jacp[domain.indexes[3],i] = -(dot(Hs,jacp[domain.indexes[1]:domain.indexes[2],i]))/(N*Cpave) #divide by V to cancel ωV to ω
         @views @fastmath @inbounds jacp[domain.indexes[4],i] = sum(jacp[domain.indexes[1]:domain.indexes[2],i])*R*T/P + jacp[domain.indexes[3],i]*V/T
     end
-    
+
     @simd for ind in domain.constantspeciesinds
         @inbounds jacp[ind,:] .= 0.
     end
-    
+
     @simd for inter in interfaces
         if isa(inter,Inlet) && domain == inter.domain
             flow = inter.F(t)
             for i in 1:Nspcs
                 ddGidTdt = flow*(- ns[i]/N)/(N*Cpave)
                 jacp[domain.indexes[3],i] += ddGidTdt
-                jacp[domain.indexes[4],i] += ddGidTdt*V/T 
+                jacp[domain.indexes[4],i] += ddGidTdt*V/T
             end
         end
     end
@@ -2164,12 +2221,12 @@ end
 function jacobianp!(jacp::Q,y::U,p::W,t::Z,domain::D,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:Union{ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTAPhiDomain}}
     jacp.=0.0
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
-    
+
     Nspcs = length(cs)
     Nrxns = size(domain.rxnarray)[2]
-    
+
     jacobianpnsderiv!(jacp,y,p,t,domain,domain.rxnarray,cs,T,V,kfs,krevs,Nspcs,Nrxns)
-    
+
     @simd for ind in domain.constantspeciesinds
         @inbounds jacp[ind,:] .= 0.
     end
@@ -2195,7 +2252,7 @@ export getreactionindices
             push!(sensrxninds,rxnind)
         end
     end
-    
+
     sensrxns = Array{ElementaryReaction,1}(undef,length(sensrxninds))
     sensspcs = Array{Species,1}(undef,length(sensspcinds))
     sensspcnames = Array{String,1}(undef,length(sensspcinds))
@@ -2218,7 +2275,7 @@ export getreactionindices
         )
         @inbounds senstooriginspcind[i] = spcind
     end
-    
+
     for (i, rxnind) in enumerate(sensrxninds)
         rxn = domain.phase.reactions[rxnind]
         reactants = Array{Species,1}()
@@ -2248,14 +2305,14 @@ export getreactionindices
         )
         @inbounds senstooriginrxnind[i] = rxnind
     end
-    
+
     return sensspcs,sensrxns,sensspcnames,senstooriginspcind,senstooriginrxnind
 end
 
 @inline function getsensdomain(domain::D,ind::Int64) where {D<:AbstractDomain}
-    
+
     sensspcs,sensrxns,sensspcnames,senstooriginspcind,senstooriginrxnind = getsensspcsrxns(domain,ind)
-    
+
     initialconds = Dict{String,Float64}()
 
     for fn in fieldnames(typeof(domain))
@@ -2263,15 +2320,15 @@ end
             initialconds["$fn"] = getfield(domain,fn)
         end
     end
-    
+
     d = split(repr(typeof(domain)),"{")[1]
-    
+
     if occursin(".",d)
         d = Symbol(split(d,".")[2])
-    else 
+    else
         d = Symbol(d)
     end
-    
+
     if isa(domain.phase,IdealGas)
         return eval(d)(phase=IdealGas(sensspcs,sensrxns,name="phase"),initialconds=initialconds)[1],sensspcnames,senstooriginspcind,senstooriginrxnind
     else

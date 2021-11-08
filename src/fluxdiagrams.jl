@@ -81,6 +81,45 @@ function getfluxdiagram(bsol,t;centralspecieslist=Array{String,1}(),superimpose=
 
     return getdiagram(fd,1)
 end
+
+"""
+Generates and returns a flux diagram following the given ReactionPath object
+"""
+function getfluxdiagram(bsol,t,rp::ReactionPath; radius=0, kwargs...)
+    fd = makefluxdiagrams(bsol,[t]; centralspecieslist=bsol.names[rp.spcsinds],
+        radius=0, kwargs...)
+    return getdiagram(fd,1)
+end
+
+"""
+Generates and returns a flux diagram representing the branching the Branching
+object contains
+"""
+function getfluxdiagram(bsol,t,b::Branching; branchtol=1.0e-2, kwargs...)
+    spcname = bsol.names[b.spcind]
+    spclist = [bsol.names[b.spcind]]
+    for (i,rind) in enumerate(b.rxninds)
+        br = b.branchingratios[i]
+        if br > branchtol
+            rxn = bsol.reactions[rind]
+            if length(rxn.pairs[1]) > 1
+                pairs = rxn.pairs
+            else
+                pairs = getpairs(rxn)
+            end
+            for (reactant,product) in pairs
+                if reactant == spcname
+                    push!(spclist,product)
+                elseif product == spcname
+                    push!(spclist,reactant)
+                end
+            end
+        end
+    end
+    fd = makefluxdiagrams(bsol,[t]; centralspecieslist=spclist, radius=0, kwargs...)
+    return getdiagram(fd,1)
+end
+
 export getfluxdiagram
 
 """
@@ -108,9 +147,9 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         mkdir(outputdirectory)
     end
 
-    concs = concentrations(bsol)
-    
-    reactionrates = rates(bsol)
+    concs = reduce(vcat,[concentrations(bsol,t) for t in ts])
+
+    reactionrates = reduce(vcat,[rates(bsol,t) for t in ts])
 
     drawspecies(specieslist)
     speciesdirectory = joinpath(pwd(),"species")
@@ -133,7 +172,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
 
     speciesrates = zeros(numspecies,numspecies,length(ts))
     for (index,reaction) in enumerate(reactionlist)
-        rate = reactionrates[index]
+        rate = reactionrates[index,:]
         if length(reaction.pairs[1]) > 1
             pairs = reaction.pairs
         else
@@ -162,8 +201,28 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     if !superimpose && length(centralspecieslist) != 0
         for centralspeciesindex in centralspeciesindices
             push!(nodes,centralspeciesindex)
-            addadjacentnodes!(centralspeciesindex,nodes,edges,reactionlist,
-                maxreactionrates,maxspeciesrates,centralreactioncount,radius,Array{Int64,1}(),speciesnamelist)
+
+            if radius == 0
+                for reaction in reactionlist
+                    if length(reaction.pairs[1]) > 1
+                        pairs = reaction.pairs
+                    else
+                        pairs = getpairs(reaction)
+                    end
+                    for (reactant,product) in pairs
+                        rindex = findfirst(y->y==reactant,speciesnamelist)
+                        pindex = findfirst(y->y==product,speciesnamelist)
+                        if rindex in nodes && pindex in nodes
+                            if !((rindex,pindex) in edges) && !((pindex,rindex) in edges)
+                                push!(edges,(rindex,pindex))
+                            end
+                        end
+                    end
+                end
+            else
+                addadjacentnodes!(centralspeciesindex,nodes,edges,reactionlist,
+                    maxreactionrates,maxspeciesrates,centralreactioncount,radius,Array{Int64,1}(),speciesnamelist)
+            end
         end
     else
         for i = 1:numspecies^2
