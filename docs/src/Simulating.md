@@ -36,6 +36,22 @@ it might look more like:
 Dict(["T"=>450.0,"V"=>1.0e-6,"octane"=>6.154e-3,"oxygen"=>4.953e-6])
 ```
 
+## Defining an Interface object
+
+In many cases you will have connections between multiple domains in your system or between one domain and something outside the system. In these cases you need to define interfaces.
+
+Example Inlet:
+```
+Flow(t::Float64) = 10.0
+inletdict= Dict(["T"=>800.0,"P"=>10.0e5,"O2"=>0.21, "N2"=>0.79])
+inlet = Inlet(domain,inletdict,Flow
+```
+
+Example Reactive Interface:
+```
+inter,pinter = ReactiveInternalInterfaceConstantTPhi(domainliq,domaincat,interfacerxns,Tinter,areainter)
+```
+
 ## Defining a Domain
 
 A domain in RMS is a homogeneous volume that contains a single phase.  The `AbstractDomain` object defines how
@@ -47,26 +63,32 @@ and the temperature is integrated for.
 When constructing a Domain object constant concentration species can be defined (list of species names).  
 During integration the derivatives with respect to time of these species will be kept at zero.  
 
-Sensitivity analysis can also be requested on the Domain object.  
+Forward sensitivity analysis can also be requested on the Domain object by setting `sensitivity=true`. Note that adjoint sensitivity analysis is usually much faster and can be done as a postprocessing analysis after the simulation is complete without a need to set `sensitivity=true` during the simulation (this is discussed in the Analysis section). 
 
 `IdealDiluteSolution` example:  
 ```
-domain,y0 = ConstantTVDomain(phase=liq,initialconds=initialconds,constantspecies=["oxygen"])
+domain,y0,p = ConstantTVDomain(phase=liq,initialconds=initialconds,constantspecies=["oxygen"])
 ```
 
 `IdealGas` example:  
 ```
-domain,y0 = ConstantTPDomain(phase=ig,initialconds=initialconds;sensitivity=true)
+domain,y0,p = ConstantTPDomain(phase=ig,initialconds=initialconds;sensitivity=true)
 ```
+
 
 ## Defining a Reactor object
 
 The Reactor object exists primarily to automatically sets up the ODEProblem object for you to solve.  
-It takes the domain, the initial condition vector returned when constructing the domain and a time interval.  
+For single domain reactors it takes the domain, the initial condition vector returned when constructing the domain, a time interval and an array of any interface objects and returns a Reactor object. If your system has multiple domains you need to pass the domains, initialconditions time interval, array of interfaces and parameters with the domains, associated initial conditions and associated parameters as tuples in consistent order from domains to interfaces.
 
-Example:  
+Example single domain:  
 ```
-react = Reactor(domain,y0,(0.0,150.1))
+react = Reactor(domain,y0,(0.0,150.1),interfaces,p=p)
+```
+
+Example multiple domains:
+```
+react,y0,p = Reactor((domainliq,domaincat), (y0liq,y0cat), (0.0, 1.0e5), [inter], (pliq,pcat,pinter))
 ```
 
 ## Solving a Reactor object
