@@ -43,6 +43,7 @@ module ReactionMechanismSimulator
     include("Calculators/Viscosity.jl")
     include("Calculators/Thermovec.jl")
     include("Calculators/Ratevec.jl")
+    include("Calculators/kLAkH.jl")
     include("Species.jl")
     include("Solvent.jl")
     include("Reaction.jl")
