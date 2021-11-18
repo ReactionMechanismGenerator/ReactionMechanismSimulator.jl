@@ -236,7 +236,7 @@ struct Inlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real,FF<:Function} <: Abstrac
     H::Q
 end
 
-function Inlet(domain::V,conddict::Dict{String,X},F::FF) where {V,X<:Real,B<:Real,FF<:Function}
+function Inlet(domain::V,conddict::Dict{X1,X},F::FF) where {V,X1,X,B<:Real,FF<:Function}
     y = makespcsvector(domain.phase,conddict)
     T = conddict["T"]
     P = conddict["P"]
