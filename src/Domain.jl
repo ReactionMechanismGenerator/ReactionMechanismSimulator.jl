@@ -1695,19 +1695,19 @@ end
     for inter in interfaces
         if isa(inter,Inlet) && domain == inter.domain
             flow = inter.F(t)
+            @fastmath dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath dCvavedni = cpdivR[i]*R/N
-                @fastmath dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
                 @inbounds @fastmath ddnidTdt = flow*(-Us[i]/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
                 @inbounds jac[domain.indexes[3],i] += ddnidTdt
                 @inbounds @fastmath jac[domain.indexes[4],i] += P/T*ddnidTdt
             end
         elseif isa(inter,Outlet) && domain == inter.domain
             flow = inter.F(t)
+            @fastmath dTdt = (P*V/N*flow)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= flow/N
                 @inbounds @fastmath dCvavedni = cpdivR[i]*R/N
-                @fastmath dTdt = (P*V/N*flow)/(N*Cvave)
                 @fastmath ddnidTdt = -dTdt*(dCvavedni/Cvave)
                 @inbounds jac[domain.indexes[3],i] -= ddnidTdt
                 @inbounds @fastmath jac[domain.indexes[4],i] -= P/T*ddnidTdt
