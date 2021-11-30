@@ -93,14 +93,14 @@ react,y0,p = Reactor((domainliq,domaincat), (y0liq,y0cat), (0.0, 1.0e5), [inter]
 
 RMS purposefully exposes the solver interface provide users with all the options available from
 Julia's DifferentialEquations package.  The ODEProblem object is a field of the Reactor
-object `react.ode` and can be solved as the user desires.
+object `react.ode` and can be solved as the user desires. A recommended solver choice is stored in `react.recommendedsolver`. User can also specify their own choice of solver.
 
 Forward sensitivity analysis can also be requested on the Reactor object by setting `forwardsensitivities=true`. Note that adjoint sensitivity analysis is usually much faster and can be done as a postprocessing analysis after the simulation is complete without a need to set `forwardsensitivities=true` during the simulation (this is discussed in the Analysis section). 
 
 Example:
 
 ```
-sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12)
+sol = solve(react.ode,react.recommendedsolver,abstol=1e-20,reltol=1e-12)
 ```
 
 ```
