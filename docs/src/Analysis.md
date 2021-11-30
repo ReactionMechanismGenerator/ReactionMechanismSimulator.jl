@@ -60,7 +60,7 @@ species for reactions this is the index of the reaction.
 
 The function `rates` can be used to calculate the rates of all reactions at specific time points.  
 `rates(bsol,t)` will give the array of reaction rates at time `t`
-while `rates(bsol;ts)` will give a matrix of reaction rates at all times in `ts`.  
+while `rates(bsol;ts=ts)` will give a matrix of reaction rates at all times in `ts`.  
 Note that `ts` defaults to `bsol.sol.t`.  
 
 ### Adjoint Sensitivities
