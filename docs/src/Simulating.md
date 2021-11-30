@@ -63,8 +63,6 @@ and the temperature is integrated for.
 When constructing a Domain object constant concentration species can be defined (list of species names).  
 During integration the derivatives with respect to time of these species will be kept at zero.  
 
-Forward sensitivity analysis can also be requested on the Domain object by setting `sensitivity=true`. Note that adjoint sensitivity analysis is usually much faster and can be done as a postprocessing analysis after the simulation is complete without a need to set `sensitivity=true` during the simulation (this is discussed in the Analysis section). 
-
 `IdealDiluteSolution` example:  
 ```
 domain,y0,p = ConstantTVDomain(phase=liq,initialconds=initialconds,constantspecies=["oxygen"])
@@ -72,7 +70,7 @@ domain,y0,p = ConstantTVDomain(phase=liq,initialconds=initialconds,constantspeci
 
 `IdealGas` example:  
 ```
-domain,y0,p = ConstantTPDomain(phase=ig,initialconds=initialconds;sensitivity=true)
+domain,y0,p = ConstantTPDomain(phase=ig,initialconds=initialconds)
 ```
 
 
@@ -95,11 +93,18 @@ react,y0,p = Reactor((domainliq,domaincat), (y0liq,y0cat), (0.0, 1.0e5), [inter]
 
 RMS purposefully exposes the solver interface provide users with all the options available from
 Julia's DifferentialEquations package.  The ODEProblem object is a field of the Reactor
-object `react.ode` and can be solved as the user desires.  
+object `react.ode` and can be solved as the user desires.
 
-Example:  
+Forward sensitivity analysis can also be requested on the Reactor object by setting `forwardsensitivities=true`. Note that adjoint sensitivity analysis is usually much faster and can be done as a postprocessing analysis after the simulation is complete without a need to set `forwardsensitivities=true` during the simulation (this is discussed in the Analysis section). 
+
+Example:
+
 ```
 sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12)
+```
+
+```
+sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12;forwardsensitivities=true)
 ```
 
 In general CVODE_BDF tends to work well on these problems.  
