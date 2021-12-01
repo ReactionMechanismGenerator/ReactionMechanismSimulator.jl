@@ -10,11 +10,19 @@ properties of the solution.
 The Simulation object can be defined:  
 
 ```
-bsol = Simulation(sol,domain)
+bsol = Simulation(sol,domain,interfaces,p)
 ```
 
-where `sol` is the ODESolution object output by the DifferentialEquations package and `domain` is the
-domain `sol` corresponds to.  
+where `sol` is the ODESolution object output by the DifferentialEquations package, `domain` is the
+domain `sol` corresponds to, interfaces is the array of interface objects and p is the parameter vector.
+
+## The SystemSimulation Object
+
+When a system involves multiple domains a single Simulation object is insufficient. For these systems you need to construct a SystemSimulation object. This works in much the same way except that the domains should be listed as a tuple and the domain and interface ordering should be the same as that used when constructing the Reactor object. In theory the SystemSimulation object should be able to be used in place of a Simulation object in most places (If this is not the case and should be the case please make an issue!).
+
+```
+ssys = SystemSimulation(sol,(domainliq,domaincat,),interfaces,p);
+```
 
 ## Useful Properties
 
@@ -52,8 +60,20 @@ species for reactions this is the index of the reaction.
 
 The function `rates` can be used to calculate the rates of all reactions at specific time points.  
 `rates(bsol,t)` will give the array of reaction rates at time `t`
-while `rates(bsol;ts)` will give a matrix of reaction rates at all times in `ts`.  
+while `rates(bsol;ts=ts)` will give a matrix of reaction rates at all times in `ts`.  
 Note that `ts` defaults to `bsol.sol.t`.  
+
+### Adjoint Sensitivities
+
+Sensitivity values to a target species or thermodynamic variable can be computed from a `Simulation` or `SystemSimulation` object using the `getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol::Float64=1e-6,reltol::Float64=1e-3,normalize=true,kwargs...)` function. This computes the sensitivity with respect to the target at the final time point of bsol. It uses `solver`, `sensalg`, `abstol`, and `reltol` for the adjoint solve and by default will give the normalized sensitivity values (note these are molar sensitivities, concentration sensitivities can't be computed from a single adjoint pass). This is usually much faster than forward sensitivities.
+
+### Transitory Sensitivities
+
+Transitory sensitivity values can be computed using several different algorithms. `transitorysensitivitiesfullexact(sim::Simulation,t;tau=NaN,
+        normalized=true,solver=Sundials.CVODE_BDF(linear_solver=:GMRES),
+        abstol=1e-16,reltol=1e-6)` gives you the exact full matrix of transitory sensitivities using the forward sensitivity algorithm, while `transitorysensitivitiesfulltrapezoidal(sim,t;tau=NaN,normalized=true)` gives the approximate full matrix of transitory sensitivities using the trapezoidal method. `transitorysensitivitiesparamexact` and `transitorysensitivitiesparamtrapezoidal` are available for computing a single column of the matrix (with respect to a single parameter)). Lastly `transitorysensitivitiesadjointexact(sim::Simulation,t,name;tau=NaN,
+        normalized=true,solver=Sundials.CVODE_BDF(),sensalg=InterpolatingAdjoint(),
+        abstol=1e-16,reltol=1e-6)` is available for computing a single row of the matrix (sensitivity to a specified species with respect to all parameters). The adjoint algorithm is jacobian free if `tau` is specified and the solver is jacobian free. 
 
 ### Other Useful Properties
 
@@ -71,15 +91,19 @@ Mole fractions can be plotting using the `plotmolefractions` function
 `tol` at the points in `bsol.sol.t`.  
 `plotmolefractions(bsol,spcnames)` plots all the species with names in `spcnames` at the points in `bsol.sol.t`.  
 
-### Plotting Concentration Sensitivity
+### Plotting Forward Sensitivities
 
-Concentration sensitivities can be plotted using the `plotmaxthermosensitivity` and `plotmaxratesensitivity` functions.  
+Sensitivities (normalized molar sensitivities) can be plotted using the `plotmaxthermoforwardsensitivity` and `plotmaxrateforwardsensitivity` functions.  
 Both of these follow the same format:  
-`plotmaxthermosensitivity(bsol, spcname; N=0, tol= 1e-2)`
+`plotmaxthermoforwardsensitivity(bsol, spcname; N=0, tol= 1e-2)`
 `spcname` corresponds to the species sensitivities are being calculated for, `N` is the maximum number of
 sensitive species/reactions plotted (0 corresponds to all of them), sensitive species/reactions with sensitivities
 less than `tol` are not included in the plot.  Note that the thermo sensitivities are given in mol/kcal while the rate
 sensitivities are fully non-dimensionalized (as displayed on the plots).  
+
+### Plotting Adjoint Sensitivities
+
+Adjoint sensitivities can be plotted using the `plotthermoadjointsensitivities(bsol::Y,name::X,dps::Z;N=0,tol=0.01)` and `plotrateadjointsensitivities(bsol::Y,name::X,dps::Z;N=0,tol=0.01)` functions where `dps` is the normalized adjoint sensitivity values.
 
 ### Plotting ROPs
 
@@ -97,6 +121,15 @@ time points to plot at (otherwise defaults to `bsol.sol.t`), any reaction with f
 than `tol` * the largest absolute rate at every time point is excluded from the plot.  
 
 The analogous functions `plotradicalrops(bsol,t;N=0,tol=0.01)` and `plotradicalrops(bsol;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05)` are available for plotting the rops for the sum of all radicals.
+
+### Plotting Transitory Sensitivities
+
+Transitory sensitivities and be combusted and plotted using `plotrxntransitorysensitivities(bsol,name,t;dSdt=nothing,tau=nothing,tol=1e-3,N=0,rxntol=1e-6)`
+and `plotthermotransitorysensitivities(bsol,name,t;dSdt=nothing,tau=nothing,tol=1e-3,N=0)` where dSdt contains the transitory sensitivity values otherwise these values will be computed automatically using the trapezoidal method using the input `tau` or automatically selecting `tau` and the `rxntol` value. At most `N` reactions are included in the plot and the plot will not include reactions with absolute transitory sensitivities less than `tol` times the largest absolute value.
+
+### Plotting Time Scales
+
+The timescale distribution of a simulation at a point can be plotted using `plottimescales(sim,t;taumax=1e6,taumin=1e-18,taures=10.0^0.5,usediag=true)` or `plottimescales(Jy;taumax=1e6,taumin=1e-18,taures=10.0^0.5,usediag=true)` where `taumax`, `taumin` and `taures` control the bins. If `usediag=true` it will simply determine the timescales using the diagonal of the Jacobian otherwise it will compute and use the eigenvalues. In general we've observed no significant differences in distributions generated using the diagonal values vs the eigenvalues although there may be significant differences when the mechanism is small.
 
 ### Other Plots
 
