@@ -298,3 +298,8 @@ end
 
 export kLAkHCondensationEvaporationWithReservoir
 
+struct VolumetricFlowRateOutlet{V,F1<:Function} <: AbstractBoundaryInterface
+    domain::V
+    Vout::F1
+end
+export VolumetricFlowRateOutlet
