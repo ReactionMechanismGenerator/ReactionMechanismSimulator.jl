@@ -1473,6 +1473,8 @@ export calcthermo
             cond = kLAs.*inter.molefractions*inter.P/R/inter.T./kHs*V
 
             dydt[d.indexes[1]:d.indexes[2]] .-= (evap .- cond)
+        elseif isa(inter,VolumetricFlowRateOutlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .-= inter.Vout(t)*ns/V
         end
     end
 end
@@ -1496,6 +1498,9 @@ end
             cond = kLAs.*ns./kHs
 
             dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
+        elseif isa(inter,VolumetricFlowRateOutlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .-= inter.Vout(t)*ns/V
+            dydt[d.indexes[3]] -= inter.Vout(t)
         end
     end
 end
@@ -1535,6 +1540,11 @@ end
             dTdt = (P*V/N*flow)/(N*Cvave)
             dydt[d.indexes[3]] -= dTdt
             dydt[d.indexes[4]] -= flow*R*T/V + P/T*dTdt
+        elseif isa(inter,VolumetricFlowRateOutlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .-= inter.Vout(t)*ns/V
+            dTdt = (P*inter.Vout(t))/(N*Cvave)
+            dydt[d.indexes[3]] -= dTdt
+            dydt[d.indexes[4]] -= inter.Vout(t)*P/V + P/T*dTdt
         end
     end
 end
@@ -1571,6 +1581,9 @@ end
 
             flow = sum(cond)
             dydt[d.indexes[4]] -= flow*R*T/P
+        elseif isa(inter,VolumetricFlowRateOutlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .-= inter.Vout(t)*ns/V
+            dydt[d.indexes[4]] -= inter.Vout(t)
         end
     end
 end
@@ -1601,6 +1614,9 @@ end
 
             flow = sum(cond)
             dydt[d.indexes[3]] -= flow*R*T/P
+        elseif isa(inter,VolumetricFlowRateOutlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .-= inter.Vout(t)*ns/V
+            dydt[d.indexes[3]] -= inter.Vout(t)
         end
     end
 end
@@ -1641,6 +1657,11 @@ end
             dTdt = (P*V/N*flow)/(N*Cvave)
             dydt[d.indexes[3]] -= dTdt
             dydt[d.indexes[4]] -= flow*R*T/V + dTdt*P/T
+        elseif isa(inter,VolumetricFlowRateOutlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .-= inter.Vout(t)*ns/V
+            dTdt = (P*inter.Vout(t))/(N*Cvave)
+            dydt[d.indexes[3]] -= dTdt
+            dydt[d.indexes[4]] -= inter.Vout(t)*P/V + dTdt*P/T
         end
     end
 end
@@ -1679,6 +1700,9 @@ end
             flow = sum(cond)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
             dydt[d.indexes[4]] -= flow*R*T/P
+        elseif isa(inter,VolumetricFlowRateOutlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .-= inter.Vout(t)*ns/V
+            dydt[d.indexes[4]] -= inter.Vout(t)
         end
     end
 end
