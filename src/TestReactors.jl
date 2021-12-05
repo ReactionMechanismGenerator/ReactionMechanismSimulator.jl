@@ -448,4 +448,23 @@ end;
     @test concentrations(ssys,"OX",0.5e-5) ≈ 1.9165723392283484e-5 rtol=1e-5
     @test molefractions(ssys.sims[1],"H2O",1e-3) ≈ 0.12732345278036702 rtol=1e-5
 end;
+
+@testset "Test Crash Analysis" begin
+ #Define the phase (how species thermodynamic and kinetic properties calculated)
+    phaseDict = readinput("../src/testing/superminimal_broken.rms")
+    spcs = phaseDict["phase"]["Species"];
+    rxns = phaseDict["phase"]["Reactions"];
+    ig = IdealGas(spcs,rxns;name="gas");
+    initialconds = Dict(["T"=>1000.0,"P"=>1e5,"H2"=>0.67,"O2"=>0.33]) #Set simulation Initial Temp and Pressure
+    domain,y0,p = ConstantTPDomain(phase=ig,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
+
+    react = Reactor(domain,y0,(0.0,150.11094);p=p) #Create the reactor object
+    sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
+    sim = Simulation(sol,domain,[],p);
+
+    dmech = analyzecrash(sim)
+    @test length(dmech.rxns) == 1
+    @test length(dmech.spcs) == 4
+    @test dmech.rxns[1].index == 11
+end;
 end;
