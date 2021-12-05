@@ -1466,6 +1466,13 @@ export calcthermo
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.y.*inter.F(t)
         elseif isa(inter,Outlet) && d == inter.domain
             dydt[d.indexes[1]:d.indexes[2]] .-= inter.F(t).*ns./N
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
+            kLAs = map.(inter.kLAs,T)
+            kHs = map.(inter.kHs,T)
+            evap = kLAs.*ns
+            cond = kLAs.*inter.molefractions*inter.P/R/inter.T./kHs*V
+
+            dydt[d.indexes[1]:d.indexes[2]] .-= (evap .- cond)
         end
     end
 end
@@ -1482,6 +1489,13 @@ end
         elseif isa(inter,Outlet) && d == inter.domain
             dydt[d.indexes[1]:d.indexes[2]] .-= inter.F(t).*ns./N
             dydt[d.indexes[3]] -= inter.F(t)*R*T/P
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+            evap = kLAs.*inter.cs*V
+            cond = kLAs.*ns./kHs
+
+            dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
         end
     end
 end
@@ -1502,6 +1516,22 @@ end
         elseif isa(inter,Outlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
+            dTdt = (P*V/N*flow)/(N*Cvave)
+            dydt[d.indexes[3]] -= dTdt
+            dydt[d.indexes[4]] -= flow*R*T/V + P/T*dTdt
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+            evap = kLAs.*inter.cs*V
+            cond = kLAs.*ns./kHs
+            dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
+
+            flow = sum(evap)
+            dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            dydt[d.indexes[3]] += dTdt
+            dydt[d.indexes[4]] += flow*R*T/V + P/T*dTdt
+
+            flow = sum(cond)
             dTdt = (P*V/N*flow)/(N*Cvave)
             dydt[d.indexes[3]] -= dTdt
             dydt[d.indexes[4]] -= flow*R*T/V + P/T*dTdt
@@ -1527,6 +1557,20 @@ end
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
             dydt[d.indexes[4]] -= flow*R*T/P
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+            evap = kLAs.*inter.cs*V
+            cond = kLAs.*ns./kHs
+            dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
+
+            flow = sum(evap)
+            dTdt = flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
+            dydt[d.indexes[3]] += dTdt
+            dydt[d.indexes[4]] += flow*R*T/P + dTdt*V/T
+
+            flow = sum(cond)
+            dydt[d.indexes[4]] -= flow*R*T/P
         end
     end
 end
@@ -1544,6 +1588,18 @@ end
         elseif isa(inter,Outlet) && d == inter.domain
             flow = inter.F(t)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow*ns./N
+            dydt[d.indexes[3]] -= flow*R*T/P
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+            evap = kLAs.*inter.cs*V
+            cond = kLAs.*ns./kHs
+            dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
+
+            flow = sum(evap)
+            dydt[d.indexes[3]] += flow*R*T/P
+
+            flow = sum(cond)
             dydt[d.indexes[3]] -= flow*R*T/P
         end
     end
@@ -1569,6 +1625,22 @@ end
             dTdt = (P*V/N*flow)/(N*Cvave)
             dydt[d.indexes[3]] -= dTdt
             dydt[d.indexes[4]] -= flow*R*T/V + dTdt*P/T
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+            evap = kLAs.*inter.cs*V
+            cond = kLAs.*ns./kHs
+            dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
+
+            flow = sum(evap)
+            dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            dydt[d.indexes[3]] += dTdt
+            dydt[d.indexes[4]] += flow*R*T/V + dTdt*P/T
+
+            flow = sum(cond)
+            dTdt = (P*V/N*flow)/(N*Cvave)
+            dydt[d.indexes[3]] -= dTdt
+            dydt[d.indexes[4]] -= flow*R*T/V + dTdt*P/T
         end
     end
 end
@@ -1590,6 +1662,21 @@ end
             dydt[d.indexes[4]] += flow*R*T/P + dTdt*V/T
         elseif isa(inter,Outlet) && d == inter.domain
             flow = inter.F(t)
+            dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
+            dydt[d.indexes[4]] -= flow*R*T/P
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+            evap = kLAs.*inter.cs*V
+            cond = kLAs.*ns./kHs
+            dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
+
+            flow = sum(evap)
+            dTdt = flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
+            dydt[d.indexes[3]] += dTdt
+            dydt[d.indexes[4]] += flow*R*T/P + dTdt*V/T
+
+            flow = sum(cond)
             dydt[d.indexes[1]:d.indexes[2]] .-= flow.*ns./N
             dydt[d.indexes[4]] -= flow*R*T/P
         end
