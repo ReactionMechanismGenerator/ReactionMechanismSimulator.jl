@@ -1757,6 +1757,16 @@ end
                 @inbounds @fastmath jac[i,i] -= flow/N
             end
             @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]] .-= -flow.*ns/(N*V)
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+
+            @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]] .+= -kLAs.*inter.cs/(V*V)
+
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
+            end
+            @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]] .-= kLAs./kHs*R*T/P
         end
     end
 end
@@ -1798,6 +1808,30 @@ end
                 @fastmath ddnidTdt = -dTdt*(dCvavedni/Cvave)
                 @inbounds jac[domain.indexes[3],i] -= ddnidTdt
                 @inbounds @fastmath jac[domain.indexes[4],i] -= P/T*ddnidTdt
+            end
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+            evap = kLAs.*inter.cs*V
+            cond = kLAs.*ns./kHs
+
+            flow = sum(evap)
+            @fastmath dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath dCvavedni = cpdivR[i]*R/N
+                @inbounds @fastmath ddnidTdt = flow*(-Us[i]/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
+                @inbounds jac[domain.indexes[3],i] += ddnidTdt
+                @inbounds @fastmath jac[domain.indexes[4],i] += P/T*ddnidTdt
+            end
+
+            flow = sum(cond)
+            @fastmath dTdt = (P*V/N*flow)/(N*Cvave)
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
+                @inbounds @fastmath dCvavedni = cpdivR[i]*R/N
+                @fastmath ddnidTdt = (P*V/N*kLAs[i]/kHs[i])/(N*Cvave)-dTdt*(dCvavedni/Cvave)
+                @inbounds jac[domain.indexes[3],i] -= ddnidTdt
+                @inbounds @fastmath jac[domain.indexes[4],i] -= kLAs[i]/kHs[i]*R*T/V + P/T*ddnidTdt
             end
         end
     end
@@ -1849,6 +1883,29 @@ end
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= flow/N
             end
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+            evap = kLAs.*inter.cs*V
+            
+            flow = sum(evap)
+            @fastmath H = dot(Hs,ns)/N
+            @fastmath dTdt = flow*(inter.H - H)/(N*Cpave)
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath dCpavedni = cpdivR[i]*R/N
+                @inbounds @fastmath ddnidTdt = flow*(-Hs[i]/N)/(N*Cpave)-dTdt*(dCpavedni/Cpave)
+                @inbounds jac[domain.indexes[3],i] += ddnidTdt
+                @inbounds @fastmath jac[domain.indexes[4],i] += V/T*ddnidTdt
+            end
+            @fastmath ddVdTdt = flow*H/V/(N*Cpave)
+            @inbounds jac[domain.indexes[3],domain.indexes[4]] += ddVdTdt
+            @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]] .+= kLAs.*inter.cs
+            @inbounds @fastmath jac[domain.indexes[4],domain.indexes[4]] += flow/N + dTdt/T + V/T*ddVdTdt
+
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
+            end
+            @views @inbounds @fastmath jac[domain.indexes[4],domain.indexes[1]:domain.indexes[2]] .-= kLAs./kHs*R*T/P
         end
     end
 
@@ -1876,6 +1933,16 @@ end
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= flow/N
             end
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+
+            @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]] .+= -kLAs.*inter.cs/(V*V)
+
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
+            end
+            @views @inbounds @fastmath jac[domain.indexes[3],domain.indexs[1]:domain.indexes[2]] .-= kLAs./kHs*R*T/P
         end
     end
 
@@ -1920,6 +1987,31 @@ end
                 @fastmath ddnidTdt = -dTdt*(dCvavedni/Cvave)
                 @inbounds jac[domain.indexes[3],i] -= ddnidTdt
                 @inbounds @fastmath jac[domain.indexes[4],i] -= P/T*ddnidTdt
+            end
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+            evap = kLAs.*inter.cs*V
+            cond = kLAs.*ns./kHs
+            
+            flow = sum(evap)
+            @fastmath dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath dCvavedni = cpdivR[i]*R/N
+                @inbounds @fastmath ddnidTdt = flow*(-Us[i]/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
+                @inbounds jac[domain.indexes[3],i] += ddnidTdt
+                @inbounds @fastmath jac[domain.indexes[4],i] += P/T*ddnidTdt
+            end
+
+
+            flow = sum(cond)
+            @fastmath dTdt = (P*V/N*flow)/(N*Cvave)
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
+                @inbounds @fastmath dCvavedni = cpdivR[i]*R/N
+                @fastmath ddnidTdt = (P*V/N*kLAs[i]/kHs[i])/(N*Cvave)-dTdt*(dCvavedni/Cvave)
+                @inbounds jac[domain.indexes[3],i] -= ddnidTdt
+                @inbounds @fastmath jac[domain.indexes[4],i] -= kLAs[i]/kHs[i]*R*T/V + P/T*ddnidTdt
             end
         end
     end
@@ -1973,6 +2065,29 @@ end
                 @inbounds @fastmath jac[i,i] -= flow/N
             end
             @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]] .-= -flow.*ns./N/V
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
+            kLAs = map.(inter.kLAs,inter.T)
+            kHs = map.(inter.kHs,inter.T)
+            evap = kLAs.*inter.cs*V
+            
+            flow = sum(evap)
+            @fastmath H = dot(Hs,ns)/N
+            @fastmath dTdt = flow*(inter.H - H)/(N*Cpave)
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath dCpavedni = cpdivR[i]*R/N
+                @inbounds @fastmath ddnidTdt = flow*(-Hs[i]/N)/(N*Cpave)-dTdt*(dCpavedni/Cpave)
+                @inbounds jac[domain.indexes[3],i] += ddnidTdt
+                @inbounds @fastmath jac[domain.indexes[4],i] += V/T*ddnidTdt
+            end
+            @fastmath ddVdTdt = flow*H/V/(N*Cpave)
+            @inbounds jac[domain.indexes[3],domain.indexes[4]] += ddVdTdt
+            @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]] .+= kLAs.*inter.cs
+            @inbounds @fastmath jac[domain.indexes[4],domain.indexes[4]] += flow/N + dTdt/T + V/T*ddVdTdt
+
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
+            end
+            @views @inbounds @fastmath jac[domain.indexes[4],domain.indexes[1]:domain.indexes[2]] .-= kLAs./kHs*R*T/P
         end
     end
 
@@ -1995,6 +2110,13 @@ end
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= flow/N
                 @inbounds @fastmath jac[i,:] .+= flow*ns[i]/(N*N)
+            end
+        elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
+            kLAs = map.(inter.kLAs,T)
+
+            #evaporation
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath jac[i,i] -= kLAs[i]
             end
         end
     end
