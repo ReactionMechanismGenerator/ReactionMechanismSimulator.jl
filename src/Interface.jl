@@ -258,7 +258,7 @@ kLAkHCondensationEvaporationWithReservoir adds evaporation and condensation to
 (1) a liquid phase domain with a constant composition vapor resevoir, where molefractions, P, and T need to be specified, or
 (2) a gas phase domain with a constant composition liquid resevoir, where number of moles, V, and T need to be specified.
 kLA and kH are used to model cond/evap. 
-kLA is liquid volumetric mass transfer coefficient with unit mol/m^3 , and kH is Henry's law constant.
+kLA is liquid volumetric mass transfer coefficient with unit 1/s , and kH is Henry's law constant.
 """
 
 struct kLAkHCondensationEvaporationWithReservoir{S,V1<:AbstractArray,V2<:Real,V3<:Real,V4<:AbstractArray,V5<:Real,V6<:AbstractArray,V7<:AbstractArray} <: AbstractBoundaryInterface
