@@ -503,7 +503,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         name = sim.names[index]
         @info "at time $t s, species $name was added to model core to avoid singularity"
         push!(invalidobjects,sim.species[index])
-        return (false,true)
+        return (false,true,0.0)
     end
     
     if branchfactor != 0.0 && !firsttime
