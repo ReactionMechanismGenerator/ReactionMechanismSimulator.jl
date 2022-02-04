@@ -15,6 +15,7 @@ export AbstractReaction
     radicalchange::Int64 = -100
     reversible::Bool = true
     pairs::V5 = @SArray [@SArray [""]]
+    comment::String = ""
 end
 export ElementaryReaction
 

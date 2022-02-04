@@ -19,6 +19,7 @@ struct EmptySpecies <: AbstractSpecies end
     radius::Float64 = 0.0
     radicalelectrons::Int64 = -100
     molecularweight::Float64 = 0.0
+    comment::String = ""
 end
 export Species
 
