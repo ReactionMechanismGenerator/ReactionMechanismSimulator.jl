@@ -499,9 +499,10 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     if charrate == 0 && length(edgereactionrates) > 0
         maxspeciesindex = argmax(edgespeciesrates)
         maxspeciesrate = edgespeciesrates[maxspeciesindex]
-        name = sim.names[maxspeciesindex]
+        index = edgespcsinds[maxspeciesindex]
+        name = sim.names[index]
         @info "at time $t s, species $name was added to model core to avoid singularity"
-        push!(invalidobjects,sim.species[maxspeciesindex])
+        push!(invalidobjects,sim.species[index])
         return (false,true)
     end
     
