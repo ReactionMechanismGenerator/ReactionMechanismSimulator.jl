@@ -2,3 +2,4 @@
 *.png
 *.dot
 docs/build/
+.DS_Store
