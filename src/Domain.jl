@@ -1774,8 +1774,53 @@ end
         @inbounds jac[ind,:] .= 0.
     end
 
+    ########################## General derivation for inlet type interface for ConstantTPDomain ###################
+    # To get d/dni (dV/dt) for in ConstantPDomain:
+        # V = N*R*T/P
+        # dV/dt = dNdt*R*T/P = flow*R*T/P
+        # d/dni (dV/dt) = 0
+
+    # To get d/dV (dV/dt) = 0
+
+    # d/dV (dni/dt) = dflow_i/dV
+
+    # tldr:
+    # d/dV (dni/dt) = dflow_i/dV
+
+    ############################ General derivation for outlet type interface for ConstantTPDomain #################
+    # To get d/dni (dV/dt) ConstantPDomain:
+        # V = N*R*T/P
+        # dV/dt = dNdt*R*T/P = flow*R*T/P
+        # d/dni (dV/dt) = d/dni (flow*R*T/P) = dflowdni*R*T/P
+
+    # d/dV(dV/dt) = dflowdV *R*T/P
+
+    # d/dV(dni/dt) = dflow_i/dV
+
+    # tldr:
+    # d/dni(dV/dt) = dflow/dni*R*T/P
+    # d/dV(dV/dt) = dflow/dV *R*T/P
+    # d/dV(dni/dt) = dflow_i/dV 
+
     @simd for inter in interfaces
-        if isa(inter,Outlet) && domain == inter.domain
+
+        if isa(inter,Inlet) && domain == inter.domain
+            # inlet
+            # d/dV(dni/dt) = dflow_i/dV
+            # flow_i = flow*inter.y
+            # dflow_i/dV = 0
+            nothing
+
+        elseif isa(inter,Outlet) && domain == inter.domain
+            # outlet
+            # d/dni(dV/dt) = dflow/dni*R*T/P = 0
+            # d/dV(dV/dt) = dflow/dV *R*T/P = 0
+            # d/dV(dni/dt) = dflow_i/dV
+            # flow_i = flow*ns[i]/N
+            # N = P*V/(R*T)
+            # dN/dV = P/(R*T)
+            # dflow_i/dV = -flow*ns[i]/N^2 *P/(R*T) = -flow*ns[i]/N/V
+
             flow = inter.F(t)
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= flow/N
@@ -1785,13 +1830,37 @@ end
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
 
+            # evaporation
+            # inlet
+            # d/dV(dni/dt) = dflow_i/dV
+            # flow = sum(inter.kLAs.*inter.cs)/V
+            # flow_i = inter.kLAs[i]*inter.cs[i]/V
+            # d/dV(dni/dt) = dflow_i/dV = -inter.kLAs[i]*inter.cs[i]/(V*V)
             @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]] .+= -kLAs.*inter.cs/(V*V)
 
+            # condensation
+            # outlet
+            # d/dni(dV/dt) = dflow/dni*R*T/P = kLAs[i]/kHs[i]*R*T/P
+            # d/dV(dV/dt) = dflow/dV *R*T/P = 0
+            # d/dV(dni/dt) = dflow_i/dV = 0
+            # flow = sum(kLAs.*ns./kHs)
+            # dflow/dni = kLAs[i]/kHs[i]
+            # dflow/dV = 0
+            # dflow_i/dV = 0
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
             end
             @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]] .-= kLAs./kHs*R*T/P
         elseif isa(inter,VolumetricFlowRateOutlet) && d == inter.domain
+            # outlet
+            # d/dni(dV/dt) = dflow/dni*R*T/P = inter.Vout(t)/V*R*T/P = inter.Vout(t)/N
+            # d/dV(dV/dt) = dflow/dV *R*T/P = -inter.Vout(t)*sum(ns)/V^2 *R*T/P = -inter.Vout(t)/V*sum(ns)/N
+            # d/dV(dni/dt) = dflow_i/dV
+            # flow = inter.Vout(t)/V*sum(ns)
+            # dflow/dni = inter.Vout(t)/V
+            # dflow/dV = -inter.Vout(t)*sum(ns)/V^2
+            # flow_i = inter.Vout(t)/V*ns[i]
+            # dflow_i/dV = -inter.Vout(t)*ns[i]/V^2
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= inter.Vout(t)/V
             end
