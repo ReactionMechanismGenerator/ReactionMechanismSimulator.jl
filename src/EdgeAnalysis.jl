@@ -236,7 +236,7 @@ function getkeyselectioninds(coreedgedomain::AbstractDomain,coreedgeinters,domai
     edgespcsinds = length(domain.phase.species)+1:length(coreedgedomain.phase.species)
     corerxninds = zeros(Int64,length(domain.phase.reactions))
     corerxncount = 1
-    edgerxninds = zeros(Int64,length(coreedgedomain.phase.reactions))
+    edgerxninds = zeros(Int64,length(coreedgedomain.phase.reactions)-length(domain.phase.reactions))
     edgerxncount = 1
     coretoedgerxnmap = Dict{Int64,Int64}()
     for (j,rxn) in enumerate(coreedgedomain.phase.reactions)
