@@ -35,6 +35,43 @@ jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 end;
 
+    @testset "Test liquid phase Constant T Constant V reactor simulation with kLAkHCondensationEvaporationWithReservoir" begin
+        phaseDict = readinput("../src/testing/constantkLAkH.rms")
+
+        spcs = phaseDict["phase"]["Species"]
+        rxns = phaseDict["phase"]["Reactions"]
+        solvent = phaseDict["Solvents"][1]
+
+        liq = IdealDiluteSolution(spcs,rxns,solvent;name="phase",diffusionlimited=true)
+
+        initialconds = Dict(["T"=>450.0,"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
+        domain,y0,p = ConstantTVDomain(phase=liq,initialconds=initialconds)
+        conds = Dict(["T"=>450.0,"P"=>1.e5,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
+        interfaces = [kLAkHCondensationEvaporationWithReservoir(domain,conds)]
+        react = Reactor(domain,y0,(0.0,140000.01),interfaces;p=p)
+
+        sol1 = solve(react.ode,react.recommendedsolver,abstol=1e-18,reltol=1e-6);
+
+        phaseDict = readinput("../src/testing/TdependentkLAkH.rms")
+        spcs = phaseDict["phase"]["Species"]
+        rxns = phaseDict["phase"]["Reactions"]
+        solvent = phaseDict["Solvents"][1]
+        liq = IdealDiluteSolution(spcs,rxns,solvent;name="phase",diffusionlimited=true)
+
+        initialconds = Dict(["T"=>450.0,"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
+        domain,y0,p = ConstantTVDomain(phase=liq,initialconds=initialconds)
+        conds = Dict(["T"=>450.0,"P"=>1.e5,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
+        interfaces = [kLAkHCondensationEvaporationWithReservoir(domain,conds)]
+        react = Reactor(domain,y0,(0.0,140000.01),interfaces;p=p) #Create the reactor object
+
+        sol2 = solve(react.ode,react.recommendedsolver,abstol=1e-18,reltol=1e-6);
+        
+        spcnames = getfield.(liq.species,:name)
+        octaneind = findfirst(isequal("octane"),spcnames)
+        @test sol1(32977.61568) ≈ sol2(32977.61568)
+
+        end;
+
 @testset "Test liquid phase Parametrized T Constant V reactor jacobian" begin
 #Parametrized T constant V Ideal Dilute Liquid
 initialconds = Dict(["ts"=>[0.,600.,1200.],"T"=>[450.0,490.,500.],"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
