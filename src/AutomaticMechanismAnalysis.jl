@@ -389,14 +389,14 @@ Generate a string report from the analysis objects
 function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
     spcname = sim.names[ra.spcind]
     rstr = getrxnstr(sim.domain.phase.reactions[ra.rxnind])
-    sens = ra.sens
+    sens = round(ra.sens,sigdigits=6)
     s = "Analyzing $spcname sensitivity to $rstr at a value of $sens \n"
     s *= "\n"
     for branch in ra.branchings
         sname = sim.names[branch.spcind]
         s *= "Key branching for $sname \n"
         for i = 1:length(branch.rxninds)+1
-            br = branch.branchingratios[i]
+            br = round(branch.branchingratios[i],sigdigits=6)
             if br < branchingcutoff
                 break
             else
@@ -414,7 +414,7 @@ function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
             s *= "Associated key reaction path in $spname loss direction \n"
             for i = 1:length(rp.rxninds)
                 rstr = getrxnstr(sim.reactions[rp.rxninds[i]])
-                br = rp.branchfracts[i]
+                br = round(rp.branchfracts[i],sigdigits=6)
                 s *= "$rstr at path branching of $br \n"
             end
         else
@@ -422,14 +422,14 @@ function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
             revinds = reverse(rp.rxninds)
             for i = 1:length(rp.rxninds)
                 rstr = getrxnstr(sim.reactions[revinds[i]])
-                br = rp.branchfracts[i]
+                br = round(rp.branchfracts[i],sigdigits=6)
                 s *= "$rstr at path step branching of $br \n"
             end
         end
         s *= "\n"
     end
     if abs(ra.radprodlossfract) > radbranchfract
-        radfract = abs(ra.radprodlossfract)
+        radfract = round(abs(ra.radprodlossfract),sigdigits=6)
         if ra.radprodlossfract > 0
             s *= "Reaction accounts for $radfract of the net radical production \n"
         else
