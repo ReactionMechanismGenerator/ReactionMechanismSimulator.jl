@@ -236,7 +236,7 @@ struct Inlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real,FF<:Function} <: Abstrac
     H::Q
 end
 
-function Inlet(domain::V,conddict::Dict{String,X},F::FF) where {V,X<:Real,B<:Real,FF<:Function}
+function Inlet(domain::V,conddict::Dict{X1,X},F::FF) where {V,X1,X,B<:Real,FF<:Function}
     y = makespcsvector(domain.phase,conddict)
     T = conddict["T"]
     P = conddict["P"]
@@ -252,3 +252,54 @@ struct Outlet{V,FF<:Function} <: AbstractBoundaryInterface
     F::FF
 end
 export Outlet
+
+"""
+kLAkHCondensationEvaporationWithReservoir adds evaporation and condensation to
+(1) a liquid phase domain with a constant composition vapor resevoir, where molefractions, P, and T need to be specified, or
+(2) a gas phase domain with a constant composition liquid resevoir, where number of moles, V, and T need to be specified.
+kLA and kH are used to model cond/evap. 
+kLA is liquid volumetric mass transfer coefficient with unit 1/s , and kH is Henry's law constant.
+"""
+
+struct kLAkHCondensationEvaporationWithReservoir{S,V1<:AbstractArray,V2<:Real,V3<:Real,V4<:AbstractArray,V5<:Real,V6<:AbstractArray,V7<:AbstractArray} <: AbstractBoundaryInterface
+    domain::S
+    molefractions::V1
+    T::V2
+    P::V3
+    cs::V4
+    H::V5
+    kLAs::V6
+    kHs::V7
+end
+
+function kLAkHCondensationEvaporationWithReservoir(domain::D,conddict::Dict{X1,X}) where {D,X1,X}
+    y = makespcsvector(domain.phase,conddict)
+    molefractions = y./sum(y)
+    T = conddict["T"]
+    H = dot(getEnthalpy.(getfield.(domain.phase.species,:thermo),T),molefractions)
+    kLAs = [T -> kLA(T=T) for kLA in getfield.(domain.phase.species,:liquidvolumetricmasstransfercoefficient)]
+    kHs = [T -> kH(T=T) for kH in getfield.(domain.phase.species,:henrylawconstant)]
+
+    if isa(domain.phase,IdealDiluteSolution)
+        if !haskey(conddict,"P")
+            @error "P needs to be specified for the vapor resevoir over the liquid phase domain"
+        end
+        P = conddict["P"]
+        return kLAkHCondensationEvaporationWithReservoir(domain,molefractions,T,P,Array{Float64,1}(),H,kLAs,kHs)
+    elseif isa(domain.phase,IdealGas)
+        if !haskey(conddict,"V")
+            @error "V needs to be specified for the liquid resevoir under the gas phase domain"
+        end
+        V = conddict["V"]
+        cs = y./V
+        return kLAkHCondensationEvaporationWithReservoir(domain,Array{Float64,1}(),T,1e8,cs,H,kLAs,kHs)
+    end
+end
+
+export kLAkHCondensationEvaporationWithReservoir
+
+struct VolumetricFlowRateOutlet{V,F1<:Function} <: AbstractBoundaryInterface
+    domain::V
+    Vout::F1
+end
+export VolumetricFlowRateOutlet

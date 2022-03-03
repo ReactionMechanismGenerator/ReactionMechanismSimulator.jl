@@ -12,11 +12,13 @@ module Calc
     include("Calculators/Viscosity.jl")
     include("Calculators/Thermovec.jl")
     include("Calculators/Ratevec.jl")
+    include("Calculators/kLAkH.jl")
 end
 module Spc
     include("Calculators/ThermoUncertainty.jl")
     include("Calculators/Thermo.jl")
     include("Calculators/Diffusion.jl")
+    include("Calculators/kLAkH.jl")
     include("Species.jl")
 end
 module Rxn
@@ -25,6 +27,7 @@ module Rxn
     include("Calculators/Thermo.jl")
     include("Calculators/Diffusion.jl")
     include("Calculators/Rate.jl")
+    include("Calculators/kLAkH.jl")
     include("Species.jl")
     include("Reaction.jl")
 end

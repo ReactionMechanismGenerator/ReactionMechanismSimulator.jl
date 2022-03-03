@@ -6,7 +6,7 @@ export AbstractSpecies
 
 struct EmptySpecies <: AbstractSpecies end
 
-@with_kw struct Species{T<:AbstractThermo,N<:AbstractDiffusivity} <: AbstractSpecies
+@with_kw struct Species{T<:AbstractThermo,N<:AbstractDiffusivity,N1<:AbstractHenryLawConstant,N2<:AbstractLiquidVolumetricMassTransferCoefficient} <: AbstractSpecies
     name::String
     index::Integer
     inchi::String = ""
@@ -19,6 +19,8 @@ struct EmptySpecies <: AbstractSpecies end
     radius::Float64 = 0.0
     radicalelectrons::Int64 = -100
     molecularweight::Float64 = 0.0
+    henrylawconstant::N1 = EmptyHenryLawConstant()
+    liquidvolumetricmasstransfercoefficient::N2 = EmptyLiquidVolumetricMassTransferCoefficient()
 end
 export Species
 

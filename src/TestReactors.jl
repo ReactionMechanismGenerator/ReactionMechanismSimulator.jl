@@ -35,6 +35,43 @@ jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 end;
 
+    @testset "Test liquid phase Constant T Constant V reactor simulation with kLAkHCondensationEvaporationWithReservoir" begin
+        phaseDict = readinput("../src/testing/constantkLAkH.rms")
+
+        spcs = phaseDict["phase"]["Species"]
+        rxns = phaseDict["phase"]["Reactions"]
+        solvent = phaseDict["Solvents"][1]
+
+        liq = IdealDiluteSolution(spcs,rxns,solvent;name="phase",diffusionlimited=true)
+
+        initialconds = Dict(["T"=>450.0,"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
+        domain,y0,p = ConstantTVDomain(phase=liq,initialconds=initialconds)
+        conds = Dict(["T"=>450.0,"P"=>1.e5,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
+        interfaces = [kLAkHCondensationEvaporationWithReservoir(domain,conds)]
+        react = Reactor(domain,y0,(0.0,140000.01),interfaces;p=p)
+
+        sol1 = solve(react.ode,react.recommendedsolver,abstol=1e-18,reltol=1e-6);
+
+        phaseDict = readinput("../src/testing/TdependentkLAkH.rms")
+        spcs = phaseDict["phase"]["Species"]
+        rxns = phaseDict["phase"]["Reactions"]
+        solvent = phaseDict["Solvents"][1]
+        liq = IdealDiluteSolution(spcs,rxns,solvent;name="phase",diffusionlimited=true)
+
+        initialconds = Dict(["T"=>450.0,"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
+        domain,y0,p = ConstantTVDomain(phase=liq,initialconds=initialconds)
+        conds = Dict(["T"=>450.0,"P"=>1.e5,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
+        interfaces = [kLAkHCondensationEvaporationWithReservoir(domain,conds)]
+        react = Reactor(domain,y0,(0.0,140000.01),interfaces;p=p) #Create the reactor object
+
+        sol2 = solve(react.ode,react.recommendedsolver,abstol=1e-18,reltol=1e-6);
+        
+        spcnames = getfield.(liq.species,:name)
+        octaneind = findfirst(isequal("octane"),spcnames)
+        @test sol1(32977.61568) ≈ sol2(32977.61568)
+
+        end;
+
 @testset "Test liquid phase Parametrized T Constant V reactor jacobian" begin
 #Parametrized T constant V Ideal Dilute Liquid
 initialconds = Dict(["ts"=>[0.,600.,1200.],"T"=>[450.0,490.,500.],"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])
@@ -255,7 +292,7 @@ dSdttrapetrue = [0.0, 0.0, 0.0, -0.0, -0.0, 0.0, -0.0, 0.0, 0.0, 0.0, -0.0, 0.0,
 
 out = analyzespc(sim,"ethane",0.01)
 s = getrxnanalysisstring(sim,out[1])
-@test s == "Analyzing ethane sensitivity to HO2+ethane<=>H2O2+C2H5 at a value of -0.03798141508230999 \n\nKey branching for HO2 \nHO2+HO2<=>O2+H2O2 had a branching ratio of 0.6323575668565247 \nHO2+ethane<=>H2O2+C2H5 had a branching ratio of 0.3584435897110888 \n\nKey branching for ethane \nOH+ethane<=>H2O+C2H5 had a branching ratio of 0.5761454212672592 \nHO2+ethane<=>H2O2+C2H5 had a branching ratio of 0.328068089518704 \nH+ethane<=>H2+C2H5 had a branching ratio of 0.03139887356374956 \nO2+ethane<=>HO2+C2H5 had a branching ratio of 0.029145360943819646 \nCH3+CH3<=>ethane had a branching ratio of 0.016514678049590094 \nCH3+ethane<=>CH4+C2H5 had a branching ratio of 0.01453339929627409 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068089518704 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.9193407690555255 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068089518704 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.9193407690555255 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068089518704 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.9193407690555255 \n\n\n"
+@test s == "Analyzing ethane sensitivity to HO2+ethane<=>H2O2+C2H5 at a value of -0.0379814 \n\nKey branching for HO2 \nHO2+HO2<=>O2+H2O2 had a branching ratio of 0.632358 \nHO2+ethane<=>H2O2+C2H5 had a branching ratio of 0.358444 \n\nKey branching for ethane \nOH+ethane<=>H2O+C2H5 had a branching ratio of 0.576145 \nHO2+ethane<=>H2O2+C2H5 had a branching ratio of 0.328068 \nH+ethane<=>H2+C2H5 had a branching ratio of 0.0313989 \nO2+ethane<=>HO2+C2H5 had a branching ratio of 0.0291454 \nCH3+CH3<=>ethane had a branching ratio of 0.0165147 \nCH3+ethane<=>CH4+C2H5 had a branching ratio of 0.0145334 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.919341 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.919341 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.919341 \n\n\n"
 end;
 
 #Parametrized T and P Ideal Gas
