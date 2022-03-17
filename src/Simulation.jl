@@ -304,15 +304,19 @@ function rops!(ropmat,rarray,cs,kfs,krevs,V,start)
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
         elseif @inbounds rarray[3,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
-        else
+        elseif @inbounds rarray[4,i] == 0 
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
-        end
-        if @inbounds rarray[5,i] == 0
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
-        elseif @inbounds rarray[6,i] == 0
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
         else
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]*cs[rarray[4,i]]  
+        end
+        if @inbounds rarray[6,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]
+        elseif @inbounds rarray[7,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]
+        elseif rarray[8,i] == 0 
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]
+        else
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]*cs[rarray[8,i]]
         end
         @fastmath R = (fR - rR)*V
         
@@ -321,13 +325,19 @@ function rops!(ropmat,rarray,cs,kfs,krevs,V,start)
             @inbounds @fastmath ropmat[i+start,rarray[2,i]] -= R
             if @inbounds rarray[3,i] != 0
                 @inbounds @fastmath ropmat[i+start,rarray[3,i]] -= R
+                if @inbounds rarray[4,i] != 0
+                    @inbounds @fastmath ropmat[i+start,rarray[4,i]] -= R
+                end
             end
         end
-        @inbounds @fastmath ropmat[i+start,rarray[4,i]] += R
-        if @inbounds rarray[5,i] != 0
-            @inbounds @fastmath ropmat[i+start,rarray[5,i]] += R
-            if @inbounds rarray[6,i] != 0
-                @inbounds @fastmath ropmat[i+start,rarray[6,i]] += R
+        @inbounds @fastmath ropmat[i+start,rarray[5,i]] += R
+        if @inbounds rarray[6,i] != 0
+            @inbounds @fastmath ropmat[i+start,rarray[6,i]] += R
+            if @inbounds rarray[7,i] != 0
+                @inbounds @fastmath ropmat[i+start,rarray[7,i]] += R
+                if @inbounds rarray[8,i] != 0
+                    @inbounds @fastmath ropmat[i+start,rarray[8,i]] += R
+                end 
             end
         end   
     end
@@ -335,21 +345,25 @@ end
 
 function rops!(ropvec,rarray,cs,kfs,krevs,V,start,ind)
     for i = 1:length(kfs)
-        c = count(isequal(ind),rarray[4:6,i])-count(isequal(ind),rarray[1:3,i])
+        c = count(isequal(ind),rarray[5:8,i])-count(isequal(ind),rarray[1:4,i])
         if c != 0.0
             if @inbounds rarray[2,i] == 0
                 @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
             elseif @inbounds rarray[3,i] == 0
                 @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
-            else
+            elseif @inbounds rarray[4,i] == 0 
                 @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
-            end
-            if @inbounds rarray[5,i] == 0
-                @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
-            elseif @inbounds rarray[6,i] == 0
-                @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
             else
-                @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+                @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]*cs[rarray[4,i]]  
+            end
+            if @inbounds rarray[6,i] == 0
+                @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]
+            elseif @inbounds rarray[7,i] == 0
+                @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]
+            elseif rarray[8,i] == 0 
+                @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]
+            else
+                @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]*cs[rarray[8,i]]
             end
             @fastmath R = (fR - rR)*V
             @fastmath @inbounds ropvec[i+start] = c*R
