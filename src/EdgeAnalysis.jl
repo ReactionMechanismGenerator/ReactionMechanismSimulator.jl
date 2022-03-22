@@ -487,8 +487,8 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,
         ignoreoverallfluxcriterion,filterreactions,maxnumobjsperiter,branchfactor,branchingratiomax,
         branchingindex,terminateatmaxobjects,termination,y0,invalidobjects,firsttime,
-        filterthreshold)
-    
+        filterthreshold,transitorydict)
+
     rxnarray = vcat()
     t = sim.sol.t[end]
     y = sim.sol.u[end]
@@ -690,7 +690,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
                 corep,coreedgep,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,tolbranchrxntocore,branchingratiomax,
                 branchingindex,terminateatmaxobjects,termination,
-                filterthreshold;
+                filterthreshold,transitorydict;
                 atol=1e-20,rtol=1e-6,solver=CVODE_BDF())
             
     (corespcsinds,corerxninds,edgespcsinds,edgerxninds,reactantindices,
@@ -734,7 +734,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
                 trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,branchfactor,branchingratiomax,
                 branchingindex,terminateatmaxobjects,termination,y0,invalidobjects,firsttime,
-                filterthreshold)
+                filterthreshold,transitorydict)
         if firsttime
             firsttime = false
         end
