@@ -68,6 +68,7 @@ function obj2dict(obj,spcs,names;label="solvent")
         D["kinetics"] = obj2dict(obj.kinetics,spcs,names)
         D["type"] = "ElementaryReaction"
         D["radicalchange"] = sum([getradicals(x) for x in obj.products])-sum([getradicals(x) for x in obj.reactants])
+        D["reversible"] = obj.reversible
     elseif pybuiltin("isinstance")(obj,arrhenius.Arrhenius)
         D["type"] = "Arrhenius"
         D["A"] = obj.A.value_si
