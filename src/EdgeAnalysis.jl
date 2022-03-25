@@ -506,7 +506,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,
         ignoreoverallfluxcriterion,filterreactions,maxnumobjsperiter,branchfactor,branchingratiomax,
         branchingindex,terminateatmaxobjects,termination,y0,invalidobjects,firsttime,
-        filterthreshold,transitorydict)
+        filterthreshold,transitorydict,checktransitory)
 
     rxnarray = vcat()
     t = sim.sol.t[end]
@@ -650,7 +650,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     end
 
 
-    if length(transitorydict) > 0 && !firsttime
+    if (checktransitory || terminated) && length(transitorydict) > 0 && !firsttime
         transitoryoutdict = Dict()
         TS = transitorysensitivitiesfulltrapezoidal(sim,t;normalized=false)
         TS .*= sim.p'
@@ -754,7 +754,7 @@ function selectobjects(react,edgereact,coreedgedomains,coreedgeinters,domains,in
                 corep,coreedgep,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,tolbranchrxntocore,branchingratiomax,
                 branchingindex,terminateatmaxobjects,termination,
-                filterthreshold,transitorydict;
+                filterthreshold,transitorydict,transitorystepperiod;
                 atol=1e-20,rtol=1e-6,solver=CVODE_BDF())
             
     (corespcsinds,corerxninds,edgespcsinds,edgerxninds,reactantindices,
@@ -784,21 +784,21 @@ function selectobjects(react,edgereact,coreedgedomains,coreedgeinters,domains,in
     y0 = sim.sol[end]
     spcsaddindices = Array{Int64,1}()
     firsttime = true
-    
-    n = 1
+
+    nsteps = 0
     while t < tf && code == :Success
-        for i = 1:n
-            step!(inte)
-        end
+        step!(inte)
+        nsteps += 1
         code = check_error(inte)
         t = inte.t
+        checktransitory = nsteps % transitorystepperiod == 1
         sim = getsim(inte,react,edgereact,coreedgedomains,coreedgeinters,coreedgep,coretoedgespcmap)
         terminated,interrupt,conversion = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             edgerxninds,reactantindices,productindices,unimolecularthreshold,bimolecularthreshold,
                 trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,branchfactor,branchingratiomax,
                 branchingindex,terminateatmaxobjects,termination,y0,invalidobjects,firsttime,
-                filterthreshold,transitorydict)
+                filterthreshold,transitorydict,checktransitory)
         if firsttime
             firsttime = false
         end
