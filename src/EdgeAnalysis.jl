@@ -42,9 +42,9 @@ end
 """
 Generate appropriate edge Simulation/SystemSimulation object
 """
-function getsim(inte,react,coreedgedomain,inters,p,coretoedgespcmap)
-    ycoreedge = getycoreedge(inte.u,coretoedgespcmap,coreedgedomain.indexes[end])
-    sol = build_solution(react.ode,inte.alg,[0.0,inte.t],[ycoreedge,ycoreedge])
+function getsim(inte,react,edgereact,coreedgedomain,inters,p,coretoedgespcmap)
+    ycoreedge = getycoreedge(inte.u,coretoedgespcmap,coreedgedomain.indexes[end],react,coreedgedomain)
+    sol = build_solution(edgereact.ode,inte.alg,[0.0,inte.t],[ycoreedge,ycoreedge])
     sim = Simulation(sol,coreedgedomain,inters,p)
     return sim
 end
@@ -52,9 +52,9 @@ end
 """
 Generate appropriate edge Simulation/SystemSimulation object
 """
-function getsim(inte,react,coreedgedomains::Tuple,inters,p,coretoedgespcmap)
-    ycoreedge = getycoreedge(inte.u,coretoedgespcmap,coreedgedomains[end].indexes[end])
-    sol = build_solution(react.ode,inte.alg,[0.0,inte.t],[ycoreedge,ycoreedge])
+function getsim(inte,react,edgereact,coreedgedomains::Tuple,inters,p,coretoedgespcmap)
+    ycoreedge = getycoreedge(inte.u,coretoedgespcmap,coreedgedomains[end].indexes[end],react,coreedgedomains)
+    sol = build_solution(edgereact.ode,inte.alg,[0.0,inte.t],[ycoreedge,ycoreedge])
     ssys = SystemSimulation(sol,coreedgedomains,inters,p)
     return ssys
 end
@@ -62,10 +62,29 @@ end
 """
 Generate a state vector appropriate for both the edge and core from the core state vector
 """
-function getycoreedge(y,coretoedgespcmap,numedgespc)
-    ycoreedge = zeros(numedgespc)
+function getycoreedge(y,coretoedgespcmap,edgelen,react,coreedgedomains::Tuple)
+    ycoreedge = zeros(edgelen)
     for (coreind,edgeind) in coretoedgespcmap
         ycoreedge[edgeind] = y[coreind]
+    end
+    for (i,domain) in enumerate(coreedgedomains)
+        for j in 3:length(domain.indexes)
+            ycoreedge[domain.indexes[j]] = y[react.domain[i].indexes[j]]
+        end
+    end
+    return ycoreedge
+end
+
+"""
+Generate a state vector appropriate for both the edge and core from the core state vector
+"""
+function getycoreedge(y,coretoedgespcmap,edgelen,react,coreedgedomain)
+    ycoreedge = zeros(edgelen)
+    for (coreind,edgeind) in coretoedgespcmap
+        ycoreedge[edgeind] = y[coreind]
+    end
+    for j in 3:length(coreedgedomain.indexes)
+        ycoreedge[coreedgedomain.indexes[j]] = y[react.domain.indexes[j]]
     end
     return ycoreedge
 end
@@ -731,7 +750,7 @@ export identifyobjects!
 """
 run edge analysis to determine objects (species/reactions) that should be added to model core
 """
-function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
+function selectobjects(react,edgereact,coreedgedomains,coreedgeinters,domains,inters,
                 corep,coreedgep,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,tolbranchrxntocore,branchingratiomax,
                 branchingindex,terminateatmaxobjects,termination,
@@ -760,7 +779,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
     inte = init(react.ode,solver,abstol=atol,reltol=rtol);
     
     t = inte.t
-    sim = getsim(inte,react,coreedgedomains,coreedgeinters,corep,coretoedgespcmap)
+    sim = getsim(inte,react,edgereact,coreedgedomains,coreedgeinters,corep,coretoedgespcmap)
 
     y0 = sim.sol[end]
     spcsaddindices = Array{Int64,1}()
@@ -773,7 +792,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
         end
         code = check_error(inte)
         t = inte.t
-        sim = getsim(inte,react,coreedgedomains,coreedgeinters,coreedgep,coretoedgespcmap)
+        sim = getsim(inte,react,edgereact,coreedgedomains,coreedgeinters,coreedgep,coretoedgespcmap)
         terminated,interrupt,conversion = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             edgerxninds,reactantindices,productindices,unimolecularthreshold,bimolecularthreshold,
                 trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
