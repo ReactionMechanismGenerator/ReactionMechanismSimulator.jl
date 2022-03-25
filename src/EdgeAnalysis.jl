@@ -549,7 +549,30 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             unimolecularthreshold,bimolecularthreshold,trimolecularthreshold,tolmovetocore,
             filterthreshold)
     end
-        
+
+    for term in termination
+        if isa(term, TerminationTime)
+            if t > term.time
+                terminated = true
+                @info "at time $t sec, reached target termination time"
+            end
+        elseif isa(term, TerminationRateRatio)
+            if maxcharrate != 0.0 && charrate / maxcharrate < term.ratio
+                terminated = true
+                ratio = term.ratio
+                @info "At time $t sec, reached target termination rate ratio $ratio"
+            end
+        else isa(term, TerminationConversion)
+            index = findfirst(isequal(term.species.name),sim.names)
+            conversion = 1 - (y[index] / y0[index])
+            name = sim.species[index].name
+            if conversion >= term.conversion
+                terminated = true
+                @info "At time $t sec, reeached target termination conversion $conversion of $name"
+            end
+        end
+    end
+
     newobjectinds = Array{Int64,1}()
     newobjects = []
     newobjectvals = Array{Float64,1}()
@@ -707,30 +730,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     if interrupt
         @info "Terminating simulation due to interrupt"
     end
-    
-    for term in termination
-        if isa(term, TerminationTime)
-            if t > term.time
-                terminated = true
-                @info "at time $t sec, reached target termination time"
-            end
-        elseif isa(term, TerminationRateRatio)
-            if maxcharrate != 0.0 && charrate / maxcharrate < term.ratio
-                terminated = true
-                ratio = term.ratio
-                @info "At time $t sec, reached target termination rate ratio $ratio"
-            end
-        else isa(term, TerminationConversion)
-            index = findfirst(isequal(term.species.name),sim.names)
-            conversion = 1 - (y[index] / y0[index])
-            name = sim.species[index].name
-            if conversion >= term.conversion
-                terminated = true
-                @info "At time $t sec, reeached target termination conversion $conversion of $name"
-            end
-        end
-    end
-    
+
     if terminated
         for term in termination
             if isa(term, TerminationConversion)
