@@ -657,8 +657,9 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         TS = TS[:,length(sim.names)+1:end]
         for (spcname,tol) in transitorydict
             spcind = findfirst(isequal(spcname),sim.names)
+            tsscale = maximum(abs.(TS[spcind,:]))
             for rind in edgerxninds
-                sens = TS[spcind,rind]
+                sens = TS[spcind,rind]/tsscale
                 if abs(sens) > tol
                     obj = sim.reactions[rind]
                     if !(obj in newobjects || obj in invalidobjects)
@@ -719,7 +720,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
                     sens = val
                     spcname = transitoryoutdict[ind]
                     tol = transitorydict[spcname]
-                    @info "at time $t sec, reaction $rstr at a transitory sensitivity from $spcname of $sens exceeded the threshold of $tol for moving to model core"
+                    @info "at time $t sec, reaction $rstr at a normalized transitory sensitivity from $spcname of $sens exceeded the threshold of $tol for moving to model core"
                 end
             end
         end
