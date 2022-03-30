@@ -9,11 +9,14 @@ using SparseArrays
 abstract type AbstractReactor end
 export AbstractReactor
 
-struct Reactor{D,Q} <: AbstractReactor
+struct Reactor{D,Q,F1,F2,F3} <: AbstractReactor
     domain::D
     ode::ODEProblem
     recommendedsolver::Q
     forwardsensitivities::Bool
+    precsundials::F1 #function to calculate preconditioner for Sundials solvers
+    psetupsundials::F2 #function to compute preconditioner \ residue for Sundials solvers
+    precsjulia::F3 #function to calculate preconditioner for Julia solvers
 end
 
 function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=DiffEqBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false,tau=1e-3) where {T<:AbstractDomain,T1<:Real,Z<:AbstractArray,X}
@@ -77,7 +80,7 @@ function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=Di
             ode = ODEProblem(odefcn,y0,tspan,p)
         end
     end
-    return Reactor(domain,ode,recsolver,forwardsensitivities)
+    return Reactor(domain,ode,recsolver,forwardsensitivities,precsundials,psetupsundials,precsjulia)
 end
 function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqBase.NullParameters();forwardsensitivities=false,modelingtoolkit=false,tau=1e-3) where {T<:Tuple,W1<:Tuple,Z,X,W2}
     #adjust indexing
@@ -209,7 +212,7 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEq
             ode = ODEProblem(odefcn,y0,tspan,p)
         end
     end
-    return Reactor(domains,ode,recsolver,forwardsensitivities),y0,p
+    return Reactor(domains,ode,recsolver,forwardsensitivities,precsundials,psetupsundials,precsjulia),y0,p
 end
 export Reactor
 
