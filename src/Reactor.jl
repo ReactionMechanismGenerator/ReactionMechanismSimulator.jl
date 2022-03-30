@@ -3,6 +3,9 @@ using DiffEqBase
 using ForwardDiff
 using Sundials
 using ModelingToolkit
+using IncompleteLU
+using LinearAlgebra
+using SparseArrays
 abstract type AbstractReactor end
 export AbstractReactor
 
@@ -162,6 +165,73 @@ function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqB
     return Reactor(domains,ode,recsolver,forwardsensitivities),y0,p
 end
 export Reactor
+
+#preconditioner related functions
+@inline function _psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6, jac!::T7, W::T8, preccache::T9, tau::T10) where {T1,T2,T3,T4,T5,T6,T7,T8,T9,T10}
+    """
+    Update preconditioner when Jacobian needs to be updated for Sundials solvers. Credit to tutorial of DifferentialEquations.jl.
+    p: the parameters
+    t: the current independent variable
+    u: the current state
+    du: the current f(u,p,t)
+    jok: a bool indicating whether the Jacobian needs to be updated
+    jcurPtr: a reference to an Int for whether the Jacobian was updated. jcurPtr[]=true should be set if the Jacobian was updated, and jcurPtr[]=false should be set if the Jacobian was not updated.
+    gamma: the gamma of W = M - gamma*J
+    """
+    if jok
+        @. W = 0.0
+        jac!(W,u,p,t)
+        jcurPtr[] = true
+
+        # W = I - gamma*J
+        @. W.nzval = -gamma*W.nzval
+        idxs = diagind(W)
+        @inbounds @views @. W[idxs] = W[idxs] + 1
+
+        # Build preconditioner on W
+        preccache[] = ilu(W, τ = tau)
+    end
+    nothing
+end
+@inline function _precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9, preccache::T10) where {T1,T2,T3,T4,T5,T6,T7,T8,T9,T10}
+    """
+    Compute preccache \\ r in-place and store the result in z for Sundials solver. Credit to tutorial of DifferentialEquations.jl.
+    z: the computed output vector
+    r: the right-hand side vector of the linear system
+    p: the parameters
+    t: the current independent variable
+    du: the current value of f(u,p,t)
+    gamma: the gamma of W = M - gamma*J
+    delta: the iterative method tolerance
+    lr: a flag for whether lr=1 (left) or lr=2 (right) preconditioning
+    preccache: preconditioner cache
+    """
+    ldiv!(z,preccache[],r)
+end
+@inline function _precsjulia(W::T1,du::T2,u::T3,p::T4,t::T5,newW::T6,Plprev::T7,Prprev::T8,solverdata::T9,tau::T10) where {T1,T2,T3,T4,T5,T6,T7,T8,T9,T10}
+    """
+    Update preconditioner when Jacobian needs to be updated for Julia solvers. Credit to tutorial of DifferentialEquations.jl.
+    W: I - gamma*J or I/gamma - J depending on the algorithm.
+       Commonly be a WOperator type defined by OrdinaryDiffEq.jl. It is a lazy representation of the operator
+       Users can construct the W-matrix on demand by calling convert(AbstractMatrix,W) to receive an AbstractMatrix matching the jac_prototype.
+    du: the current ODE derivative
+    u: the current ODE state
+    p: the ODE parameters
+    t: the current ODE time
+    newW: a Bool which specifies whether the W matrix has been updated since the last call to precs. 
+          It is recommended that this is checked to only update the preconditioner when newW == true.
+    Plprev: the previous Pl.
+    Prprev: the previous Pr.
+    solverdata: Optional extra data the solvers can give to the precs function. Solver-dependent and subject to change.
+    """
+    if newW === nothing || newW
+        Pl = ilu(convert(AbstractMatrix,W), τ = tau)
+    else
+        Pl = Plprev
+    end
+    Pl,nothing
+end
+
 
 @inline function getrate(rxn::T,cs::Array{W,1},kfs::Array{Q,1},krevs::Array{Q,1}) where {T<:AbstractReaction,Q,W<:Real}
     Nreact = length(rxn.reactantinds)
