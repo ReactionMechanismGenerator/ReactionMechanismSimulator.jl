@@ -16,12 +16,32 @@ struct Reactor{D,Q} <: AbstractReactor
     forwardsensitivities::Bool
 end
 
-function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=DiffEqBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false) where {T<:AbstractDomain,W<:Real,Z<:AbstractArray,X}
+function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=DiffEqBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false,tau=1e-3) where {T<:AbstractDomain,T1<:Real,Z<:AbstractArray,X}
     dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V} = dydtreactor!(dy,y,t,domain,interfaces,p=p)
     jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobiany!(J,y,p,t,domain,interfaces,nothing)
     jacyforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,nothing)
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
     jacpforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,nothing)
+    
+    psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetup(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
+    precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _prec(z, r, p, t, y, fy, gamma, delta, lr, preccache)
+    precsjulia(W::T1,du::T2,u::T3,p::T4,t::T5,newW::T6,Plprev::T7,Prprev::T8,solverdata::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} =  _precsjulia(W,du,u,p,t,newW,Plprev,Prprev,solverdata,tau)
+    
+    # determine worst sparsity
+    y0length = length(y0)
+    J = spzeros(y0length,y0length)
+    jacyforwarddiff!(J,NaN*ones(y0length),p,0.0)
+    @. J.nzval = 1.0
+    sparsity = 1.0 - length(J.nzval)/(y0length*y0length)
+
+    # preconditioner caches for Sundials solver
+    W = spzeros(y0length,y0length)
+    jacyforwarddiff!(W,y0,p,0.0)
+    @. W.nzval = -1.0*W.nzval
+    idxs = diagind(W)
+    @inbounds @views @. W[idxs] = W[idxs] + 1
+    prectmp = ilu(W, τ = tau)
+    preccache = Ref(prectmp)
     
     if (forwardsensitivities || !forwarddiff) && domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTAPhiDomain}
         if !forwardsensitivities
@@ -30,14 +50,18 @@ function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=Dif
             odefcn = ODEFunction(dydt;paramjac=jacp!)
         end
     else
-        odefcn = ODEFunction(dydt;jac=jacyforwarddiff!,paramjac=jacpforwarddiff!) 
+        odefcn = ODEFunction(dydt;jac=jacyforwarddiff!,paramjac=jacpforwarddiff!,jac_prototype=float.(J)) #jac_prototype is not needed/used for Sundials solvers but maybe needed for Julia solvers
     end
     if forwardsensitivities
         ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
         recsolver = Sundials.CVODE_BDF(linear_solver=:GMRES)
     else
         ode = ODEProblem(odefcn,y0,tspan,p)
-        recsolver  = Sundials.CVODE_BDF()
+        if sparsity > 0.8 #empirical threshold to use preconditioner
+            recsolver  = Sundials.CVODE_BDF(linear_solver=:GMRES,prec=precsundials,psetup=psetupsundials,prec_side=1)
+        else
+            recsolver  = Sundials.CVODE_BDF()
+        end
     end
     if modelingtoolkit
         sys = modelingtoolkitize(ode)
@@ -55,7 +79,7 @@ function Reactor(domain::T,y0::Array{W,1},tspan::Tuple,interfaces::Z=[];p::X=Dif
     end
     return Reactor(domain,ode,recsolver,forwardsensitivities)
 end
-function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqBase.NullParameters();forwardsensitivities=false,modelingtoolkit=false) where {T<:Tuple,W<:Tuple,Z,X,W2}
+function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqBase.NullParameters();forwardsensitivities=false,modelingtoolkit=false,tau=1e-3) where {T<:Tuple,W1<:Tuple,Z,X,W2}
     #adjust indexing
     y0 = zeros(sum(length(y) for y in y0s))
     Nvars = 0
@@ -140,6 +164,25 @@ function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqB
     jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domains,interfaces,nothing)
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domains,interfaces,nothing)
 
+    psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetup(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
+    precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _prec(z, r, p, t, y, fy, gamma, delta, lr, preccache)
+    precsjulia(W::T1,du::T2,u::T3,p::T4,t::T5,newW::T6,Plprev::T7,Prprev::T8,solverdata::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} =  _precsjulia(W,du,u,p,t,newW,Plprev,Prprev,solverdata,tau)
+    
+    # determine worst sparsity
+    y0length = length(y0)
+    J = spzeros(y0length,y0length)
+    jacy!(J,NaN*ones(y0length),p,0.0)
+    @. J.nzval = 1.0
+    sparsity = 1.0 - length(J.nzval)/(y0length*y0length)
+
+    # preconditioner caches for Sundials solver
+    W = spzeros(y0length,y0length)
+    jacy!(W,y0,p,0.0)
+    @. W.nzval = -1.0*W.nzval
+    idxs = diagind(W)
+    @inbounds @views @. W[idxs] = W[idxs] + 1
+    prectmp = ilu(W, τ = tau)
+    preccache = Ref(prectmp)
     
     if forwardsensitivities
         odefcn = ODEFunction(dydt;paramjac=jacp!)
@@ -152,9 +195,13 @@ function Reactor(domains::T,y0s::W,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqB
             ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
         end
     else
-        odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!)
+        odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!,jac_prototype=float.(J))
         ode = ODEProblem(odefcn,y0,tspan,p)
-        recsolver  = Sundials.CVODE_BDF()
+        if sparsity > 0.8 #empirical threshold to use preconditioner
+            recsolver  = Sundials.CVODE_BDF(linear_solver=:GMRES,prec=precsundials,psetup=psetupsundials,prec_side=1)
+        else
+            recsolver  = Sundials.CVODE_BDF()
+        end
         if modelingtoolkit
             sys = modelingtoolkitize(ode)
             jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
