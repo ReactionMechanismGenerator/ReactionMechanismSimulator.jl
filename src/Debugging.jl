@@ -81,7 +81,7 @@ function analyzecrash(sim::Simulation;tol=1e6)
             push!(rxns,getdebugreaction(sim.reactions[i];tol=tol,kf=kfs[i],krev=krevs[i],rt=rt,T=T,ratio=NaN,index=i))
         elseif abs(rt/rmedian) > tol
             ratio = abs(rt/rmedian)
-            push!(rxns,getdebugreaction(sim.reactions[i];tol=tol,kf=kfs[i],krev=krev[i],rt=rt,T=T,ratio=ratio,index=i))
+            push!(rxns,getdebugreaction(sim.reactions[i];tol=tol,kf=kfs[i],krev=krevs[i],rt=rt,T=T,ratio=ratio,index=i))
         end
     end
     for (i,dy) in enumerate(dydt)
