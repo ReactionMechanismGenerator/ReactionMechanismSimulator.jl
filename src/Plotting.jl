@@ -55,6 +55,25 @@ end
 
 export plotmolefractions
 
+function plotradicalmolefraction(bsol;t=0.0,ts=[])
+    if t == 0.0;
+        t = bsol.sol.t[end]
+    end
+    if ts == []
+        ts = range(0.0,stop=t, length=100);
+    end
+    radmf = zeros(length(ts))
+    rads = [x.radicalelectrons for x in bsol.domain.phase.species]
+    for (i,t) in enumerate(ts)
+        radmf[i] = dot(rads,molefractions(bsol,t))
+    end
+    plot(ts,radmf)
+    ylabel("Radical Mole Fraction")
+    xlabel("Time in sec")
+end
+
+export plotradicalmolefraction
+
 function plotmaxthermoforwardsensitivity(bsol, spcname; N=0, tol= 1e-2)
     spnames = getfield.(bsol.domain.phase.species,:name)
     values = Array{Float64,1}()
