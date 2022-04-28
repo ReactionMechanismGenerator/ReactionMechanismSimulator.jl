@@ -363,8 +363,10 @@ function eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=0.9
     branchesout = Array{Branching,1}()
     for branch in branches
         ind = findfirst(isequal(rxnind),branch.rxninds)
-        if branch.branchingratios[ind] < branchthreshold
-            push!(branchesout,branch)
+        if ind !== nothing
+            if branch.branchingratios[ind] < branchthreshold
+                push!(branchesout,branch)
+            end
         end
     end
     rpouts = Array{ReactionPath,1}()
