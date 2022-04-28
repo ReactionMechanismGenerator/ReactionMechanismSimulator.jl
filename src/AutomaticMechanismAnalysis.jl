@@ -16,14 +16,14 @@ based on production/loss < 1/steptol for forward and
 production/loss > steptol for reverse direction and stops accordingly
 """
 function stepnetwork(sim,statespcind,ropp,ropl,rts;forward=true,i=0,steptol=1e-2)
-    ratio = sum(ropp[:,statespcind])/sum(ropl[:,statespcind])
+    @views ratio = sum(ropp[:,statespcind])/sum(ropl[:,statespcind])
     if forward
         if ratio > 1.0/steptol
             return (0,[0,])
         elseif i == 0
-            rxnind = argmax(ropl[:,statespcind])
+            @views rxnind = argmax(ropl[:,statespcind])
         else
-            rxnind = reverse(sortperm(ropl[:,statespcind]))[i]
+            @views rxnind = reverse(sortperm(ropl[:,statespcind]))[i]
         end
         rt = rts[rxnind]
         if rt > 0.0
@@ -36,9 +36,9 @@ function stepnetwork(sim,statespcind,ropp,ropl,rts;forward=true,i=0,steptol=1e-2
         if ratio < steptol
             return (0,[0,])
         elseif i == 0
-            rxnind = argmax(ropp[:,statespcind])
+            @views rxnind = argmax(ropp[:,statespcind])
         else
-            rxnind = reverse(sortperm(ropp[:,statespcind]))[i]
+            @views rxnind = reverse(sortperm(ropp[:,statespcind]))[i]
         end
         rt = rts[rxnind]
         if rt > 0.0
@@ -187,11 +187,11 @@ function getbranching(sim,rxnind,ropl,rts)
     branches = Array{Branching,1}()
     for (i,spc) in enumerate(spcs)
         ind = findfirst(isequal(spc.name),sim.names)
-        rinds = reverse(sortperm(ropl[:,ind]))
-        rvals = (ropl[:,ind]/sum(ropl[:,ind]))[rinds]
+        @views rinds = reverse(sortperm(ropl[:,ind]))
+        @views rvals = (ropl[:,ind]/sum(ropl[:,ind]))[rinds]
         indend = findfirst(isequal(0.0),rvals)
-        rinds = rinds[1:indend]
-        rvals = rvals[1:indend]
+        @views rinds = rinds[1:indend]
+        @views rvals = rvals[1:indend]
         push!(branches,Branching(ind,rinds,rvals))
     end
     return branches
@@ -313,8 +313,8 @@ than branchtol the other species involved are considered coupled
 """
 function getcoupledspecies(sim,spcind,rxnind,ropp,ropl,rts;branchtol=0.2)
     spcsinds = Array{Int64,1}()
-    totflux = sum(ropl[:,spcind])
-    inds = reverse(sortperm(ropl[:,spcind]))
+    @views totflux = sum(ropl[:,spcind])
+    @views inds = reverse(sortperm(ropl[:,spcind]))
     i = 1
     ind = inds[i]
     for ind in inds
