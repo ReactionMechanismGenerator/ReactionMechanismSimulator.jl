@@ -3,3 +3,4 @@
 *.dot
 docs/build/
 .DS_Store
+deps/build.log
