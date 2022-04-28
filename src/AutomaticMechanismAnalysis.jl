@@ -236,6 +236,7 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
         )
 
     spcind = findfirst(isequal(spcname),sim.names)
+    @assert spcind != nothing "$spcname not found"
     dSdt = gettransitoryadjoint(sim,t,spcname,spcind,transitorysensitivitymethod)
 
     rop = rops(sim,t)
