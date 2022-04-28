@@ -150,7 +150,7 @@ function normalizefulltransitorysensitivities!(dSdt,sim::Simulation,t)
     y = sim.sol(t)
     @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
     dSdt .*= sim.domain.p'
-    dSdt[1:sim.domain.indexes[2],:] ./= ns
+    @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2],:] ./= ns
     return dSdt
 end
 
@@ -168,7 +168,7 @@ function normalizeparamtransitorysensitivities!(dSdt,sim::Simulation,t,ind)
     y = sim.sol(t)
     @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
     dSdt .*= sim.domain.p[ind]
-    dSdt[1:length(sim.domain.phase.species)] ./= ns
+    @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2]] ./= ns
     return dSdt
 end
 

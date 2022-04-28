@@ -217,7 +217,7 @@ function gettransitoryadjoint(sim,t,spcname,spcind,transitorysensitivitymethod)
         return transitorysensitivitymethod(sim,t,spcname)
     else
         dSdt = transitorysensitivitymethod(sim,t)
-        return dSdt[spcind,:]
+        return dSdt[spcind+sim.domain.indexes[1]-1,:]
     end
 end
 
@@ -253,7 +253,7 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
     end
     rts = rates(sim,t)
 
-    dSdtspc = dSdt[length(sim.names)+1:end]
+    @views dSdtspc = dSdt[length(sim.domain.phase.species)+sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]]
 
     #find sensitive reactions
     inds = reverse(sortperm(abs.(dSdtspc)))
