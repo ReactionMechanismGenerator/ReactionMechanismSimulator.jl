@@ -424,15 +424,19 @@ export addreactionratecontributions!
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
         elseif @inbounds rarray[3,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
-        else
+        elseif @inbounds rarray[4,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
-        end
-        if @inbounds rarray[5,i] == 0
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
-        elseif @inbounds rarray[6,i] == 0
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
         else
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]*cs[rarray[4,i]]
+        end
+        if @inbounds rarray[6,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]
+        elseif @inbounds rarray[7,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]
+        elseif @inbounds rarray[8,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]
+        else
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]*cs[rarray[8,i]]
         end
         @inbounds @fastmath frts[i] = fR*V
         @inbounds @fastmath rrts[i] = rR*V
@@ -443,13 +447,19 @@ export addreactionratecontributions!
             @inbounds @fastmath dydt[rarray[2,i]] -= R
             if @inbounds rarray[3,i] != 0
                 @inbounds @fastmath dydt[rarray[3,i]] -= R
+                if @inbounds rarray[4,i] != 0
+                    @inbounds @fastmath dydt[rarray[4,i]] -= R
+                end
             end
         end
-        @inbounds @fastmath dydt[rarray[4,i]] += R
-        if @inbounds rarray[5,i] != 0
-            @inbounds @fastmath dydt[rarray[5,i]] += R
-            if @inbounds rarray[6,i] != 0
-                @inbounds @fastmath dydt[rarray[6,i]] += R
+        @inbounds @fastmath dydt[rarray[5,i]] += R
+        if @inbounds rarray[6,i] != 0
+            @inbounds @fastmath dydt[rarray[6,i]] += R
+            if @inbounds rarray[7,i] != 0
+                @inbounds @fastmath dydt[rarray[7,i]] += R
+                if @inbounds rarray[8,i] != 0
+                    @inbounds @fastmath dydt[rarray[8,i]] += R
+                end
             end
         end
     end
