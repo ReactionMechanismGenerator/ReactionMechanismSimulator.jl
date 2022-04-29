@@ -46,8 +46,20 @@ struct SystemSimulation{Q,B<:AbstractODESolution,X,Y,Z}
     p::Array{Float64,1}
 end
 
+function getinterfacesfordomain(domain,interfaces)
+    return [inter for inter in interfaces if interofdomain(inter,domain)]
+end
+
+function interofdomain(inter,domain)
+    if hasfield(typeof(inter),:domain)
+        return domain==inter.domain
+    elseif hasfield(typeof(inter),:domain1)
+        return domain==inter.domain1 || domain==inter.domain2
+    end
+end
+
 function SystemSimulation(sol,domains,interfaces,p)
-    sims = Tuple([Simulation(sol,domain) for domain in domains])
+    sims = Tuple([Simulation(sol,domain,getinterfacesfordomain(domain,interfaces),p) for domain in domains])
     names = Array{String,1}()
     reactions = Array{ElementaryReaction,1}()
     species = Array{Species,1}()
