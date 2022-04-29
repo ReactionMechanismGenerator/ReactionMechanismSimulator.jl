@@ -113,7 +113,7 @@ function getdividingtimescale(Jy;taumax=1e4,taumin=1e-18,taures=10.0^0.5,usediag
 end
 
 function getdividingtimescale(sim,t;taumax=1e6,taumin=1e-18,taures=10.0^0.5,usediag=true)
-    Jy = jacobiany(sim.sol(t),sim.domain.p,t,sim.domain,sim.interfaces);
+    Jy = jacobiany(sim.sol(t),sim.p,t,sim.domain,sim.interfaces);
     getdividingtimescale(Jy,taumax=taumax,taumin=taumin,taures=taures,usediag=usediag)
 end
 export getdividingtimescale
@@ -148,9 +148,9 @@ end
 
 function normalizefulltransitorysensitivities!(dSdt,sim::Simulation,t)
     y = sim.sol(t)
-    ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
-    dSdt .*= sim.domain.p'
-    dSdt[1:sim.domain.indexes[2],:] ./= ns
+    @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
+    dSdt .*= sim.p'
+    @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2],:] ./= ns
     return dSdt
 end
 
@@ -158,33 +158,33 @@ function normalizefulltransitorysensitivities!(dSdt,ssys::SystemSimulation,t)
     y = ssys.sol(t)
     dSdt .*= ssys.p'
     for sim in ssys.sims
-        ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
-        dSdt[sim.domain.indexes[1]:sim.domain.indexes[2],:] ./= ns
+        @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
+        @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2],:] ./= ns
     end
     return dSdt
 end
 
 function normalizeparamtransitorysensitivities!(dSdt,sim::Simulation,t,ind)
     y = sim.sol(t)
-    ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
-    dSdt .*= sim.domain.p[ind]
-    dSdt[1:length(sim.domain.phase.species)] ./= ns
+    @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
+    dSdt .*= sim.p[ind]
+    @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2]] ./= ns
     return dSdt
 end
 
 function normalizeparamtransitorysensitivities!(dSdt,ssys::SystemSimulation,t,ind)
     y = ssys.sol(t)
     for sim in ssys.sims
-        ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
-        dSdt .*= ssys.domain.p[ind]
-        dSdt[sim.domain.indexes[1]:sim.domain.indexes[2]] ./= ns
+        @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
+        dSdt .*= ssys.p[ind]
+        @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2]] ./= ns
     end
     return dSdt
 end
 
 function normalizeadjointtransitorysensitivities!(dSdt,sim::Simulation,t,ind)
     y = sim.sol(t)
-    dSdt .*= sim.domain.p'
+    dSdt .*= sim.p'
     if ind <= sim.domain.indexes[2]
         dSdt ./= y[ind]
     end
@@ -194,7 +194,7 @@ end
 function normalizeadjointtransitorysensitivities!(dSdt,ssys::SystemSimulation,t,ind)
     y = ssys.sol(t)
     for sim in ssys.sims
-        dSdt[sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]] .*= ssys.domain.p[sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]]
+        @views dSdt[sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]] .*= ssys.domain.p[sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]]
         if ind >= sim.domain.indexes[1] && ind <= sim.domain.indexes[2]
             dSdt ./= y[ind]
         end

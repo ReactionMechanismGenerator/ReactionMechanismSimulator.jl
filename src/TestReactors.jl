@@ -293,6 +293,25 @@ dSdttrapetrue = [0.0, 0.0, 0.0, -0.0, -0.0, 0.0, -0.0, 0.0, 0.0, 0.0, -0.0, 0.0,
 out = analyzespc(sim,"ethane",0.01)
 s = getrxnanalysisstring(sim,out[1])
 @test s == "Analyzing ethane sensitivity to HO2+ethane<=>H2O2+C2H5 at a value of -0.0379814 \n\nKey branching for HO2 \nHO2+HO2<=>O2+H2O2 had a branching ratio of 0.632358 \nHO2+ethane<=>H2O2+C2H5 had a branching ratio of 0.358444 \n\nKey branching for ethane \nOH+ethane<=>H2O+C2H5 had a branching ratio of 0.576145 \nHO2+ethane<=>H2O2+C2H5 had a branching ratio of 0.328068 \nH+ethane<=>H2+C2H5 had a branching ratio of 0.0313989 \nO2+ethane<=>HO2+C2H5 had a branching ratio of 0.0291454 \nCH3+CH3<=>ethane had a branching ratio of 0.0165147 \nCH3+ethane<=>CH4+C2H5 had a branching ratio of 0.0145334 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.919341 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.919341 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.919341 \n\n\n"
+
+phaseDict = readinput("../src/testing/ethane.rms")
+spcs = phaseDict["phase"]["Species"]
+rxns = phaseDict["phase"]["Reactions"]
+ig1 = IdealGas(spcs,[],name="phase1")
+ig2 = IdealGas(spcs,rxns,name="phase2")
+
+initialcondsV1 = Dict(["T"=>1000.0,"P"=>2.0e5,"ethane"=>1.0,"Ar"=>1.0,"O2"=>3.5])
+domainV1,y0V1,pV1 = ConstantPDomain(phase=ig1,initialconds=initialcondsV1) #Define the domain (encodes how system thermodynamic properties calculated)
+initialcondsV2 = Dict(["T"=>1000.0,"P"=>2.0e5,"ethane"=>1.0,"Ar"=>1.0,"O2"=>3.5])
+domainV2,y0V2,pV2 = ConstantPDomain(phase=ig2,initialconds=initialcondsV2) #Define the domain (encodes how system thermodynamic properties calculated)
+
+react,y0,p = Reactor((domainV1,domainV2),(y0V1,y0V2),(0.0,1.0),[],(pV1,pV2));
+sol = solve(react.ode,CVODE_BDF(),abstol=1e-16,reltol=1e-6);
+sysim = SystemSimulation(sol,(domainV1,domainV2),[],p);
+
+out = analyzespc(sysim.sims[2],"ethane",0.01)
+s = getrxnanalysisstring(sysim.sims[2],out[1])
+@test s == "Analyzing ethane sensitivity to HO2+ethane<=>H2O2+C2H5 at a value of -0.0379814 \n\nKey branching for HO2 \nHO2+HO2<=>O2+H2O2 had a branching ratio of 0.632358 \nHO2+ethane<=>H2O2+C2H5 had a branching ratio of 0.358444 \n\nKey branching for ethane \nOH+ethane<=>H2O+C2H5 had a branching ratio of 0.576145 \nHO2+ethane<=>H2O2+C2H5 had a branching ratio of 0.328068 \nH+ethane<=>H2+C2H5 had a branching ratio of 0.0313989 \nO2+ethane<=>HO2+C2H5 had a branching ratio of 0.0291454 \nCH3+CH3<=>ethane had a branching ratio of 0.0165147 \nCH3+ethane<=>CH4+C2H5 had a branching ratio of 0.0145334 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.919341 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.919341 \n\nAssociated key reaction path in ethane loss direction \nHO2+ethane<=>H2O2+C2H5 at path branching of 0.328068 \nHO2+C2H4<=>O2+C2H5 at path branching of 0.919341 \n\n\n"
 end;
 
 #Parametrized T and P Ideal Gas
