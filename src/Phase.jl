@@ -257,7 +257,7 @@ Broadcast.broadcastable(p::T) where {T<:AbstractPhase} = Ref(p)
 export broadcastable
 
 function getreactionindices(spcs,rxns) where {Q<:AbstractPhase}
-    arr = zeros(Int64,(6,length(rxns)))
+    arr = zeros(Int64,(8,length(rxns)))
     names = [spc.name for spc in spcs]
     for (i,rxn) in enumerate(rxns)
         inds = [findfirst(isequal(spc),spcs) for spc in rxn.reactants]
@@ -268,7 +268,7 @@ function getreactionindices(spcs,rxns) where {Q<:AbstractPhase}
         end
         for (j,spc) in enumerate(rxn.products)
             ind = findfirst(isequal(spc),spcs)
-            arr[j+3,i] = ind
+            arr[j+4,i] = ind
             rxn.productinds[j] = ind
         end
         if hasproperty(rxn.kinetics,:efficiencies) && length(rxn.kinetics.nameefficiencies) > 0
