@@ -227,8 +227,15 @@ for rms (.rms, .yml, .rmg) it parses it directly
 """
 function readinput(fname::String;spcdict::String="",output::String="chem.rms")
     extension = split(fname,".")[end]
-    if extension in ["rms","yml","rmg"]
+    if extension in ["rms","rmg"]
         return readinputyml(fname)
+    elseif extension in ["yml","yaml"] #can be rms yml or cantera yml
+        try
+            return readinputyml(fname)
+        catch
+            convertcanterayml2rmsyml(fname,output=output)
+            return readinputyml(output)
+        end
     elseif extension in ["inp"]
         if spcdict == ""
             convertchemkin2yml(fname,output=output)
@@ -247,7 +254,7 @@ parses a YAML input file into a dictionary containing
 partitions of Species and Reaction objects
 """
 function readinputyml(fname::String)
-    D = YAML.load(open(fname))
+    D = YAML.load_file(fname)
     outdict = Dict()
 
     #Units
