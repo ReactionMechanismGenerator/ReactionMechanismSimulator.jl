@@ -4,12 +4,12 @@ function convertchemkin2yml(chemkinpath;spcdictpath="",output="chem.rms")
     else
         spcs,rxns = chemkin.load_chemkin_file(chemkinpath)
     end
-    writeyml(spcs,rxns;path=output)
+    D = getmechdictfromchemkin(spcs,rxns)
+    writeyml(D;path=output)
 end
 
-function writeyml(spcs,rxns;path="chem.rms")
-    D = getmechdict(spcs,rxns)
-    yaml.dump(D,stream=pybuiltin("open")(path,"w"))
+function writeyml(D;path="chem.rms")
+    YAML.write_file(path,D)
 end
 
 function getmechdictfromchemkin(spcs,rxns)
