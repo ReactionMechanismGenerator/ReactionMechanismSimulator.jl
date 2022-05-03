@@ -254,7 +254,7 @@ parses a YAML input file into a dictionary containing
 partitions of Species and Reaction objects
 """
 function readinputyml(fname::String)
-    D = YAML.load(open(fname))
+    D = YAML.load_file(fname)
     outdict = Dict()
 
     #Units
