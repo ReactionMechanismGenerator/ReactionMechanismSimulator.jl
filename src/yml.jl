@@ -1,3 +1,6 @@
+using YAML
+using Unitful
+
 function convertchemkin2yml(chemkinpath;spcdictpath="",output="chem.rms")
     if spcdictpath != ""
         spcs,rxns = chemkin.load_chemkin_file(chemkinpath,dictionary_path=spcdictpath)
