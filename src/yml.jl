@@ -12,7 +12,7 @@ function writeyml(spcs,rxns;path="chem.rms")
     yaml.dump(D,stream=pybuiltin("open")(path,"w"))
 end
 
-function getmechdict(spcs,rxns)
+function getmechdictfromchemkin(spcs,rxns)
     names = [x.label for x in spcs]
     for (i,name) in enumerate(names)
         if count(names.==name) > 1
