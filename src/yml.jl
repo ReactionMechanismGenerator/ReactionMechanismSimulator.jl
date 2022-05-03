@@ -32,6 +32,74 @@ function getmechdictfromchemkin(spcs,rxns)
     return D
 end
 
+function convertcanterayml2rmsyml(path;output="chem.rms")
+    canterayml = YAML.load_file(path)
+    D = getmechdictfromcantera(canterayml)
+    writeyml(D;path=output)
+end
+
+function getmechdictfromcantera(canterayml)
+    unsupportedphases = [
+        "binary-solution-tabulated",
+        "compound-lattice",
+        "constant-density",
+        "Debye-Huckel",
+        "edge",
+        "electron-cloud",
+        "fixed-stoichiometry",
+        "HMW-electrolyte",
+        # "ideal-gas",
+        "ideal-molal-solution",
+        "ideal-condensed",
+        "ideal-solution-VPSS",
+        # "ideal-surface",
+        "ions-from-neutral-molecule",
+        "lattice",
+        "liquid-water-IAPWS95",
+        "Margules",
+        "Maskell-solid-solution",
+        "Peng-Robinson",
+        "plasma",
+        "pure-fluid",
+        "Redlich-Kister",
+        "Redlich-Kwong",
+    ]
+    
+    spcs = canterayml["species"]
+    rxns = canterayml["reactions"]
+    phases = canterayml["phases"]
+    units = canterayml["units"] #user specified units
+    units = Dict(key=>uparse(value) for (key,value) in units) #convert to Unitful units
+    
+    #prevent duplicate names
+    spc_names = [spc["name"] for spc in spcs]
+    for (i,name) in enumerate(spc_names)
+        if count(spc_names.==name) > 1
+            k = 2
+            new_name = name
+            while new_name in spc_names
+                new_name = string(name,"-",k)
+            end
+            spc_names[i] = new_name
+        end
+    end
+    
+    D = Dict([])
+    D["Units"] = Dict([]) #will be converting all values to SI
+    D["Phases"] = []
+    for phase in phases
+        if phase["thermo"] in unsupportedphases
+            @error "Currently not supporting $(phase["thermo"])"
+        end
+        phasedict = Dict()
+        phasedict["name"] = phase["name"]
+        phasedict["Species"] = [canteradict2rmsdict(spc,spcs,spc_names,units,:species) for spc in spcs if spc["name"] in phase["species"]]
+        push!(D["Phases"],phasedict)
+    end
+    D["Reactions"] = [canteradict2rmsdict(rxn,spcs,spc_names,units,:reaction) for rxn in rxns]
+    return D
+end
+
 function getradicals(obj::T) where {T}
     sm = obj.molecule[1].to_smiles()
     if sm == "[O][O]"
