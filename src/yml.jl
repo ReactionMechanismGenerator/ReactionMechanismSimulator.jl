@@ -211,3 +211,160 @@ function obj2dict(obj,spcs,names;label="solvent")
     end
     return D
 end
+
+function canteradict2rmsdict(canteradict,spcs,names,units,dict_type;numreactants=nothing,polyindex=nothing)
+    D = Dict([])
+    if dict_type == :species #species
+        D["name"] = names[findall(x->x==canteradict,spcs)[1]] 
+        D["type"] = "Species"
+        D["smiles"] = ""
+        D["thermo"] = canteradict2rmsdict(canteradict["thermo"],spcs,names,units,:thermo)
+        if haskey(canteradict,"equation-of-state")
+            model = canteradict["equation-of-state"]["model"]
+            @error "Currently not supporting $(model) thermo model"
+        end
+    elseif dict_type == :thermo
+        if canteradict["model"] == "NASA7"
+            D["type"] = "NASA"
+            D["polys"] = [canteradict2rmsdict(canteradict,spcs,names,units,:NASApolynomial;polyindex=i) for i in 1:(length(canteradict["temperature-ranges"])-1)]
+        else
+             @error "Currently only support NASA7 thermo model from Cantera"
+        end
+    elseif dict_type == :NASApolynomial
+        D["type"] = "NASApolynomial"
+        D["Tmax"] = canteradict["temperature-ranges"][polyindex+1]
+        D["Tmin"] = canteradict["temperature-ranges"][polyindex]
+        D["coefs"] = canteradict["data"][polyindex,:][1]
+    elseif dict_type == :reaction #reaction
+        equation = canteradict["equation"]
+        reversible = true
+        if occursin(" <=> ",equation) #reversible
+            reactants, products = split(canteradict["equation"]," <=> ")
+        elseif occursin(" => ",equation) #irreversible
+            reactants, products = split(canteradict["equation"]," => ")
+            reversible = false
+        end
+        reactants = _interpretstoichstring(reactants,names)
+        products = _interpretstoichstring(products,names)
+        kinetics = canteradict2rmsdict(canteradict,spcs,names,units,:kinetics,numreactants=length(reactants))
+        D["reactants"] = reactants
+        D["products"] = products
+        D["kinetics"] = kinetics
+        D["reversible"] = reversible
+        D["type"] = "ElementaryReaction"
+    elseif dict_type == :kinetics
+        if haskey(canteradict,"type")
+            kinetics_type = canteradict["type"]
+            if kinetics_type == "three-body"
+                D["type"] = "ThirdBody"
+                D["arr"] = canteradict2rmsdict(canteradict["rate-constant"],spcs,names,units,:arrhenius,numreactants=numreactants+1)
+                D["efficiencies"] = get(canteradict,"efficiencies",Dict([]))
+            elseif kinetics_type == "falloff"
+                if haskey(canteradict,"Troe")
+                    D["type"] = "Troe"
+                    D["arrhigh"] = canteradict2rmsdict(canteradict["high-P-rate-constant"],spcs,names,units,:arrhenius,numreactants=numreactants)
+                    D["arrlow"] = canteradict2rmsdict(canteradict["low-P-rate-constant"],spcs,names,units,:arrhenius,numreactants=numreactants+1)
+                    D["efficiencies"] = get(canteradict,"efficiencies",Dict([]))
+                    D["a"] = canteradict["Troe"]["A"]
+                    D["T1"] = canteradict["Troe"]["T1"]
+                    if haskey(canteradict["Troe"],"T2")
+                        D["T2"] = canteradict["Troe"]["T2"]
+                    else
+                        D["T2"] = 0.0
+                    end
+                    D["T3"] = canteradict["Troe"]["T3"]
+                else #Lindemann
+                    D["type"] = "Lindemann"
+                    D["arrhigh"] = canteradict2rmsdict(canteradict["high-P-rate-constant"],spcs,names,units,:arrhenius,numreactants=numreactants)
+                    D["arrlow"] = canteradict2rmsdict(canteradict["low-P-rate-constant"],spcs,names,units,:arrhenius,numreactants=numreactants+1)
+                    D["efficiencies"] = get(canteradict,"efficiencies",Dict([]))
+                end
+            elseif kinetics_type == "pressure-dependent-Arrhenius"
+                D["type"] = "PdepArrhenius"
+                D["Ps"] = [kinetics["P"] for kinetics in canteradict["rate-constants"]]
+                D["arrs"] = [canteradict2rmsdict(kinetics,spcs,names,units,:arrhenius,numreactants=numreactants) for kinetics in canteradict["rate-constants"]]
+            elseif kinetics_type == "Chebyshev"
+                D["type"] = "Chebyshev"
+                D["coefs"] = [canteradict["data"][:,i] for i in 1:size(canteradict["data"],2)]
+                D["Tmin"] = tosivalue(canteradict["temperature-range"][1],units=units,value_type=:temperature)
+                D["Tmax"] = tosivalue(canteradict["temperature-range"][end],units=units,value_type=:temperature)
+                D["Pmin"] = tosivalue(canteradict["pressure-range"][1],units=units,value_type=:pressure)
+                D["Pmax"] = tosivalue(canteradict["pressure-range"][end],units=units,value_type=:pressure)
+            else
+                @error "Currently not supporting $(kinetics_type)"
+            end   
+        elseif haskey(canteradict,"sticking-coefficient")
+            D = canteradict2rmsdict(canteradict["sticking-coefficient"],spcs,names,units,:arrhenius,numreactants=0)
+            D["type"] = "StickingCoefficient"
+        elseif haskey(canteradict,"rate-constant") #arrhenius
+            D = canteradict2rmsdict(canteradict["rate-constant"],spcs,names,units,:arrhenius,numreactants=numreactants)
+        else
+            @error "Currently not supporting $(canteradict) type kinetics"
+        end
+        if haskey(canteradict,"coverage-dependencies")
+            @error "Currently not supporting coverage dependencies"
+        end
+    elseif dict_type == :arrhenius
+        D["type"] = "Arrhenius"
+        D["A"] = tosivalue(canteradict["A"],units=units,value_type=:Afactor,numreactants=numreactants)
+        D["Ea"] = tosivalue(canteradict["Ea"],units=units,value_type=:activationenergy)
+        D["n"] = canteradict["b"]
+    end
+    return D
+end
+
+function _interpretstoichstring(spcs,names)
+    spc_names = Vector{String}()
+    
+    spcs = split(spcs," ")
+    for (ind,item) in enumerate(spcs)
+        stoich = tryparse(Int64,item)
+        if stoich != nothing
+            spc = spcs[ind+1]
+            append!(spc_names,[spc for i in 1:(stoich-1)])
+        else
+            if item in names
+                spc = item
+                push!(spc_names,spc)
+            end
+        end
+    end
+    return spc_names
+end
+
+function tosivalue(value;units=nothing,value_type=nothing,numreactants=nothing)
+    
+    if value isa String #unit specified for this individual value
+        value,unit = split(value," ")
+        value = parse(Float64,value)
+        unit = uparse(unit)
+    else 
+        if value_type == :temperature
+            unit = get(units,"temperature",Unitful.K)
+        elseif value_type == :pressure
+            unit = get(units,"pressure",Unitful.Pa)
+        elseif value_type == :activationenergy
+            unit = get(units,"activation-energy",nothing)
+            if unit == nothing
+                quantity_unit = get(units,"quantity",Unitful.mol)
+                energy_unit = get(units,"energy",Unitful.J)
+                unit = (energy_unit)/(quantity_unit)
+            end
+        elseif value_type == :Afactor
+            time_unit = get(units,"time",Unitful.s)
+            length_unit = get(units,"length",Unitful.m)
+            quantity_unit = get(units,"quantity",Unitful.mol)
+            if numreactants == 1
+                unit = time_unit^(-1)
+            elseif numreactants == 2
+                unit = (length_unit)^3/(quantity_unit*time_unit)
+            elseif numreactants == 3
+                unit = (length_unit)^6/((quantity_unit)^2*(time_unit))
+            elseif numreactants == 0
+                return value
+            end
+        end
+    end
+    return upreferred(value*unit).val
+end
+
