@@ -6,6 +6,7 @@ using ModelingToolkit
 using IncompleteLU
 using LinearAlgebra
 using SparseArrays
+using DiffEqBase.PreallocationTools
 abstract type AbstractReactor end
 export AbstractReactor
 
@@ -213,6 +214,81 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEq
         end
     end
     return Reactor(domains,ode,recsolver,forwardsensitivities,precsundials,psetupsundials,precsjulia),y0,p
+end
+
+struct ReducedModelCache{X1,X2,X3}
+    yunlumped::X1 #cached y in full chemical space
+    dydtunlumped::X2 #cached dy/dt in full chemical space
+    qssc::X3 #cached qss species concentration
+end
+
+#Not generating reducedmodelmappings within Reactor object as generating qssc! can take a while for large mechanisms so we only want to do it once
+function Reactor(domain::T,y0unlumped::Array{W1,1},tspan::Tuple,reducedmodelmappings::ReducedModelMappings,interfaces::Z=[];p::X=DiffEqBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false,tau=1e-3,chunk_size=9) where {T<:AbstractDomain,W1<:Real,Z<:AbstractArray,X,F<:Function}
+    dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V} = dydtreactor!(dy,y,t,domain,interfaces,reducedmodelmappings,reducedmodelcache,p=p)
+    jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,reducedmodelmappings,reducedmodelcache)
+    jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,reducedmodelmappings,reducedmodelcache)
+
+    #y0 in Y space
+    y0 = zeros(length(reducedmodelmappings.reducedindexes)+length(reducedmodelmappings.lumpedgroupmapping)+length(domain.thermovariabledict))
+    @inbounds @views y0[1:end-length(domain.thermovariabledict)-length(reducedmodelmappings.lumpedgroupmapping)] .= y0unlumped[reducedmodelmappings.reducedindexes]
+    for (i,group) in enumerate(reducedmodelmappings.lumpedgroupmapping)
+        for (index,weight) in group
+            @fastmath @inbounds y0[length(reducedmodelmappings.reducedindexes)+i] += y0unlumped[index]
+        end
+    end
+    @inbounds @views y0[end-length(domain.thermovariabledict)+1:end] .= y0unlumped[end-length(domain.thermovariabledict)+1:end]
+
+    #initialize cache
+    ylength = length(y0)+length(reducedmodelmappings.qssindexes)-length(reducedmodelmappings.lumpedgroupmapping)+length(reducedmodelmappings.lumpedindexes)
+    yunlumped = dualcache(zeros(ylength),chunk_size)
+    dydtunlumped = dualcache(zeros(ylength),chunk_size)
+    qssc = dualcache(zeros(length(reducedmodelmappings.qssindexes)),chunk_size)
+    reducedmodelcache = ReducedModelCache(yunlumped,dydtunlumped,qssc)
+
+    psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetup(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
+    precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _prec(z, r, p, t, y, fy, gamma, delta, lr, preccache)
+    precsjulia(W::T1,du::T2,u::T3,p::T4,t::T5,newW::T6,Plprev::T7,Prprev::T8,solverdata::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} =  _precsjulia(W,du,u,p,t,newW,Plprev,Prprev,solverdata,tau)
+    
+    # determine worst sparsity
+    y0length = length(y0)
+    J = spzeros(y0length,y0length)
+    jacy!(J,NaN*ones(y0length),p,0.0)
+    @. J.nzval = 1.0
+    sparsity = 1.0 - length(J.nzval)/(y0length*y0length)
+
+    # preconditioner caches for Sundials solver
+    W = spzeros(y0length,y0length)
+    jacy!(W,y0,p,0.0)
+    @. W.nzval = -1.0*W.nzval
+    idxs = diagind(W)
+    @inbounds @views @. W[idxs] = W[idxs] + 1
+    prectmp = ilu(W, τ = tau)
+    preccache = Ref(prectmp)
+    
+    odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!,jac_prototype=float.(J)) #jac_prototype is not needed/used for Sundials solvers but maybe needed for Julia solvers
+
+    if forwardsensitivities
+        ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
+        recsolver = Sundials.CVODE_BDF(linear_solver=:GMRES)
+    else
+        ode = ODEProblem(odefcn,y0,tspan,p)
+        if sparsity > 0.8 #empirical threshold to use preconditioner
+            recsolver  = Sundials.CVODE_BDF(linear_solver=:GMRES,prec=precsundials,psetup=psetupsundials,prec_side=1)
+        else
+            recsolver  = Sundials.CVODE_BDF()
+        end
+    end
+    if modelingtoolkit
+        sys = modelingtoolkitize(ode)
+        jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
+        odefcn = ODEFunction(dydt;jac=jac,paramjac=jacp!)
+        if forwardsensitivities
+            ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
+        else
+            ode = ODEProblem(odefcn,y0,tspan,p)
+        end
+    end
+    return Reactor(domain,ode,recsolver,forwardsensitivities,precsundials,psetupsundials,precsjulia)
 end
 export Reactor
 
@@ -560,6 +636,12 @@ function jacobianyforwarddiff(y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec:
     jacobianyforwarddiff!(J,y,p,t,domains,interfaces,colorvec)
     return J
 end
+
+function jacobianyforwarddiff!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,reducedmodelmappings::ReducedModelMappings,reducedmodelcache::ReducedModelCache,colorvec::Q2=nothing) where {Q3,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
+    f(dy::X,y::Array{T,1}) where {T<:Real,X} = dydtreactor!(dy,y,t,domain,interfaces,reducedmodelmappings,reducedmodelcache;p=p,sensitivity=false)
+    ForwardDiff.jacobian!(J,f,zeros(size(y)),y)
+end
+
 # function jacobiany!(J::Q,y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2<:AbstractArray,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
 #     f(y::Array{T,1}) where {T<:Real} = dydtreactor!(y,t,domain,interfaces;p=p,sensitivity=false)
 #     forwarddiff_color_jacobian!(J,f,y,colorvec=colorvec)
@@ -581,6 +663,14 @@ end
 function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
     function f(dy::X,p::Array{T,1}) where {X,T<:Real} 
         dydtreactor!(dy,y,t,domains,interfaces;p=p,sensitivity=false)
+    end
+    dy = zeros(length(y))
+    ForwardDiff.jacobian!(J,f,dy,p)
+end
+
+function jacobianpforwarddiff!(J::Q,y::U,p::W,t::Z,domains::V,reducedmodelmappings::ReducedModelMappings,reducedmodelcache::ReducedModelCache,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
+    function f(dy::X,p::Array{T,1}) where {X,T<:Real} 
+        dydtreactor!(dy,y,t,domains,interfaces,reducedmodelmapping,reducedmodelcache;p=p,sensitivity=false)
     end
     dy = zeros(length(y))
     ForwardDiff.jacobian!(J,f,dy,p)
