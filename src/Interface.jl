@@ -237,11 +237,25 @@ struct Inlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real,FF<:Function} <: Abstrac
 end
 
 function Inlet(domain::V,conddict::Dict{X1,X},F::FF) where {V,X1,X,B<:Real,FF<:Function}
+    T = 0.0
+    P = 0.0
+
     y = makespcsvector(domain.phase,conddict)
-    T = conddict["T"]
-    P = conddict["P"]
     yout = y./sum(y)
-    H = dot(getEnthalpy.(getfield.(domain.phase.species,:thermo),T),yout)
+
+    if haskey(conddict,"T")
+        T = conddict["T"]
+    end
+    if haskey(conddict,"P")
+        P = conddict["P"]
+    end
+
+    if haskey(conddict,"Hin")
+        H = conddict["Hin"]
+    else
+        @assert T != 0.0 && P != 0.0 "T and P need to be provided if Hin is not provided for Inlet"
+        H = dot(getEnthalpy.(getfield.(domain.phase.species,:thermo),T),yout)
+    end
     return Inlet(domain,yout,F,T,P,H)
 end
 
