@@ -1,5 +1,5 @@
 using LinearAlgebra
-using DiffEqBase
+using SciMLBase
 using LsqFit
 
 abstract type AbstractInterface end
@@ -54,7 +54,7 @@ function getkfskrevs(ri::ReactiveInternalInterface,T1,T2,phi1,phi2,Gs1,Gs2,cstot
     return kfs,krevs
 end
 
-function evaluate(ri::ReactiveInternalInterface,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p::W) where {W<:DiffEqBase.NullParameters}
+function evaluate(ri::ReactiveInternalInterface,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p::W) where {W<:SciMLBase.NullParameters}
     kfs,krevs = getkfskrevs(ri,T1,T2,phi1,phi2,Gs1,Gs2,cstot)
     addreactionratecontributions!(dydt,ri.rxnarray,cstot,kfs,krevs,ri.A)
 end
@@ -108,7 +108,7 @@ function getkfskrevs(ri::ReactiveInternalInterfaceConstantTPhi,T1,T2,phi1,phi2,G
     return ri.kfs,ri.krevs
 end
 
-function evaluate(ri::ReactiveInternalInterfaceConstantTPhi,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p::W) where {W<:DiffEqBase.NullParameters}
+function evaluate(ri::ReactiveInternalInterfaceConstantTPhi,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p::W) where {W<:SciMLBase.NullParameters}
     addreactionratecontributions!(dydt,ri.rxnarray,cstot,ri.kfs,ri.krevs,ri.A)
 end
 

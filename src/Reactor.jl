@@ -1,12 +1,12 @@
 using Parameters
-using DiffEqBase
+using SciMLBase
 using ForwardDiff
 using Sundials
 using ModelingToolkit
 using IncompleteLU
 using LinearAlgebra
 using SparseArrays
-using DiffEqBase.PreallocationTools
+using PreallocationTools
 abstract type AbstractReactor end
 export AbstractReactor
 
@@ -20,7 +20,7 @@ struct Reactor{D,Q,F1,F2,F3} <: AbstractReactor
     precsjulia::F3 #function to calculate preconditioner for Julia solvers
 end
 
-function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=DiffEqBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false,tau=1e-3) where {T<:AbstractDomain,T1<:Real,Z<:AbstractArray,X}
+function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=SciMLBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false,tau=1e-3) where {T<:AbstractDomain,T1<:Real,Z<:AbstractArray,X}
     dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V} = dydtreactor!(dy,y,t,domain,interfaces,p=p)
     jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobiany!(J,y,p,t,domain,interfaces,nothing)
     jacyforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,nothing)
@@ -83,7 +83,7 @@ function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=Di
     end
     return Reactor(domain,ode,recsolver,forwardsensitivities,precsundials,psetupsundials,precsjulia)
 end
-function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEqBase.NullParameters();forwardsensitivities=false,modelingtoolkit=false,tau=1e-3) where {T<:Tuple,W1<:Tuple,Z,X,W2}
+function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLBase.NullParameters();forwardsensitivities=false,modelingtoolkit=false,tau=1e-3) where {T<:Tuple,W1<:Tuple,Z,X,W2}
     #adjust indexing
     y0 = zeros(sum(length(y) for y in y0s))
     Nvars = 0
@@ -223,7 +223,7 @@ struct ReducedModelCache{X1,X2,X3}
 end
 
 #Not generating reducedmodelmappings within Reactor object as generating qssc! can take a while for large mechanisms so we only want to do it once
-function Reactor(domain::T,y0unlumped::Array{W1,1},tspan::Tuple,reducedmodelmappings::ReducedModelMappings,interfaces::Z=[];p::X=DiffEqBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false,tau=1e-3,chunk_size=9) where {T<:AbstractDomain,W1<:Real,Z<:AbstractArray,X,F<:Function}
+function Reactor(domain::T,y0unlumped::Array{W1,1},tspan::Tuple,reducedmodelmappings::ReducedModelMappings,interfaces::Z=[];p::X=SciMLBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false,tau=1e-3,chunk_size=9) where {T<:AbstractDomain,W1<:Real,Z<:AbstractArray,X,F<:Function}
     dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V} = dydtreactor!(dy,y,t,domain,interfaces,reducedmodelmappings,reducedmodelcache,p=p)
     jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,reducedmodelmappings,reducedmodelcache)
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,reducedmodelmappings,reducedmodelcache)
@@ -543,7 +543,7 @@ export addreactionratecontributions!
 end
 export addreactionratecontributionsforwardreverse!
 
-@inline function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:AbstractDomain}    
+@inline function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B;p::RV=SciMLBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:AbstractDomain}    
     dydt .= 0.0
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,p)
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
@@ -551,7 +551,7 @@ export addreactionratecontributionsforwardreverse!
     calcdomainderivatives!(domain,dydt,interfaces;t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
     return dydt
 end
-@inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:Tuple}    
+@inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=SciMLBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:Tuple}    
     cstot = similar(y)
     cstot .= 0.0
     dydt .= 0.0
@@ -611,7 +611,7 @@ end
     end
     return dydt
 end
-function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B,reducedmodelmappings::ReducedModelMappings,reducedmodelcache::ReducedModelCache;p::RV=DiffEqBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:AbstractDomain}
+function dydtreactor!(dydt::RC,y::U,t::Z,domain::Q,interfaces::B,reducedmodelmappings::ReducedModelMappings,reducedmodelcache::ReducedModelCache;p::RV=SciMLBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:AbstractDomain}
 
     dydt .= 0.0
     yunlumped = get_tmp(reducedmodelcache.yunlumped,first(y)*t)
