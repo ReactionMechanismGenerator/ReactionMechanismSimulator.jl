@@ -102,14 +102,16 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEq
         for i in 1:length(domain.constantspeciesinds)
             domain.constantspeciesinds[i] += k-1
         end
-        for (thermovar,ind) in domain.thermovariabledict
-            domain.thermovariabledict[thermovar] += k-1
-        end
         domain.indexes[1] = k
         k += Nspcs
         domain.indexes[2] = k-1
         y0[domain.indexes[1]:domain.indexes[2]] = y0s[j][1:Nspcs]
         for m = 3:2+Ntherm
+            for (therm,ind) in domain.thermovariabledict
+                if ind == domain.indexes[m]
+                    domain.thermovariabledict[therm] = n
+                end
+            end
             domain.indexes[m] = n
             y0[n] = y0s[j][Nspcs+m-2]
             n -= 1
