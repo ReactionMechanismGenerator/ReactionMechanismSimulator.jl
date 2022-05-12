@@ -164,7 +164,7 @@ function getstoichmatrix(domain1,domain2,rxns)
 end
 
 function getinterfacereactioninds(domain1,domain2,reactions)
-    indices = zeros(Int64,(6,length(reactions)))
+    indices = zeros(Int64,(8,length(reactions)))
     N1 = length(domain1.phase.species)
     for (i,rxn) in enumerate(reactions)
         for (j,r) in enumerate(rxn.reactants)
@@ -183,7 +183,7 @@ function getinterfacereactioninds(domain1,domain2,reactions)
                 isfirst = false
                 ind = findfirst(isequal(r),domain2.phase.species)
             end
-            indices[j+3,i] = isfirst ? ind : ind+N1
+            indices[j+4,i] = isfirst ? ind : ind+N1
         end
     end
     return indices
