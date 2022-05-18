@@ -1503,6 +1503,14 @@ end
             dydt[d.indexes[3]] -= inter.Vout(t)
         end
     end
+    for inter in interfaces
+        if isa(inter,VolumeMaintainingOutlet) && d == inter.domain #VolumeMaintainingOutlet has to be evaluated after dVdt has been modified by everything else
+            @inbounds dVdt = dydt[d.indexes[3]]
+            @inbounds flow = P*dVdt/(R*T)
+            @views @inbounds dydt[d.indexes[1]:d.indexes[2]] .-= flow * ns/N
+            @inbounds dydt[d.indexes[3]] -= dVdt
+        end
+    end
 end
 
 @inline function calcdomainderivatives!(d::ConstantVDomain{W,Y},dydt::K,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Z,Hs::Z11,V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z7) where {Z12,Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5}
@@ -1586,6 +1594,14 @@ end
             dydt[d.indexes[4]] -= inter.Vout(t)
         end
     end
+    for inter in interfaces
+        if isa(inter,VolumeMaintainingOutlet) && d == inter.domain #VolumeMaintainingOutlet has to be evaluated after dVdt has been modified by everything else
+            @inbounds dVdt = dydt[d.indexes[4]]
+            @inbounds flow = P*dVdt/(R*T)
+            @views @inbounds dydt[d.indexes[1]:d.indexes[2]] .-= flow * ns/N
+            @inbounds dydt[d.indexes[4]] -= dVdt
+        end
+    end
 end
 
 @inline function calcdomainderivatives!(d::ParametrizedTPDomain{W,Y},dydt::K,interfaces::Z12;t::Z10,T::Z4,P::Z9,Us::Z,Hs::Z11,V::Z2,C::Z3,ns::Z5,N::Z6,Cvave::Z7) where {Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5,Z12}
@@ -1617,6 +1633,14 @@ end
         elseif isa(inter,VolumetricFlowRateOutlet) && d == inter.domain
             dydt[d.indexes[1]:d.indexes[2]] .-= inter.Vout(t)*ns/V
             dydt[d.indexes[3]] -= inter.Vout(t)
+        end
+    end
+    for inter in interfaces
+        if isa(inter,VolumeMaintainingOutlet) && d == inter.domain #VolumeMaintainingOutlet has to be evaluated after dVdt has been modified by everything else
+            @inbounds dVdt = dydt[d.indexes[3]]
+            @inbounds flow = P*dVdt/(R*T)
+            @views @inbounds dydt[d.indexes[1]:d.indexes[2]] .-= flow * ns/N
+            @inbounds dydt[d.indexes[3]] -= dVdt
         end
     end
 end
@@ -1703,6 +1727,14 @@ end
         elseif isa(inter,VolumetricFlowRateOutlet) && d == inter.domain
             dydt[d.indexes[1]:d.indexes[2]] .-= inter.Vout(t)*ns/V
             dydt[d.indexes[4]] -= inter.Vout(t)
+        end
+    end
+    for inter in interfaces
+        if isa(inter,VolumeMaintainingOutlet) && d == inter.domain #VolumeMaintainingOutlet has to be evaluated after dVdt has been modified by everything else
+            @inbounds dVdt = dydt[d.indexes[4]]
+            @inbounds flow = P*dVdt/(R*T)
+            @views @inbounds dydt[d.indexes[1]:d.indexes[2]] .-= flow * ns/N
+            @inbounds dydt[d.indexes[4]] -= dVdt
         end
     end
 end

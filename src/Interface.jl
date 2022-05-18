@@ -304,6 +304,17 @@ struct VolumetricFlowRateOutlet{V,F1<:Function} <: AbstractBoundaryInterface
 end
 export VolumetricFlowRateOutlet
 
+"""
+VolumeMaintainingOutlet is designed for gas phase domain such that the flow rate of this outlet will adjust to maintain the volume of the 
+    domain to be constant. This is particularly useful to simulate any vapor-liquid phase system where the gas phase outlet
+    is determined by the amount of evaporation.
+"""
+struct VolumeMaintainingOutlet{V} <: AbstractBoundaryInterface
+    domain::V
+end
+
+export VolumeMaintainingOutlet
+
 struct VaporLiquidMassTransferInternalInterfaceConstantT{D1,D2,B} <: AbstractInternalInterface
     domaingas::D1
     domainliq::D2
