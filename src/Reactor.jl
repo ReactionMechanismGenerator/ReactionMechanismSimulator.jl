@@ -162,6 +162,15 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=DiffEq
             inter.parameterindexes[2] = length(p)+length(ps[i+length(domains)])
             inter.rxnarray .= getinterfacereactioninds(inter.domain1,inter.domain2,inter.reactions)
             p = vcat(p,ps[i+length(domains)])
+        elseif isa(inter, VaporLiquidMassTransferInternalInterfaceConstantT)
+            indgas = findfirst(isequal(inter.domaingas),domains)
+            indliq = findfirst(isequal(inter.domainliq),domains)
+            inter.domaininds[1] = indgas
+            inter.domaininds[2] = indliq
+            inter.parameterindexes[1] = length(p)+1
+            inter.parameterindexes[2] = length(p)+length(ps[i+length(domains)])
+            inter.ignoremasstransferspcinds .= getinterfaceignoremasstransferspcinds(inter.domaingas,inter.domainliq,inter.ignoremasstransferspcnames)
+            p = vcat(p,ps[i+length(domains)])
         end
     end
     
@@ -544,6 +553,8 @@ end
     for (i,inter) in enumerate(interfaces)
         if isa(inter,AbstractReactiveInternalInterface)
             evaluate(inter,dydt,domains,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot,p)
+        elseif isa(inter,VaporLiquidMassTransferInternalInterfaceConstantT)
+            evaluate(inter,dydt,vV[inter.domaininds[1]],vV[inter.domaininds[2]],vT[inter.domaininds[1]],vT[inter.domaininds[2]],vN[inter.domaininds[1]],vN[inter.domaininds[2]],vP[inter.domaininds[1]],vP[inter.domaininds[2]],vCvave[inter.domaininds[1]],vCvave[inter.domaininds[2]],vns[inter.domaininds[1]],vns[inter.domaininds[2]],vUs[inter.domaininds[1]],vUs[inter.domaininds[2]],cstot,p)
         end
     end
     for (i,domain) in enumerate(domains)

@@ -303,3 +303,55 @@ struct VolumetricFlowRateOutlet{V,F1<:Function} <: AbstractBoundaryInterface
     Vout::F1
 end
 export VolumetricFlowRateOutlet
+
+struct VaporLiquidMassTransferInternalInterfaceConstantT{D1,D2,B} <: AbstractInternalInterface
+    domaingas::D1
+    domainliq::D2
+    ignoremasstransferspcnames::Array{String,1}
+    ignoremasstransferspcinds::B
+    kLAs::Array{Float64,1}
+    kHs::Array{Float64,1}
+    parameterindexes::Array{Int64,1}
+    domaininds::Array{Int64,1}
+    p::Array{Float64,1}
+end
+
+function VaporLiquidMassTransferInternalInterfaceConstantT(domaingas,domainliq,ignoremasstransferspcnames)
+    @assert isa(domaingas.phase,IdealGas)
+    @assert isa(domainliq.phase,IdealDiluteSolution)
+    @assert getfield.(domaingas.phase.species,:name) == getfield.(domainliq.phase.species,:name)
+    T = domainliq.T
+    phase = domainliq.phase
+    ignoremasstransferspcinds = getinterfaceignoremasstransferspcinds(domaingas,domainliq,ignoremasstransferspcnames)
+    kLAs = [kLA(T=T) for kLA in getfield.(phase.species,:liquidvolumetricmasstransfercoefficient)]
+    kHs = [kH(T=T) for kH in getfield.(phase.species,:henrylawconstant)]
+    return VaporLiquidMassTransferInternalInterfaceConstantT(domaingas,domainliq,ignoremasstransferspcnames,ignoremasstransferspcinds,kLAs,kHs,[1,length(domainliq.phase.species)],[0,0],ones(length(domainliq.phase.species))),ones(length(domainliq.phase.species))
+end
+export VaporLiquidMassTransferInternalInterfaceConstantT
+
+function getkLAkHs(vl::VaporLiquidMassTransferInternalInterfaceConstantT,Tgas,Tliq)
+    return vl.kLAs, vl.kHs
+end
+
+function evaluate(vl::VaporLiquidMassTransferInternalInterfaceConstantT,dydt,Vgas,Vliq,Tgas,Tliq,N1,N2,P1,P2,Cvave1,Cvave2,ns1,ns2,Us1,Us2,cstot,p)
+    kLAs, kHs = getkLAkHs(vl,Tgas,Tliq)
+    @views @inbounds @fastmath evap = kLAs.*cstot[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]]*Vliq
+    @views @inbounds @fastmath cond = kLAs./kHs.*cstot[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]]*Vliq
+    netevap = (evap .- cond)
+    @simd for ind in vl.ignoremasstransferspcinds
+        @inbounds netevap[ind] = 0.0
+    end
+    @views @inbounds @fastmath dydt[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]] .+= netevap
+    @views @inbounds @fastmath dydt[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]] .-= netevap
+end
+export evaluate
+
+function getinterfaceignoremasstransferspcinds(domaingas,domainliq,ignoremasstransferspcnames)
+    indices = zeros(Int64,length(ignoremasstransferspcnames))
+    spcnamesliq = getfield.(domainliq.phase.species,:name)
+    for (i,name) in enumerate(ignoremasstransferspcnames)
+        indliq = findfirst(isequal(name),spcnamesliq)
+        indices[i] = domainliq.indexes[1]-1+indliq
+    end
+    return indices
+end
