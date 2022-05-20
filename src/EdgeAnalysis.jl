@@ -208,20 +208,20 @@ function getkeyselectioninds(coreedgedomains,coreedgeinters,domains,inters)
         rxnindexedge += length(coreedgedomains[i].phase.reactions)
 
         indend = length(domains[i].phase.reactions)
-        reactantindices[:,ind:ind+indend-1] = domains[i].rxnarray[1:4,:]
-        productindices[:,ind:ind+indend-1] = domains[i].rxnarray[5:8,:]
+        reactantindices[:,ind:ind+indend-1] = domains[i].rxnarray[1:5,:]
+        productindices[:,ind:ind+indend-1] = domains[i].rxnarray[6:10,:]
         ind += indend
     end
-        
+
     for i = 1:length(inters)
         if isa(inters[i],ReactiveInternalInterface)
             push!(corerxnrangearray,index:index+length(inters[i].reactions))
             push!(edgerxnrangearray,index+length(inters[i].reactions):index+length(coreedgeinters[i].reactions))
             index += length(coreedgeinters[i].phase.reactions)
-            
+
             indend = length(inters[i].reactions)
-            reactantindices[:,ind:ind+indend] = inters[i].rxnarray[1:4,:]
-            productindices[:,ind:ind+indend] = inters[i].rxnarray[5:8,:]
+            reactantindices[:,ind:ind+indend] = inters[i].rxnarray[1:5,:]
+            productindices[:,ind:ind+indend] = inters[i].rxnarray[6:10,:]
             ind += indend
         end
     end
@@ -251,8 +251,8 @@ function getkeyselectioninds(coreedgedomain::AbstractDomain,coreedgeinters,domai
         end
     end
 
-    @views @inbounds reactantindices = coreedgedomain.rxnarray[1:4,:]
-    @views @inbounds productindices = coreedgedomain.rxnarray[5:8,:]
+    @views @inbounds reactantindices = coreedgedomain.rxnarray[1:5,:]
+    @views @inbounds productindices = coreedgedomain.rxnarray[6:10,:]
     coretoedgespcmap = Dict([i=>findfirst(isequal(spc),coreedgedomain.phase.species) for (i,spc) in enumerate(domain.phase.species)])
     @simd for j = 3:length(domain.indexes)
         coretoedgespcmap[domain.indexes[j]] = coreedgedomain.indexes[j]
@@ -265,9 +265,9 @@ Process flux information into useful quantities for edge analysis
 """
 function processfluxes(sim::SystemSimulation,
         corespcsinds,corerxninds,edgespcsinds,edgerxninds)
-    
+
     dydt,rts,frts,rrts,cs = calcfluxes(sim)
-    
+
     corespeciesrates = abs.(dydt[corespcsinds])
     charrate = sqrt(dot(corespeciesrates,corespeciesrates))
     edgespeciesrates = abs.(dydt[edgespcsinds])
@@ -278,7 +278,7 @@ function processfluxes(sim::SystemSimulation,
     corespeciesconcentrations = cs[corespcsinds]
     corespeciesconsumptionrates = zeros(length(corespeciesconcentrations))
     corespeciesproductionrates = zeros(length(corespeciesconcentrations))
-    
+
     #process core species consumption and production rates
     index = 1
     for d in getfield.(sim.sims,:domain)
@@ -286,7 +286,7 @@ function processfluxes(sim::SystemSimulation,
             if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
                 continue
             end
-            for j = 1:4
+            for j = 1:5
                 if d.rxnarray[j,i] != 0
                     corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
                     corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
@@ -294,7 +294,7 @@ function processfluxes(sim::SystemSimulation,
                     break
                 end
             end
-            for j = 5:8
+            for j = 6:10
                 if d.rxnarray[j,i] != 0
                     corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
                     corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
@@ -311,7 +311,7 @@ function processfluxes(sim::SystemSimulation,
                 if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
                     continue
                 end
-                for j = 1:4
+                for j = 1:5
                     if d.rxnarray[j,i] != 0
                         corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
                         corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
@@ -319,7 +319,7 @@ function processfluxes(sim::SystemSimulation,
                         break
                     end
                 end
-                for j = 5:8
+                for j = 6:10
                     if d.rxnarray[j,i] != 0
                         corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
                         corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
@@ -339,9 +339,9 @@ end
 Process flux information into useful quantities for edge analysis
 """
 function processfluxes(sim::Simulation,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
-    
+
     dydt,rts,frts,rrts,cs = calcfluxes(sim)
-    
+
     corespeciesrates = abs.(dydt[corespcsinds])
     charrate = sqrt(dot(corespeciesrates,corespeciesrates))
     edgespeciesrates = abs.(dydt[edgespcsinds])
@@ -352,14 +352,14 @@ function processfluxes(sim::Simulation,corespcsinds,corerxninds,edgespcsinds,edg
     corespeciesconcentrations = cs[corespcsinds]
     corespeciesconsumptionrates = zeros(length(corespeciesconcentrations))
     corespeciesproductionrates = zeros(length(corespeciesconcentrations))
-    
+
     #process core species consumption and production rates
     d = sim.domain
     for i = 1:size(d.rxnarray)[2]
         if any(d.rxnarray[:,i].>length(corespeciesconcentrations))
             continue
         end
-        for j = 1:4
+        for j = 1:5
             if d.rxnarray[j,i] != 0
                 corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i]
                 corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i]
@@ -367,7 +367,7 @@ function processfluxes(sim::Simulation,corespcsinds,corerxninds,edgespcsinds,edg
                 break
             end
         end
-        for j = 5:8
+        for j = 6:10
             if d.rxnarray[j,i] != 0
                 corespeciesproductionrates[d.rxnarray[j,i]] += frts[i]
                 corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i]
@@ -376,7 +376,7 @@ function processfluxes(sim::Simulation,corespcsinds,corerxninds,edgespcsinds,edg
             end
         end
     end
-    
+
     return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
 end
 
@@ -391,7 +391,7 @@ function calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxni
     branchingnums = zeros(length(edgereactionrates))
     for index in 1:length(edgereactionrates)
         reactionrate = edgereactionrates[index]
-            
+
         if reactionrate > 0
             reactantside = reactantinds[:,index+length(corerxninds)]
             productside = productinds[:,index+length(corerxninds)]
@@ -399,15 +399,15 @@ function calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxni
             reactantside = productinds[:,index+length(corerxninds)]
             productside = reactantinds[:,index+length(corerxninds)]
         end
-            
+
         rade = [sim.species[i].radicalelectrons for i in productside if i != 0]
-            
+
         if maximum(rade) > 1
             continue
         end
-            
+
         for spcindex in reactantside
-            if spcindex == 0 
+            if spcindex == 0
                 continue
             elseif spcindex < length(corespcsinds)
                 if sim.species[spcindex].radicalelectrons != 1
@@ -420,9 +420,9 @@ function calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxni
                     if br > branchingratiomax
                         br = branchingratiomax
                     end
-                        
+
                     bnum = branchfactor * br * rr^branchingindex
-                        
+
                     if bnum > branchingnums[index]
                         branchingnums[index] = bnum
                     end
@@ -430,7 +430,7 @@ function calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxni
             end
         end
     end
-   return branchingnums 
+    return branchingnums
 end
 
 export calcbranchingnumbers
@@ -442,11 +442,11 @@ function updatefilterthresholds!(sim,corespcsinds,corespeciesconcentrations,char
         unimolecularthreshold,bimolecularthreshold,trimolecularthreshold,tolmovetocore,
         filterthreshold)
     unimolecularthresholdrateconstant,bimolecularthresholdrateconstant,trimolecularthresholdrateconstant = getthresholdrateconstants(sim,sim.domain.phase,filterthreshold)
-    
+
     unimolecularthresholdval = tolmovetocore * charrate / unimolecularthresholdrateconstant
     bimolecularthresholdval = tolmovetocore * charrate / bimolecularthresholdrateconstant
     trimolecularthresholdval = tolmovetocore * charrate / trimolecularthresholdrateconstant
-        
+
     for i in 1:length(corespcsinds)
         if !unimolecularthreshold[i]
             if corespeciesconcentrations[i] > unimolecularthresholdval
@@ -479,7 +479,7 @@ end
 export updatefilterthresholds!
 
 """
-Determine species/reactions that should be added to the model core, react thresholding and 
+Determine species/reactions that should be added to the model core, react thresholding and
 whether the simulation should be interrupted or terminated
 """
 function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
@@ -488,7 +488,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         ignoreoverallfluxcriterion,filterreactions,maxnumobjsperiter,branchfactor,branchingratiomax,
         branchingindex,terminateatmaxobjects,termination,y0,invalidobjects,firsttime,
         filterthreshold)
-    
+
     rxnarray = vcat()
     t = sim.sol.t[end]
     y = sim.sol.u[end]
@@ -498,18 +498,18 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     invalidobjectsprintboolean = true
     terminated = false
     conversion = 0.0
-    
+
     (dydt,rts,frts,rrts,cs,corespeciesratse,charrate,edgespeciesrates,
     edgereactionrates,corespeciesrateratios,edgespeciesrateratios,
     corereactionrates,corespeciesconcentrations,corespeciesproductionrates,
     corespeciesconsumptionrates) = processfluxes(sim,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
-    
+
     for i = 1:length(edgespeciesrateratios)
         if edgespeciesrateratios[i] > maxedgespeciesrateratios[i]
             maxedgespeciesrateratios[i] = edgespeciesrateratios[i]
         end
     end
-    
+
     if charrate == 0 && length(edgereactionrates) > 0
         maxspeciesindex = argmax(edgespeciesrates)
         maxspeciesrate = edgespeciesrates[maxspeciesindex]
@@ -519,32 +519,32 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         push!(invalidobjects,sim.species[index])
         return (false,true,0.0)
     end
-    
+
     if branchfactor != 0.0 && !firsttime
         branchingnums = calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxninds,edgereactionrates,
             corespeciesrateratios,corespeciesconsumptionrates,branchfactor,branchingratiomax,branchingindex)
     end
-    
+
     if filterreactions
         updatefilterthresholds!(sim,corespcsinds,corespeciesconcentrations,charrate,
             unimolecularthreshold,bimolecularthreshold,trimolecularthreshold,tolmovetocore,
             filterthreshold)
     end
-        
+
     newobjectinds = Array{Int64,1}()
     newobjects = []
     newobjectvals = Array{Float64,1}()
     newobjecttype = []
-        
+
     tempnewobjects = []
     tempnewobjectinds = Array{Int64,1}()
     tempnewobjectvals = Array{Float64,1}()
     tempnewobjecttype = []
-        
+
     interrupt = false
-        
+
     #movement of species to core based on rate ratios
-        
+
     if !ignoreoverallfluxcriterion
         for (i,ind) in enumerate(edgespcsinds)
             rr = edgespeciesrateratios[i]
@@ -563,22 +563,22 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
                 interrupt = true
             end
         end
-        
+
         sortedinds = reverse(sortperm(tempnewobjectvals))
-        
+
         for q in sortedinds
             push!(newobjects,tempnewobjects[q])
             push!(newobjectinds,tempnewobjectinds[q])
             push!(newobjectvals,tempnewobjectvals[q])
             push!(newobjecttype,tempnewobjecttype[q])
         end
-        
+
         tempnewobjects = []
         tempnewobjectinds = Array{Int64,1}()
         tempnewobjectvals = Array{Float64,1}()
         tempnewobjecttype = []
     end
-    
+
     if branchfactor != 0.0 && !firsttime
         for (i,ind) in enumerate(edgerxninds)
             bnum = branchingnums[i]
@@ -593,20 +593,20 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             end
         end
         sortedinds = reverse(sortperm(tempnewobjectvals))
-        
+
         for q in sortedinds
             push!(newobjects,tempnewobjects[q])
             push!(newobjectinds,tempnewobjectinds[q])
             push!(newobjectvals,tempnewobjectvals[q])
             push!(newobjecttype,tempnewobjecttype[q])
         end
-        
+
         tempnewobjects = []
         tempnewobjectinds = Array{Int64,1}()
         tempnewobjectvals = Array{Float64,1}()
         tempnewobjecttype = []
     end
-    
+
     if length(invalidobjects) + length(newobjects) > maxnumobjsperiter
         if invalidobjectsprintboolean
             @info "Exceeded max number of objects...removing excess objects"
@@ -618,12 +618,12 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         newobjectvals = newobjectvals[1:num]
         newobjecttype = newobjecttype[1:num]
     end
-    
+
     if terminateatmaxobjects && length(invalidobjects) + length(newobjects) >= maxnumobjsperiter
         @info "Reached max number of objects...preparing to terminate"
         interrupt = true
     end
-    
+
     if length(newobjects) > 0
         for (i,obj) in enumerate(newobjects)
             val = newobjectvals[i]
@@ -636,14 +636,14 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
                 @info "at time $t sec, reaction $rstr at a branching number of $val exceeded the threshold of 1 for moving to model core"
             end
         end
-        
+
         append!(invalidobjects,newobjects)
     end
-    
+
     if interrupt
         @info "Terminating simulation due to interrupt"
     end
-    
+
     for term in termination
         if isa(term, TerminationTime)
             if t > term.time
@@ -666,7 +666,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             end
         end
     end
-    
+
     if terminated
         for term in termination
             if isa(term, TerminationConversion)
@@ -677,8 +677,8 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             end
         end
     end
-    
-    return (terminated,interrupt,conversion) 
+
+    return (terminated,interrupt,conversion)
 end
 
 export identifyobjects!
@@ -692,10 +692,10 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
                 branchingindex,terminateatmaxobjects,termination,
                 filterthreshold;
                 atol=1e-20,rtol=1e-6,solver=CVODE_BDF())
-            
+
     (corespcsinds,corerxninds,edgespcsinds,edgerxninds,reactantindices,
                 productindices,coretoedgespcmap,coretoedgerxnmap) = getkeyselectioninds(coreedgedomains,coreedgeinters,domains,inters)
-    
+
     unimolecularthreshold = falses(length(corespcsinds))
     bimolecularthreshold = falses((length(corespcsinds),length(corespcsinds)))
     trimolecularthreshold = falses((length(corespcsinds),length(corespcsinds),length(corespcsinds)))
@@ -704,23 +704,23 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
     terminated = false
     conversion = 0.0
     code = :Success
-    
+
     if tolbranchrxntocore != 0.0
         branchfactor = 1.0/tolbranchrxntocore
     else
         branchfactor = 0.0
     end
-    
+
     tf = react.ode.tspan[2]
     inte = init(react.ode,solver,abstol=atol,reltol=rtol);
-    
+
     t = inte.t
     sim = getsim(inte,react,coreedgedomains,coreedgeinters,corep,coretoedgespcmap)
 
     y0 = sim.sol[end]
     spcsaddindices = Array{Int64,1}()
     firsttime = true
-    
+
     n = 1
     while t < tf && code == :Success
         for i = 1:n
@@ -756,7 +756,7 @@ function selectobjects(react,coreedgedomains,coreedgeinters,domains,inters,
         return (terminated,true,invalidobjects,unimolecularthreshold,
             bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios,t,conversion)
     end
-        
+
 end
 
 export selectobjects

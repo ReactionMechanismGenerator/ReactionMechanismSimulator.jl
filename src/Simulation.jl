@@ -300,26 +300,30 @@ export rops
 
 function rops!(ropmat,rarray,cs,kfs,krevs,V,start)
     for i = 1:length(kfs)
-        if @inbounds rarray[2,i] == 0
-            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
-        elseif @inbounds rarray[3,i] == 0
-            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
-        elseif @inbounds rarray[4,i] == 0 
-            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
+        if @inbounds rarray[2, i] == 0
+            @inbounds @fastmath fR = kfs[i] * cs[rarray[1, i]]
+        elseif @inbounds rarray[3, i] == 0
+            @inbounds @fastmath fR = kfs[i] * cs[rarray[1, i]] * cs[rarray[2, i]]
+        elseif @inbounds rarray[4, i] == 0
+            @inbounds @fastmath fR = kfs[i] * cs[rarray[1, i]] * cs[rarray[2, i]] * cs[rarray[3, i]]
+        elseif @inbounds rarray[5, i] == 0
+            @inbounds @fastmath fR = kfs[i] * cs[rarray[1, i]] * cs[rarray[2, i]] * cs[rarray[3, i]] * cs[rarray[4, i]]
         else
-            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]*cs[rarray[4,i]]  
+            @inbounds @fastmath fR = kfs[i] * cs[rarray[1, i]] * cs[rarray[2, i]] * cs[rarray[3, i]] * cs[rarray[4, i]] * cs[rarray[5, i]]
         end
-        if @inbounds rarray[6,i] == 0
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]
-        elseif @inbounds rarray[7,i] == 0
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]
-        elseif rarray[8,i] == 0 
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]
+        if @inbounds rarray[7, i] == 0
+            @inbounds @fastmath rR = krevs[i] * cs[rarray[6, i]]
+        elseif @inbounds rarray[8, i] == 0
+            @inbounds @fastmath rR = krevs[i] * cs[rarray[6, i]] * cs[rarray[7, i]]
+        elseif @inbounds rarray[9, i] == 0
+            @inbounds @fastmath rR = krevs[i] * cs[rarray[6, i]] * cs[rarray[7, i]] * cs[rarray[8, i]]
+        elseif @inbounds rarray[10, i] == 0
+            @inbounds @fastmath rR = krevs[i] * cs[rarray[6, i]] * cs[rarray[7, i]] * cs[rarray[8, i]] * cs[rarray[9, i]]
         else
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]*cs[rarray[8,i]]
+            @inbounds @fastmath rR = krevs[i] * cs[rarray[6, i]] * cs[rarray[7, i]] * cs[rarray[8, i]] * cs[rarray[9, i]] * cs[rarray[10, i]]
         end
         @fastmath R = (fR - rR)*V
-        
+
         @inbounds @fastmath ropmat[i+start,rarray[1,i]] -= R
         if @inbounds rarray[2,i] != 0
             @inbounds @fastmath ropmat[i+start,rarray[2,i]] -= R
@@ -327,43 +331,53 @@ function rops!(ropmat,rarray,cs,kfs,krevs,V,start)
                 @inbounds @fastmath ropmat[i+start,rarray[3,i]] -= R
                 if @inbounds rarray[4,i] != 0
                     @inbounds @fastmath ropmat[i+start,rarray[4,i]] -= R
+                    if @inbounds rarray[5, i] != 0
+                        @inbounds @fastmath ropmat[i+start, rarray[5, i]] -= R
+                    end
                 end
             end
         end
-        @inbounds @fastmath ropmat[i+start,rarray[5,i]] += R
-        if @inbounds rarray[6,i] != 0
-            @inbounds @fastmath ropmat[i+start,rarray[6,i]] += R
-            if @inbounds rarray[7,i] != 0
-                @inbounds @fastmath ropmat[i+start,rarray[7,i]] += R
-                if @inbounds rarray[8,i] != 0
-                    @inbounds @fastmath ropmat[i+start,rarray[8,i]] += R
-                end 
+        @inbounds @fastmath ropmat[i+start,rarray[6,i]] += R
+        if @inbounds rarray[7,i] != 0
+            @inbounds @fastmath ropmat[i+start,rarray[7,i]] += R
+            if @inbounds rarray[8,i] != 0
+                @inbounds @fastmath ropmat[i+start,rarray[8,i]] += R
+                if @inbounds rarray[9,i] != 0
+                    @inbounds @fastmath ropmat[i+start,rarray[9,i]] += R
+                    if @inbounds rarray[10, i] != 0
+                        @inbounds @fastmath ropmat[i+start, rarray[10, i]] += R
+                    end
+                end
             end
-        end   
+        end
     end
 end
 
 function rops!(ropvec,rarray,cs,kfs,krevs,V,start,ind)
     for i = 1:length(kfs)
-        c = count(isequal(ind),rarray[5:8,i])-count(isequal(ind),rarray[1:4,i])
+        c = count(isequal(ind),rarray[6:10,i])-count(isequal(ind),rarray[1:5,i])
         if c != 0.0
-            if @inbounds rarray[2,i] == 0
-                @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
-            elseif @inbounds rarray[3,i] == 0
-                @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
-            elseif @inbounds rarray[4,i] == 0 
-                @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
+            if @inbounds rarray[2, i] == 0
+                @inbounds @fastmath fR = kfs[i] * cs[rarray[1, i]]
+            elseif @inbounds rarray[3, i] == 0
+                @inbounds @fastmath fR = kfs[i] * cs[rarray[1, i]] * cs[rarray[2, i]]
+            elseif @inbounds rarray[4, i] == 0
+                @inbounds @fastmath fR = kfs[i] * cs[rarray[1, i]] * cs[rarray[2, i]] * cs[rarray[3, i]]
+            elseif @inbounds rarray[5, i] == 0
+                @inbounds @fastmath fR = kfs[i] * cs[rarray[1, i]] * cs[rarray[2, i]] * cs[rarray[3, i]] * cs[rarray[4, i]]
             else
-                @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]*cs[rarray[4,i]]  
+                @inbounds @fastmath fR = kfs[i] * cs[rarray[1, i]] * cs[rarray[2, i]] * cs[rarray[3, i]] * cs[rarray[4, i]] * cs[rarray[5, i]]
             end
-            if @inbounds rarray[6,i] == 0
-                @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]
-            elseif @inbounds rarray[7,i] == 0
-                @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]
-            elseif rarray[8,i] == 0 
-                @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]
+            if @inbounds rarray[7, i] == 0
+                @inbounds @fastmath rR = krevs[i] * cs[rarray[6, i]]
+            elseif @inbounds rarray[8, i] == 0
+                @inbounds @fastmath rR = krevs[i] * cs[rarray[6, i]] * cs[rarray[7, i]]
+            elseif @inbounds rarray[9, i] == 0
+                @inbounds @fastmath rR = krevs[i] * cs[rarray[6, i]] * cs[rarray[7, i]] * cs[rarray[8, i]]
+            elseif @inbounds rarray[10, i] == 0
+                @inbounds @fastmath rR = krevs[i] * cs[rarray[6, i]] * cs[rarray[7, i]] * cs[rarray[8, i]] * cs[rarray[9, i]]
             else
-                @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]*cs[rarray[8,i]]
+                @inbounds @fastmath rR = krevs[i] * cs[rarray[6, i]] * cs[rarray[7, i]] * cs[rarray[8, i]] * cs[rarray[9, i]] * cs[rarray[10, i]]
             end
             @fastmath R = (fR - rR)*V
             @fastmath @inbounds ropvec[i+start] = c*R
@@ -378,8 +392,8 @@ Calculates sensitivities with respect to `target` at the time point at the end o
 The returned sensitivities are the normalized values
 
 By default uses the InterpolatingAdjoint algorithm with vector Jacobian products calculated with ReverseDiffVJP(true)
-this assumes no changes in code branching during simulation, if that were to become no longer true, the Tracker 
-based alternative algorithm is slower, but avoids this concern. 
+this assumes no changes in code branching during simulation, if that were to become no longer true, the Tracker
+based alternative algorithm is slower, but avoids this concern.
 """
 function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
     abstol::Float64=1e-6,reltol::Float64=1e-3,normalize=true,kwargs...) where {Q,W,W2}
@@ -406,45 +420,45 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
             ind = findfirst(isequal(target),sensspcnames)
         end
     end
-    
+
     function sensg(y::X,p::Array{Y,1},t::Z) where {Q,V,X,Y<:Float64,Z}
         sensy = y[yinds]
         sensp = p[pinds]
         dy = similar(sensy,length(sensy))
         return dydtreactor!(dy,sensy,t,sensdomain,[],p=sensp)[ind]
     end
-    function sensg(y::Array{X,1},p::Y,t::Z) where {Q,V,X<:Float64,Y,Z} 
+    function sensg(y::Array{X,1},p::Y,t::Z) where {Q,V,X<:Float64,Y,Z}
         sensy = y[yinds]
         sensp = p[pinds]
         dy = similar(sensp,length(sensy))
         return dydtreactor!(dy,sensy,t,sensdomain,[],p=sensp)[ind]
     end
-    function sensg(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:Float64,Y<:Float64,Z} 
+    function sensg(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:Float64,Y<:Float64,Z}
         sensy = y[yinds]
         sensp = p[pinds]
         dy = similar(sensy,length(sensy))
         return dydtreactor!(dy,sensy,t,sensdomain,[],p=sensp)[ind]
     end
-    function sensg(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z} 
+    function sensg(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z}
         sensy = y[yinds]
         sensp = p[pinds]
         dy = similar(sensy,length(sensy))
         return dydtreactor!(dy,sensy,t,sensdomain,[],p=sensp)[ind]
     end
-    
-    function g(y::X,p::Array{Y,1},t::Z) where {Q,V,X,Y<:Float64,Z} 
+
+    function g(y::X,p::Array{Y,1},t::Z) where {Q,V,X,Y<:Float64,Z}
         dy = similar(y,length(y))
         return dydtreactor!(dy,y,t,bsol.domain,bsol.interfaces,p=p)[ind]
     end
-    function g(y::Array{X,1},p::Y,t::Z) where {Q,V,X<:Float64,Y,Z} 
+    function g(y::Array{X,1},p::Y,t::Z) where {Q,V,X<:Float64,Y,Z}
         dy = similar(p,length(y))
         return dydtreactor!(dy,y,t,bsol.domain,bsol.interfaces,p=p)[ind]
     end
-    function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:Float64,Y<:Float64,Z} 
+    function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:Float64,Y<:Float64,Z}
         dy = zeros(length(y))
         return dydtreactor!(dy,y,t,bsol.domain,bsol.interfaces,p=p)[ind]
     end
-    function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z} 
+    function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z}
         dy = similar(y,length(y))
         return dydtreactor!(dy,y,t,bsol.domain,bsol.interfaces,p=p)[ind]
     end
@@ -457,7 +471,7 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
     dsensgdprevdiff(out, y, p, t) = ReverseDiff.gradient!(out, p -> sensg(y, p, t), p)
     dgdurevdiff(out, y, p, t) = ReverseDiff.gradient!(out, y -> g(y, p, t), y)
     dgdprevdiff(out, y, p, t) = ReverseDiff.gradient!(out, p -> g(y, p, t), p)
-    
+
     if length(bsol.domain.p)<= pethane
         if target in ["T","V","P"] || !isempty(bsol.interfaces)
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,g,nothing,(dgdu,dgdp);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
@@ -495,19 +509,19 @@ function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sen
         ind = findfirst(isequal(target),bsol.names)+bsol.domain.indexes[1]-1
     end
     domains = Tuple([x.domain for x in syssim.sims])
-    function g(y::X,p::Array{Y,1},t::Z) where {Q,V,X,Y<:Float64,Z} 
+    function g(y::X,p::Array{Y,1},t::Z) where {Q,V,X,Y<:Float64,Z}
         dy = similar(y,length(y))
         return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
     end
-    function g(y::Array{X,1},p::Y,t::Z) where {Q,V,X<:Float64,Y,Z} 
+    function g(y::Array{X,1},p::Y,t::Z) where {Q,V,X<:Float64,Y,Z}
         dy = similar(p,length(y))
         return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
     end
-    function g(y::Array{Float64,1},p::Array{Float64,1},t::Z) where {Q,V,Z} 
+    function g(y::Array{Float64,1},p::Array{Float64,1},t::Z) where {Q,V,Z}
         dy = similar(p,length(y))
         return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
     end
-    function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z} 
+    function g(y::Array{X,1},p::Array{Y,1},t::Z) where {Q,V,X<:ForwardDiff.Dual,Y<:ForwardDiff.Dual,Z}
         dy = similar(y,length(y))
         return dydtreactor!(dy,y,t,domains,syssim.interfaces,p=p)[ind]
     end
@@ -516,7 +530,7 @@ function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sen
     du0,dpadj = adjoint_sensitivities(syssim.sol,solver,g,nothing,(dgdu,dgdp);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
     if normalize
         for domain in domains
-           dpadj[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]] .*= syssim.p[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]]
+            dpadj[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]] .*= syssim.p[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]]
         end
         if !(target in ["T","V","P"])
             dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
@@ -531,7 +545,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     @assert denominator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)+bsol.domain.indexes[1]-1
     inddeno = findfirst(isequal(denominator),bsol.names)+bsol.domain.parameterindexes[1]-1
-    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2 
+    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2
     Nrxns = length(bsol.domain.phase.reactions)
     x,dp = extract_local_sensitivities(bsol.sol,t)
     s = dp[inddeno][indnum]
@@ -548,7 +562,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     @assert denominator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)+bsol.domain.indexes[1]-1
     inddeno = findfirst(isequal(denominator),bsol.names)+bsol.domain.parameterindexes[1]-1
-    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2 
+    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2
     Nrxns = length(bsol.domain.phase.reactions)
     x,dp = extract_local_sensitivities(bsol.sol,t)
     svals = dp[inddeno][bsol.domain.indexes[1]:bsol.domain.indexes[2]]
@@ -567,7 +581,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     @assert numerator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)+bsol.domain.indexes[1]-1
     inddeno = denominator+bsol.domain.parameterindexes[1]-1
-    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2 
+    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2
     Nrxns = length(bsol.domain.phase.reactions)
     x,dp = extract_local_sensitivities(bsol.sol,t)
     s = dp[inddeno+length(bsol.domain.phase.species)][indnum]
@@ -587,7 +601,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     @assert numerator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)+bsol.domain.indexes[1]-1
     inddeno = denominator+bsol.domain.parameterindexes[1]-1
-    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2 
+    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2
     Nrxns = length(bsol.domain.phase.reactions)
     x,dp = extract_local_sensitivities(bsol.sol,t)
     svals = dp[inddeno+length(bsol.domain.phase.species)][bsol.domain.indexes[1]:bsol.domain.indexes[2]]

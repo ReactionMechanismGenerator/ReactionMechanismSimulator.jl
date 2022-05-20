@@ -44,7 +44,7 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
     echangevec = getfield.(rxns,:electronchange)
     if all(echangevec .== 0)
         electronchange = nothing
-    else 
+    else
         electronchange = convert(echangevec,Array{Float64,1})
     end
     reversibility = getfield.(rxns,:reversible)
@@ -84,7 +84,7 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
     echangevec = getfield.(rxns,:electronchange)
     if all(echangevec .== 0)
         electronchange = nothing
-    else 
+    else
         electronchange = convert(echangevec,Array{Float64,1})
     end
     reversibility = getfield.(rxns,:reversible)
@@ -125,7 +125,7 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
     echangevec = getfield.(rxns,:electronchange).*F
     if all(echangevec .== 0)
         electronchange = nothing
-    else 
+    else
         electronchange = convert(typeof(Nrp),echangevec)
     end
     reversibility = getfield.(rxns,:reversible)
@@ -147,7 +147,7 @@ function getstoichmatrix(rxnarray,spcs)
         for (j,ind) in enumerate(rxnarray[:,i])
             if ind == 0
                 continue
-            elseif j > 3
+            elseif j > 5
                 M[i,ind] -= 1.0
                 n += 1.0
             else
@@ -209,7 +209,7 @@ function getveckinetics(rxns)
             push!(fs,x)
             if posinds == Array{Int64,1}()
                 push!(posinds,length(rinds))
-            else 
+            else
                 push!(posinds,length(rinds)+posinds[end])
             end
         end
@@ -257,7 +257,7 @@ Broadcast.broadcastable(p::T) where {T<:AbstractPhase} = Ref(p)
 export broadcastable
 
 function getreactionindices(spcs,rxns) where {Q<:AbstractPhase}
-    arr = zeros(Int64,(8,length(rxns)))
+    arr = zeros(Int64,(10,length(rxns)))
     names = [spc.name for spc in spcs]
     for (i,rxn) in enumerate(rxns)
         inds = [findfirst(isequal(spc),spcs) for spc in rxn.reactants]
@@ -268,7 +268,7 @@ function getreactionindices(spcs,rxns) where {Q<:AbstractPhase}
         end
         for (j,spc) in enumerate(rxn.products)
             ind = findfirst(isequal(spc),spcs)
-            arr[j+4,i] = ind
+            arr[j+5,i] = ind
             rxn.productinds[j] = ind
         end
         if hasproperty(rxn.kinetics,:efficiencies) && length(rxn.kinetics.nameefficiencies) > 0
