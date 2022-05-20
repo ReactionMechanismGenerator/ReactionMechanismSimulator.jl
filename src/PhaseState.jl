@@ -108,20 +108,24 @@ export getDiffusiveRate
     if Nreact == 1
         @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]
     elseif Nreact == 2
-        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]+Gs[rxn.reactantinds[2]]
+        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]] + Gs[rxn.reactantinds[2]]
     elseif Nreact == 3
-        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]+Gs[rxn.reactantinds[2]]+Gs[rxn.reactantinds[3]]
+        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]] + Gs[rxn.reactantinds[2]] + Gs[rxn.reactantinds[3]]
     elseif Nreact == 4
-        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]+Gs[rxn.reactantinds[2]]+Gs[rxn.reactantinds[3]]+Gs[rxn.reactantinds[4]]
+        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]] + Gs[rxn.reactantinds[2]] + Gs[rxn.reactantinds[3]] + Gs[rxn.reactantinds[4]]
+    elseif Nreact == 5
+        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]] + Gs[rxn.reactantinds[2]] + Gs[rxn.reactantinds[3]] + Gs[rxn.reactantinds[4]] + Gs[rxn.reactantinds[5]]
     end
     if Nprod == 1
         @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]
     elseif Nprod == 2
-        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]+Gs[rxn.productinds[2]]
+        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]] + Gs[rxn.productinds[2]]
     elseif Nprod == 3
-        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]+Gs[rxn.productinds[2]]+Gs[rxn.productinds[3]]
+        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]] + Gs[rxn.productinds[2]] + Gs[rxn.productinds[3]]
     elseif Nprod == 4
-        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]+Gs[rxn.productinds[2]]+Gs[rxn.productinds[3]]+Gs[rxn.productinds[4]]
+        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]] + Gs[rxn.productinds[2]] + Gs[rxn.productinds[3]] + Gs[rxn.productinds[4]]
+    elseif Nprod == 5
+        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]] + Gs[rxn.productinds[2]] + Gs[rxn.productinds[3]] + Gs[rxn.productinds[4]] + Gs[rxn.productinds[5]]
     end
     return @inbounds @fastmath exp(-(dGrxn+rxn.electronchange*phi)/(R*T))*(getC0(ph,T))^(Nprod-Nreact)
 end
