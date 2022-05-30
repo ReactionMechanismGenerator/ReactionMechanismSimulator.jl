@@ -195,8 +195,8 @@ function getkeyselectioninds(coreedgedomains,coreedgeinters,domains,inters)
     corerxninds = Array{Int64,1}()
     edgerxninds = Array{Int64,1}()
     Nrxns = sum(length(d.phase.reactions) for d in coreedgedomains)
-    reactantindices = zeros(Int64,(3,Nrxns))
-    productindices  = zeros(Int64,(3,Nrxns))
+    reactantindices = zeros(Int64,(4,Nrxns))
+    productindices  = zeros(Int64,(4,Nrxns))
     coretoedgespcmap = Dict{Int64,Int64}()
     coretoedgerxnmap = Dict{Int64,Int64}()
     spcindexcore = 0
@@ -213,7 +213,7 @@ function getkeyselectioninds(coreedgedomains,coreedgeinters,domains,inters)
             @inbounds coretoedgespcmap[domains[i].indexes[j]] = coreedgedomains[i].indexes[j]
         end
         for (j,rxn) in enumerate(coreedgedomains[i].phase.reactions)
-            @inbounds coreind = findfirst(isequal(rxn),domains[i].phase.reactions)
+            @inbounds coreind = findfirst(x->rxn.reactants==x.reactants && rxn.products==x.products && rxn.kinetics==x.kinetics,domains[i].phase.reactions)
             if coreind === nothing
                 push!(edgerxninds,j+rxnindexedge)
             else
@@ -226,9 +226,9 @@ function getkeyselectioninds(coreedgedomains,coreedgeinters,domains,inters)
         @inbounds rxnindexcore += length(domains[i].phase.reactions)
         @inbounds rxnindexedge += length(coreedgedomains[i].phase.reactions)
 
-        @inbounds indend = length(domains[i].phase.reactions)
-        @inbounds reactantindices[:,ind:ind+indend-1] = domains[i].rxnarray[1:4,:]
-        @inbounds productindices[:,ind:ind+indend-1] = domains[i].rxnarray[5:8,:]
+        @inbounds indend = length(coreedgedomains[i].phase.reactions)
+        @inbounds reactantindices[:,ind:ind+indend-1] = coreedgedomains[i].rxnarray[1:4,:]
+        @inbounds productindices[:,ind:ind+indend-1] = coreedgedomains[i].rxnarray[5:8,:]
         ind += indend
     end
 
@@ -237,13 +237,25 @@ function getkeyselectioninds(coreedgedomains,coreedgeinters,domains,inters)
             @inbounds push!(corerxnrangearray,index:index+length(inters[i].reactions))
             @inbounds push!(edgerxnrangearray,index+length(inters[i].reactions):index+length(coreedgeinters[i].reactions))
             @inbounds index += length(coreedgeinters[i].phase.reactions)
-
+            for (j,rxn) in enumerate(coreedgeinters[i].reactions)
+                @inbounds coreind = findfirst(x->rxn.reactants==x.reactants && rxn.products==x.products && rxn.kinetics==x.kinetics,inters[i].phase.reactions)
+                if coreind === nothing
+                    push!(edgerxninds,j+rxnindexedge)
+                else
+                    coretoedgerxnmap[coreind+rxnindexcore] = j+rxnindexedge
+                    push!(corerxninds,j+rxnindexedge)
+                end
+            end
+            @inbounds rxnindexcore += length(inters[i].reactions)
+            @inbounds rxnindexedge += length(coreedgeinters[i].reactions)
             @inbounds indend = length(inters[i].reactions)
-            @inbounds reactantindices[:,ind:ind+indend] = inters[i].rxnarray[1:4,:]
-            @inbounds productindices[:,ind:ind+indend] = inters[i].rxnarray[5:8,:]
+            @inbounds reactantindices[:,ind:ind+indend] = coreedgeinters[i].rxnarray[1:4,:]
+            @inbounds productindices[:,ind:ind+indend] = coreedgeinters[i].rxnarray[5:8,:]
             ind += indend
         end
     end
+
+
     return corespcsinds,collect(flatten(corerxninds)),edgespcsinds,collect(flatten(edgerxninds)),reactantindices,productindices,coretoedgespcmap,coretoedgerxnmap
 end
 
@@ -405,18 +417,18 @@ export processfluxes
 Calculate branching numbers for appropriate reactions for use in evaluating
 the branching criterion: 1.0 < branchfactor * max(branchingratio,branchingratiomax) * rateratio^branchingindex
 """
-function calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxninds,edgereactionrates,corespeciesrateratios,
+function calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxninds,edgerxninds,edgereactionrates,corespeciesrateratios,
         corespeciesconsumptionrates,branchfactor,branchingratiomax,branchingindex)
     branchingnums = zeros(length(edgereactionrates))
-    for index in 1:length(edgereactionrates)
-        reactionrate = edgereactionrates[index]
-
+    for ind in 1:length(edgereactionrates)
+        index = edgerxninds[ind]
+        reactionrate = edgereactionrates[ind]
         if reactionrate > 0
-            @inbounds reactantside = reactantinds[:,index+length(corerxninds)]
-            @inbounds productside = productinds[:,index+length(corerxninds)]
+            @views reactantside = reactantinds[:,index]
+            @views productside = productinds[:,index]
         else
-            @inbounds reactantside = productinds[:,index+length(corerxninds)]
-            @inbounds productside = reactantinds[:,index+length(corerxninds)]
+            @views reactantside = productinds[:,index]
+            @views productside = reactantinds[:,index]
         end
 
         @inbounds rade = [sim.species[i].radicalelectrons for i in productside if i != 0]
@@ -428,8 +440,8 @@ function calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxni
         for spcindex in reactantside
             if spcindex == 0
                 continue
-            elseif spcindex < length(corespcsinds)
-                if @inbounds  sim.species[spcindex].radicalelectrons != 1
+            elseif spcindex in corespcsinds
+                if @inbounds sim.species[spcindex].radicalelectrons != 1
                     continue
                 end
                 @inbounds consumption = corespeciesconsumptionrates[spcindex]
@@ -442,8 +454,8 @@ function calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxni
 
                     bnum = branchfactor * br * rr^branchingindex
 
-                    if @inbounds  bnum > branchingnums[index]
-                        @inbounds branchingnums[index] = bnum
+                    if @inbounds bnum > branchingnums[ind]
+                        @inbounds branchingnums[ind] = bnum
                     end
                 end
             end
@@ -540,7 +552,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     end
 
     if branchfactor != 0.0 && !firsttime
-        branchingnums = calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxninds,edgereactionrates,
+        branchingnums = calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxninds,edgerxninds,edgereactionrates,
             corespeciesrateratios,corespeciesconsumptionrates,branchfactor,branchingratiomax,branchingindex)
     end
 
