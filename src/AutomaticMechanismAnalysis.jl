@@ -258,6 +258,21 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
     end
     rts = rates(sim,t)
 
+    clusters = gettimescaleclusters(sim,t,tau/100.0)
+    reactives,stable = breakintoreactivestableclusters(clusters)
+    clustersordered = vcat(reactives,stable)
+    clusterprodfluxes,clusterlossfluxes = getclusterfluxes(sim,clustersordered,rts)
+    clusterns = [[sim.species[j].name for j in cluster] for cluster in reactives]
+    clusternames = String[]
+    for j in 1:length(clusterns)
+        if length(clusterns[j]) > 10 #truncate names
+            push!(clusternames,string(clusterns[j][1:10])[1:end-1]*"...]")
+        else
+            push!(clusternames,string(clusterns[j]))
+        end
+    end
+    push!(clusternames,"Stables")
+
     @views dSdtspc = dSdt[length(sim.domain.phase.species)+sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]]
 
     #find sensitive reactions
@@ -283,11 +298,12 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
     rxnanalysis = Array{ReactionAnalysis,1}()
     for rxnind in sensinds
         branches,rps = getbranchpathinfo(sim,spcind,rxnind,ropp,ropl,rts;steptol=steptol,branchtol=branchtol)
+        clusterfluxfracts =  getclusterfluxfracts(sim,clustersordered,rxnind,clusterprodfluxes,clusterlossfluxes,rts)
         radprodlossfract = getradprodlossfract(sim,rxnind,rts)
         if eliminate
             branches,rps = eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=branchthreshold,pathbranchthreshold=pathbranchthreshold)
         end
-        push!(rxnanalysis,ReactionAnalysis(branches,rps,radprodlossfract,spcind,spcname,rxnind,dSdtspc[rxnind]))
+        push!(rxnanalysis,ReactionAnalysis(branches,rps,clusternames,clusterfluxfracts,radprodlossfract,spcind,spcname,rxnind,dSdtspc[rxnind]))
     end
     return rxnanalysis
 end
@@ -621,7 +637,7 @@ export eliminatereasons
 """
 Generate a string report from the analysis objects
 """
-function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
+function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,branchfract=0.01)
     spcname = sim.names[ra.spcind]
     rstr = getrxnstr(sim.domain.phase.reactions[ra.rxnind])
     sens = round(ra.sens,sigdigits=6)
@@ -663,7 +679,22 @@ function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
         end
         s *= "\n"
     end
-    if abs(ra.radprodlossfract) > radbranchfract
+
+    #cluster analysis
+    for i = 1:length(ra.clusterprodlossfracts)
+        if abs(ra.clusterprodlossfracts[i]) > branchfract
+            cluster = ra.clusternames[i]
+            fract = abs(ra.clusterprodlossfracts[i])
+            if ra.clusterprodlossfracts[i] > 0
+                s *= "Reaction accounts for $fract of the net production for cluster $cluster \n"
+            else
+                s *= "Reaction accounts for $fract of the net loss for cluster $cluster \n"
+            end
+        end
+    end
+
+    #radical analysis
+    if abs(ra.radprodlossfract) > branchfract
         radfract = round(abs(ra.radprodlossfract),sigdigits=6)
         if ra.radprodlossfract > 0
             s *= "Reaction accounts for $radfract of the net radical production \n"
@@ -679,7 +710,7 @@ export getrxnanalysisstring
 """
 Print out a string report from the analysis objects
 """
-function printrxnanalysis(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
-    return println(getrxnanalysisstring(sim,ra;branchingcutoff=branchingcutoff,radbranchfract=radbranchfract))
+function printrxnanalysis(sim,ra;branchingcutoff=1e-2,branchfract=0.01)
+    return println(getrxnanalysisstring(sim,ra;branchingcutoff=branchingcutoff,branchfract=branchfract))
 end
 export printrxnanalysis
