@@ -105,36 +105,42 @@ sim should be a simulation object created from a solution object corresponding t
 tol is the ratio relative to the median absolute rate or dn_i/dt value above which reactions
 and species will be reported
 """
-function analyzecrash(sim::SystemSimulation;tol=1e6)
+function analyzecrash(ssys::SystemSimulation;tol=1e6)
     rxns = Array{DebugReaction,1}()
     spcs = Array{DebugSpecies,1}()
-    t = sim.sol.t[end]
-    rts = rates(sim,t)
+    t = ssys.sol.t[end]
+    rts = rates(ssys,t)
     rmedian = median(abs.([rt for rt in rts if !isnan(rt) && rt != 0.0]))
-    dydt = zeros(length(sim.sol.u[end]))
-    dydtreactor!(dydt,sim.sol.u[end],0.0,tuple([s.domain for s in sim.sims]),sim.interfaces;p=sim.p)
+    dydt = zeros(length(ssys.sol.u[end]))
+    dydtreactor!(dydt,ssys.sol.u[end],0.0,tuple([s.domain for s in ssys.sims]...),ssys.interfaces;p=ssys.p)
     dymedian = median(abs.([dy for dy in dydt if !isnan(dy) && dy != 0.0]))
-    y = sim.sol(t)
-    p = sim.domain.p
-    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(sim.domain,y,t,p)
-    for (i,rt) in enumerate(rts)
-        if isnan(rt)
-            push!(rxns,getdebugreaction(sim.reactions[i];tol=tol,kf=kfs[i],krev=krevs[i],rt=rt,ratio=NaN,index=i))
-        elseif abs(rt/rmedian) > tol
-            ratio = abs(rt/rmedian)
-            push!(rxns,getdebugreaction(sim.reactions[i];tol=tol,kf=kfs[i],krev=krevs[i],rt=rt,ratio=ratio,index=i))
+    y = ssys.sol(t)
+    p = ssys.p
+    rdindex = 1
+    sdindex = 1
+    for sim in ssys.sims
+        ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(sim.domain,y,t,p)
+        for (i,rt) in enumerate(rts[rdindex:rdindex-1+length(sim.domain.phase.reactions)])
+            if isnan(rt)
+                push!(rxns,getdebugreaction(sim.reactions[i];tol=tol,kf=kfs[i],krev=krevs[i],rt=rt,ratio=NaN,index=i))
+            elseif abs(rt/rmedian) > tol
+                ratio = abs(rt/rmedian)
+                push!(rxns,getdebugreaction(sim.reactions[i];tol=tol,kf=kfs[i],krev=krevs[i],rt=rt,ratio=ratio,index=i))
+            end
         end
-    end
-    for (i,dy) in enumerate(dydt)
-        if i > length(sim.species)
-            continue
+        rdindex += length(sim.domain.phase.reactions)
+        for (i,dy) in enumerate(dydt[sdindex:sdindex-1+length(sim.domain.phase.species)])
+            if i > length(sim.species)
+                continue
+            end
+            if isnan(dy)
+                push!(spcs,getdebugspecies(sim.species[i],T;dy=dy,ratio=NaN,tol=tol,index=i))
+            elseif abs(dy/dymedian) > tol
+                ratio = abs(dy/dymedian)
+                push!(spcs,getdebugspecies(sim.species[i],T;dy=dy,ratio=ratio,tol=tol,index=i))
+            end
         end
-        if isnan(dy)
-            push!(spcs,getdebugspecies(sim.species[i];dy=dy,ratio=NaN,tol=tol,index=i))
-        elseif abs(dy/dymedian) > tol
-            ratio = abs(dy/dymedian)
-            push!(spcs,getdebugspecies(sim.species[i];dy=dy,ratio=ratio,tol=tol,index=i))
-        end
+        sdindex += length(sim.domain.phase.species)
     end
     return DebugMech(spcs,rxns)
 end
