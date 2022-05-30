@@ -149,15 +149,17 @@ end
 function normalizefulltransitorysensitivities!(dSdt,sim::Simulation,t)
     y = sim.sol(t)
     @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
-    dSdt .*= sim.p'
+    #only fully normalize rate coefficient parameters
+    dSdt[:,sim.domain.parameterindexes[1]+length(sim.species):sim.domain.parameterindexes[2]] .*= sim.p[sim.domain.parameterindexes[1]+length(sim.species):sim.domain.parameterindexes[2]]'
     @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2],:] ./= ns
-    return dSdt
+    return dSdt[vcat(Array(sim.domain.indexes[1]:sim.domain.indexes[2]),[i for (j,i) in enumerate(sim.domain.indexes) if j > 2]),sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]]
 end
 
 function normalizefulltransitorysensitivities!(dSdt,ssys::SystemSimulation,t)
     y = ssys.sol(t)
-    dSdt .*= ssys.p'
     for sim in ssys.sims
+        #only fully normalize rate coefficient parameters
+        @views dSdt[:,sim.domain.parameterindexes[1]+length(sim.species):sim.domain.parameterindexes[2]] .*= ssys.p[sim.domain.parameterindexes[1]+length(sim.species):sim.domain.parameterindexes[2]]'
         @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
         @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2],:] ./= ns
     end
@@ -167,16 +169,20 @@ end
 function normalizeparamtransitorysensitivities!(dSdt,sim::Simulation,t,ind)
     y = sim.sol(t)
     @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
-    dSdt .*= sim.p[ind]
+    if sim.domain.parameterindexes[1]+length(sim.species) < ind && sim.domain.parameterindexes[2] > ind
+        dSdt .*= sim.p[ind]
+    end
     @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2]] ./= ns
-    return dSdt
+    return dSdt[vcat(Array(sim.domain.indexes[1]:sim.domain.indexes[2]),[i for (j,i) in enumerate(sim.domain.indexes) if j > 2])]
 end
 
 function normalizeparamtransitorysensitivities!(dSdt,ssys::SystemSimulation,t,ind)
     y = ssys.sol(t)
     for sim in ssys.sims
+        if sim.domain.parameterindexes[1]+length(sim.species) < ind && sim.domain.parameterindexes[2] > ind
+            dSdt .*= ssys.p[ind]
+        end
         @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
-        dSdt .*= ssys.p[ind]
         @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2]] ./= ns
     end
     return dSdt
@@ -184,17 +190,17 @@ end
 
 function normalizeadjointtransitorysensitivities!(dSdt,sim::Simulation,t,ind)
     y = sim.sol(t)
-    dSdt .*= sim.p'
+    @views dSdt[sim.domain.parameterindexes[1]+length(sim.species):sim.domain.parameterindexes[2]] .*= sim.p[sim.domain.parameterindexes[1]+length(sim.species):sim.domain.parameterindexes[2]]'
     if ind <= sim.domain.indexes[2]
         dSdt ./= y[ind]
     end
-    return dSdt
+    return dSdt[sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]]
 end
 
 function normalizeadjointtransitorysensitivities!(dSdt,ssys::SystemSimulation,t,ind)
     y = ssys.sol(t)
     for sim in ssys.sims
-        @views dSdt[sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]] .*= ssys.domain.p[sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]]
+        @views dSdt[sim.domain.parameterindexes[1]+length(sim.species):sim.domain.parameterindexes[2]] .*= ssys.p[sim.domain.parameterindexes[1]+length(sim.species):sim.domain.parameterindexes[2]]
         if ind >= sim.domain.indexes[1] && ind <= sim.domain.indexes[2]
             dSdt ./= y[ind]
         end
@@ -224,9 +230,9 @@ function transitorysensitivitiesfullexact(sim::Simulation,t;tau=NaN,
     end
 
     if normalized
-        return normalizefulltransitorysensitivities!(dSdt,sim,t)
+        return normalizefulltransitorysensitivities!(dSdt,sim,t),tau
     else
-        return dSdt
+        return dSdt,tau
     end
 end
 
@@ -252,9 +258,9 @@ function transitorysensitivitiesfullexact(ssys::SystemSimulation,t;tau=NaN,
     end
 
     if normalized
-        return normalizefulltransitorysensitivities!(dSdt,sim,t)
+        return normalizefulltransitorysensitivities!(dSdt,sim,t),tau
     else
-        return dSdt
+        return dSdt,tau
     end
 end
 export transitorysensitivitiesfullexact
@@ -279,9 +285,9 @@ function transitorysensitivitiesfulltrapezoidal(sim,t;tau=NaN,normalized=true)
         dSdt = (Jp .+ exp(tau*Jy)*Jp)./2.0
     end
     if normalized
-        return normalizefulltransitorysensitivities!(dSdt,sim,t)
+        return normalizefulltransitorysensitivities!(dSdt,sim,t),tau
     else
-        return dSdt
+        return dSdt[vcat(Array(sim.domain.indexes[1]:sim.domain.indexes[2]),[i for (j,i) in enumerate(sim.domain.indexes) if j > 2]),sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]], tau
     end
 end
 export transitorysensitivitiesfulltrapezoidal
@@ -306,9 +312,9 @@ function transitorysensitivitiesparamtrapezoidal(sim,t,ind;tau=NaN,normalized=tr
         dSdt = (Jp .+ exp(tau*Jy)*Jp)./2.0
     end
     if normalized
-        return normalizeparamtransitorysensitivities!(dSdt,sim,t)
+        return normalizeparamtransitorysensitivities!(dSdt,sim,t),tau
     else
-        return dSdt
+        return dSdt,tau
     end
 end
 export transitorysensitivitiesparamtrapezoidal
@@ -339,9 +345,9 @@ function transitorysensitivitiesparamexact(sim::Simulation,t,ind;tau=NaN,
     end
 
     if normalized
-        return normalizeparamtransitorysensitivities!(dSdt,sim,t)
+        return normalizeparamtransitorysensitivities!(dSdt,sim,t),tau
     else
-        return dSdt
+        return dSdt,tau
     end
 end
 
@@ -371,9 +377,9 @@ function transitorysensitivitiesparamexact(ssys::SystemSimulation,t,ind;tau=NaN,
     end
 
     if normalized
-        return normalizeparamtransitorysensitivities!(dSdt,sim,t)
+        return normalizeparamtransitorysensitivities!(dSdt,sim,t),tau
     else
-        return dSdt
+        return dSdt,tau
     end
 end
 export transitorysensitivitiesparamexact
@@ -417,9 +423,9 @@ function transitorysensitivitiesadjointexact(sim::Simulation,t,name;tau=NaN,
     end
 
     if normalized
-        return normalizeadjointtransitorysensitivities!(dSdt,sim,t,ind);
+        return normalizeadjointtransitorysensitivities!(dSdt,sim,t,ind),tau
     else
-        return dSdt
+        return dSdt,tau
     end
 end
 
@@ -461,9 +467,9 @@ function transitorysensitivitiesadjointexact(ssys::SystemSimulation,t,name;tau=N
     end
 
     if normalized
-        return normalizeadjointtransitorysensitivities!(dSdt,ssys,t,ind)
+        return normalizeadjointtransitorysensitivities!(dSdt,ssys,t,ind),tau
     else
-        return dSdt
+        return dSdt,tau
     end
 end
 export transitorysensitivitiesadjointexact
@@ -538,9 +544,9 @@ function transitorysensitivitiesadjointapprox(sim::Simulation,t,name;tau=NaN,
         dSdt = reduce(hcat,Gvals)*weights
     end
     if normalized
-        return normalizeadjointtransitorysensitivities!(dSdt',sim,t,ind)
+        return normalizeadjointtransitorysensitivities!(dSdt',sim,t,ind),tau
     else
-        return dSdt
+        return dSdt,tau
     end
 end
 
@@ -594,8 +600,8 @@ function transitorysensitivitiesadjointapprox(ssys::SystemSimulation,t,name;tau=
     end
 
     if normalized
-        return normalizeadjointtransitorysensitivities!(dSdt,ssys,t,ind)
+        return normalizeadjointtransitorysensitivities!(dSdt,ssys,t,ind),tau
     else
-        return dSdt
+        return dSdt,tau
     end
 end
