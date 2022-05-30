@@ -469,7 +469,7 @@ export calcbranchingnumbers
 """
 determine species pairings that are concentrated enough that they should be reacted
 """
-function updatefilterthresholds!(sim,corespcsinds,corespeciesconcentrations,charrate,
+function updatefilterthresholds!(sim::Simulation,corespcsinds,corespeciesconcentrations,charrate,
         unimolecularthreshold,bimolecularthreshold,trimolecularthreshold,tolmovetocore,
         filterthreshold)
     unimolecularthresholdrateconstant,bimolecularthresholdrateconstant,trimolecularthresholdrateconstant = getthresholdrateconstants(sim,sim.domain.phase,filterthreshold)
