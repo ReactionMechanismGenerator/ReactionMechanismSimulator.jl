@@ -220,8 +220,8 @@ function gettransitoryadjoint(sim,t,spcname,spcind,transitorysensitivitymethod)
     if applicable(transitorysensitivitymethod,sim,t,spcname)
         return transitorysensitivitymethod(sim,t,spcname)
     else
-        dSdt = transitorysensitivitymethod(sim,t)
-        return dSdt[spcind+sim.domain.indexes[1]-1,:]
+        dSdt,tau = transitorysensitivitymethod(sim,t)
+        return @views dSdt[spcind,:],tau
     end
 end
 
@@ -241,7 +241,7 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
 
     spcind = findfirst(isequal(spcname),sim.names)
     @assert spcind != nothing "$spcname not found"
-    dSdt = gettransitoryadjoint(sim,t,spcname,spcind,transitorysensitivitymethod)
+    (dSdt,tau) = gettransitoryadjoint(sim,t,spcname,spcind,transitorysensitivitymethod)
 
     rop = rops(sim,t)
     ropp = zeros(size(rop))
