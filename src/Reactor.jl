@@ -26,11 +26,11 @@ function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=Sc
     jacyforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,nothing)
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
     jacpforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,nothing)
-    
+
     psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetupsundials(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
     precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _precsundials(z, r, p, t, y, fy, gamma, delta, lr, preccache)
     precsjulia(W::T1,du::T2,u::T3,p::T4,t::T5,newW::T6,Plprev::T7,Prprev::T8,solverdata::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} =  _precsjulia(W,du,u,p,t,newW,Plprev,Prprev,solverdata,tau)
-    
+
     # determine worst sparsity
     y0length = length(y0)
     J = spzeros(y0length,y0length)
@@ -46,7 +46,7 @@ function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=Sc
     @inbounds @views @. W[idxs] = W[idxs] + 1
     prectmp = ilu(W, τ = tau)
     preccache = Ref(prectmp)
-    
+
     if (forwardsensitivities || !forwarddiff) && domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTAPhiDomain}
         if !forwardsensitivities
             odefcn = ODEFunction(dydt;jac=jacy!,paramjac=jacp!)
@@ -118,7 +118,7 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
             n -= 1
         end
     end
-    
+
     p = Array{Float64,1}()
     phases = []
     phaseinds = Array{Tuple,1}()
@@ -144,7 +144,7 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
                     end
                 end
             end
-        else 
+        else
             domain.parameterindexes[1] = length(p)+1
             domain.parameterindexes[2] = length(p)+length(ps[i])
             push!(phaseinds,(length(p)+1,length(p)+length(ps[i])))
@@ -152,7 +152,7 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
             p = vcat(p,ps[i])
         end
     end
-    
+
     for (i,inter) in enumerate(interfaces)
         if isa(inter, AbstractReactiveInternalInterface)
             ind1 = findfirst(isequal(inter.domain1),domains)
@@ -174,7 +174,7 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
             p = vcat(p,ps[i+length(domains)])
         end
     end
-    
+
     dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V} = dydtreactor!(dy,y,t,domains,interfaces,p=p)
     jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domains,interfaces,nothing)
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domains,interfaces,nothing)
@@ -182,7 +182,7 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
     psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetupsundials(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
     precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _precsundials(z, r, p, t, y, fy, gamma, delta, lr, preccache)
     precsjulia(W::T1,du::T2,u::T3,p::T4,t::T5,newW::T6,Plprev::T7,Prprev::T8,solverdata::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} =  _precsjulia(W,du,u,p,t,newW,Plprev,Prprev,solverdata,tau)
-    
+
     # determine worst sparsity
     y0length = length(y0)
     J = spzeros(y0length,y0length)
@@ -198,7 +198,7 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
     @inbounds @views @. W[idxs] = W[idxs] + 1
     prectmp = ilu(W, τ = tau)
     preccache = Ref(prectmp)
-    
+
     if forwardsensitivities
         odefcn = ODEFunction(dydt;paramjac=jacp!)
         ode = ODEForwardSensitivityProblem(odefcn,y0,tspan,p)
