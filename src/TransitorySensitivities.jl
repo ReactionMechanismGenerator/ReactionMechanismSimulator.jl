@@ -507,7 +507,7 @@ function transitorysensitivitiesadjointapprox(sim::Simulation,t,name;tau=NaN,
     end
 
     if tau == 0.0
-        dSdt = jacobianp(sim.sol,t,sim.ps)[ind,:];
+        dSdt = jacobianp(sim.sol,t,sim.p)[ind,:];
     else
         prob = remake(sim.sol.prob;u0=sim.sol(t),tspan=(0.0,tau));
         soladj = solve(prob,solver,reltol=reltol,abstol=abstol);
