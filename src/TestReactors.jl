@@ -72,6 +72,52 @@ end;
 
         end;
 
+    @testset "Test vapor-liquid phase multi-domain reactor simulation with VaporLiquidMassTransferInternalInterfaceConstantT and VolumeMaintainingOutlet interface" begin
+        input_file = "../src/testing/TdependentkLAkH.rms"
+        phaseDict = readinput(input_file)
+        liqspcs = phaseDict["phase"]["Species"]
+        liqrxns = phaseDict["phase"]["Reactions"]
+        solvent = phaseDict["Solvents"][1]
+        gasspcs = liqspcs
+        gasrxns = []
+        liqspcnames = getfield.(liqspcs,:name)
+        gasspcnames = getfield.(gasspcs,:name)
+
+        gas = IdealGas(gasspcs,gasrxns;name="gas"); 
+        liq = IdealDiluteSolution(liqspcs,liqrxns,solvent;name="liq",diffusionlimited=true)
+
+        Vliq = 1.0
+        Vgas = 1.0
+        T = 25 + 273.15
+        octaneconc = 6478
+        tf = 3600*24
+
+        initialconds = Dict("octane"=>octaneconc*Vliq,"T"=>T,"V"=>Vliq)
+        domainliq,y0liq,pliq = ConstantTVDomain(phase=liq,initialconds=initialconds);
+
+        P = 101300.0
+        N2N = P*Vgas/R/T*0.8
+        oxygenN = P*Vgas/R/T*0.2
+        initialconds = Dict("N2"=>N2N,"oxygen"=>oxygenN,"T"=>T,"P"=>P)
+        domaingas,y0gas,pgas = ConstantTPDomain(phase=gas,initialconds=initialconds);
+        initialconds = Dict("N2"=>N2N,"oxygen"=>oxygenN,"T"=>T,"P"=>P)
+        inletgas = Inlet(domaingas,initialconds,x->42)
+        outletgas = VolumeMaintainingOutlet(domaingas)
+
+        ignoremasstransferspcnames = ["octane"] #only allowing octane to be consumed via reactions, to avoid the liquid phase to dry out completely
+        vl,pinter = VaporLiquidMassTransferInternalInterfaceConstantT(domaingas,domainliq,ignoremasstransferspcnames);
+
+        domains = (domainliq,domaingas)
+        interfaces = [vl,inletgas,outletgas]
+        react,y0,p = Reactor(domains,(y0liq,y0gas),(0.0,tf),interfaces,(pliq,pgas,pinter));
+        sol = solve(react.ode,react.recommendedsolver,abstol=1e-18,reltol=1e-6);
+
+        name = "oxygen"
+        ind = findfirst(x->x==name,liqspcnames)
+        @test sol(tf)[ind] ≈ 1.5533140456432624e-7 rtol=1e-5 #test there are oxygen dissolved into the liquid 
+
+    end
+
 @testset "Test liquid phase Parametrized T Constant V reactor jacobian" begin
 #Parametrized T constant V Ideal Dilute Liquid
 initialconds = Dict(["ts"=>[0.,600.,1200.],"T"=>[450.0,490.,500.],"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6])

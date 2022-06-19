@@ -28,7 +28,7 @@ abstract type AbstractLiquidVolumetricMassTransferCoefficient end
 export AbstractLiquidVolumetricMassTransferCoefficient
 
 struct EmptyLiquidVolumetricMassTransferCoefficient <: AbstractLiquidVolumetricMassTransferCoefficient end
-(eh::EmptyLiquidVolumetricMassTransferCoefficient)(;T::N) where {N<:Number} = 0
+(eh::EmptyLiquidVolumetricMassTransferCoefficient)(;T::N) where {N<:Number} = 0.0
 export EmptyLiquidVolumetricMassTransferCoefficient
 
 @with_kw struct ConstantLiquidVolumetricMassTransferCoefficient{N<:Number} <: AbstractLiquidVolumetricMassTransferCoefficient

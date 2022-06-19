@@ -105,6 +105,8 @@ function interofdomain(inter,domain)
         return domain==inter.domain
     elseif hasfield(typeof(inter),:domain1)
         return domain==inter.domain1 || domain==inter.domain2
+    elseif hasfield(typeof(inter),:domaingas)
+        return domain==inter.domaingas || domain==inter.domainliq
     end
 end
 
@@ -684,7 +686,7 @@ calculate the rates of all reactions at time t
 function rates(ssys::Q,t::X) where {Q<:SystemSimulation,X<:Real}
     rts = zeros(length(ssys.reactions))
     domains = getfield.(ssys.sims,:domain)
-    Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter,:reactions)])
+    Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([hasproperty(inter,:reactions) ? length(inter.reactions) : 0 for inter in ssys.interfaces])
     Nspcs = sum([length(sim.domain.phase.species) for sim in ssys.sims])
     cstot = zeros(Nspcs)
     vns = Array{Any,1}(undef,length(domains))

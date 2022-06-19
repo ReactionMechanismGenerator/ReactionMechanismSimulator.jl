@@ -103,14 +103,16 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
         for i in 1:length(domain.constantspeciesinds)
             domain.constantspeciesinds[i] += k-1
         end
-        for (thermovar,ind) in domain.thermovariabledict
-            domain.thermovariabledict[thermovar] += k-1
-        end
         domain.indexes[1] = k
         k += Nspcs
         domain.indexes[2] = k-1
         y0[domain.indexes[1]:domain.indexes[2]] = y0s[j][1:Nspcs]
         for m = 3:2+Ntherm
+            for (therm,ind) in domain.thermovariabledict
+                if ind == domain.indexes[m]
+                    domain.thermovariabledict[therm] = n
+                end
+            end
             domain.indexes[m] = n
             y0[n] = y0s[j][Nspcs+m-2]
             n -= 1
@@ -160,6 +162,15 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
             inter.parameterindexes[1] = length(p)+1
             inter.parameterindexes[2] = length(p)+length(ps[i+length(domains)])
             inter.rxnarray .= getinterfacereactioninds(inter.domain1,inter.domain2,inter.reactions)
+            p = vcat(p,ps[i+length(domains)])
+        elseif isa(inter, VaporLiquidMassTransferInternalInterfaceConstantT)
+            indgas = findfirst(isequal(inter.domaingas),domains)
+            indliq = findfirst(isequal(inter.domainliq),domains)
+            inter.domaininds[1] = indgas
+            inter.domaininds[2] = indliq
+            inter.parameterindexes[1] = length(p)+1
+            inter.parameterindexes[2] = length(p)+length(ps[i+length(domains)])
+            inter.ignoremasstransferspcinds .= getinterfaceignoremasstransferspcinds(inter.domaingas,inter.domainliq,inter.ignoremasstransferspcnames)
             p = vcat(p,ps[i+length(domains)])
         end
     end
@@ -394,15 +405,19 @@ export getrate
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
         elseif @inbounds rarray[3,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
-        else
+        elseif @inbounds rarray[4,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
-        end
-        if @inbounds rarray[5,i] == 0
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
-        elseif @inbounds rarray[6,i] == 0
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
         else
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]*cs[rarray[4,i]]
+        end
+        if @inbounds rarray[6,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]
+        elseif @inbounds rarray[7,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]
+        elseif @inbounds rarray[8,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]
+        else
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]*cs[rarray[8,i]]
         end
         @fastmath R = fR - rR
         
@@ -462,15 +477,19 @@ end
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]
         elseif @inbounds rarray[3,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]
-        else
+        elseif @inbounds rarray[4,i] == 0
             @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]
-        end
-        if @inbounds rarray[5,i] == 0
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]
-        elseif @inbounds rarray[6,i] == 0
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]
         else
-            @inbounds @fastmath rR = krevs[i]*cs[rarray[4,i]]*cs[rarray[5,i]]*cs[rarray[6,i]]
+            @inbounds @fastmath fR = kfs[i]*cs[rarray[1,i]]*cs[rarray[2,i]]*cs[rarray[3,i]]*cs[rarray[4,i]]
+        end
+        if @inbounds rarray[6,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]
+        elseif @inbounds rarray[7,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]
+        elseif @inbounds rarray[8,i] == 0
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]
+        else
+            @inbounds @fastmath rR = krevs[i]*cs[rarray[5,i]]*cs[rarray[6,i]]*cs[rarray[7,i]]*cs[rarray[8,i]]
         end
         @fastmath R = (fR - rR)*V
         @inbounds @fastmath dydt[rarray[1,i]] -= R
@@ -478,13 +497,19 @@ end
             @inbounds @fastmath dydt[rarray[2,i]] -= R
             if @inbounds rarray[3,i] != 0
                 @inbounds @fastmath dydt[rarray[3,i]] -= R
+                if @inbounds rarray[4,i] != 0
+                    @inbounds @fastmath dydt[rarray[4,i]] -= R
+                end
             end
         end
-        @inbounds @fastmath dydt[rarray[4,i]] += R
-        if @inbounds rarray[5,i] != 0
-            @inbounds @fastmath dydt[rarray[5,i]] += R
-            if @inbounds rarray[6,i] != 0
-                @inbounds @fastmath dydt[rarray[6,i]] += R
+        @inbounds @fastmath dydt[rarray[5,i]] += R
+        if @inbounds rarray[6,i] != 0
+            @inbounds @fastmath dydt[rarray[6,i]] += R
+            if @inbounds rarray[7,i] != 0
+                @inbounds @fastmath dydt[rarray[7,i]] += R
+                if @inbounds rarray[8,i] != 0
+                    @inbounds @fastmath dydt[rarray[8,i]] += R
+                end
             end
         end
     end
@@ -604,6 +629,8 @@ end
     for (i,inter) in enumerate(interfaces)
         if isa(inter,AbstractReactiveInternalInterface)
             evaluate(inter,dydt,domains,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot,p)
+        elseif isa(inter,VaporLiquidMassTransferInternalInterfaceConstantT)
+            evaluate(inter,dydt,vV[inter.domaininds[1]],vV[inter.domaininds[2]],vT[inter.domaininds[1]],vT[inter.domaininds[2]],vN[inter.domaininds[1]],vN[inter.domaininds[2]],vP[inter.domaininds[1]],vP[inter.domaininds[2]],vCvave[inter.domaininds[1]],vCvave[inter.domaininds[2]],vns[inter.domaininds[1]],vns[inter.domaininds[2]],vUs[inter.domaininds[1]],vUs[inter.domaininds[2]],cstot,p)
         end
     end
     for (i,domain) in enumerate(domains)
