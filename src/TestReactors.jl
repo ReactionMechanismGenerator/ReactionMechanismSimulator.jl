@@ -1,5 +1,5 @@
 using Test
-using DiffEqBase
+using SciMLBase
 using Sundials
 
 @testset "Test Reactors" begin

@@ -37,6 +37,8 @@ function makespcsvector(phase,spcdict)
             continue
         elseif key == "V"
             continue
+        elseif key == "Hin"
+            continue
         else
             ind = findfirst(isequal(key),spnames)
             @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"

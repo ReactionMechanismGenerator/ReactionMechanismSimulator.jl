@@ -5,7 +5,7 @@ Tools for model edge analysis for automatic mechanism generation
 using Logging
 using Sundials
 using SparseArrays
-using DiffEqBase: build_solution
+using SciMLBase: build_solution
 using Base.Iterators: flatten
 
 abstract type AbstractTerminationCriterion end
@@ -76,7 +76,7 @@ Calculate key flux and concentration related quantities for edge analysis
 @inline function calcfluxes(sim::Simulation)
     t = sim.sol.t[end]
     dydt = zeros(sim.domain.indexes[end])
-    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(sim.domain,sim.sol.u[end],sim.sol.t[end],DiffEqBase.NullParameters())
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(sim.domain,sim.sol.u[end],sim.sol.t[end],SciMLBase.NullParameters())
     rts,frts,rrts = addreactionratecontributionsforwardreverse!(dydt,sim.domain.rxnarray,cs,kfs,krevs,V)
     calcdomainderivatives!(sim.domain,dydt,[];t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
     return dydt,rts,frts,rrts,cs
@@ -94,7 +94,7 @@ Calculate key flux and concentration related quantities for edge analysis
     domains = [sim.domain for sim in ssys.sims]
     interfaces = ssys.interfaces
     domain = domains[1]
-    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,DiffEqBase.NullParameters())
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(domain,y,t,SciMLBase.NullParameters())
     vns = Array{Any,1}(undef,length(domains))
     vns[1] = ns
     vcs = Array{Any,1}(undef,length(domains))
@@ -136,7 +136,7 @@ Calculate key flux and concentration related quantities for edge analysis
     rrtsall = [rrts]
     for (i,domain) in enumerate(@views domains[2:end])
         k = i + 1
-        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vcpdivR[k],vphi[k] = calcthermo(domain,y,t,DiffEqBase.NullParameters())
+        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vcpdivR[k],vphi[k] = calcthermo(domain,y,t,SciMLBase.NullParameters())
         cstot[domain.indexes[1]:domain.indexes[2]] .= vcs[k]
         rts,frts,rrts = addreactionratecontributionsforwardreverse!(dydt,domain.rxnarray,cstot,vkfs[k],vkrevs[k],vV[k])
         push!(rtsall,rts)

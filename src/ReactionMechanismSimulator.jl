@@ -53,6 +53,7 @@ module ReactionMechanismSimulator
     include("Domain.jl")
     include("yml.jl")
     include("Parse.jl")
+    include("ModelReduction.jl")
     include("Reactor.jl")
     include("Simulation.jl")
     include("TransitorySensitivities.jl")

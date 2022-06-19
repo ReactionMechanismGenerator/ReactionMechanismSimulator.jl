@@ -1,5 +1,5 @@
 using LinearAlgebra
-using DiffEqBase
+using SciMLBase
 using LsqFit
 
 abstract type AbstractInterface end
@@ -54,7 +54,7 @@ function getkfskrevs(ri::ReactiveInternalInterface,T1,T2,phi1,phi2,Gs1,Gs2,cstot
     return kfs,krevs
 end
 
-function evaluate(ri::ReactiveInternalInterface,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p::W) where {W<:DiffEqBase.NullParameters}
+function evaluate(ri::ReactiveInternalInterface,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p::W) where {W<:SciMLBase.NullParameters}
     kfs,krevs = getkfskrevs(ri,T1,T2,phi1,phi2,Gs1,Gs2,cstot)
     addreactionratecontributions!(dydt,ri.rxnarray,cstot,kfs,krevs,ri.A)
 end
@@ -108,7 +108,7 @@ function getkfskrevs(ri::ReactiveInternalInterfaceConstantTPhi,T1,T2,phi1,phi2,G
     return ri.kfs,ri.krevs
 end
 
-function evaluate(ri::ReactiveInternalInterfaceConstantTPhi,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p::W) where {W<:DiffEqBase.NullParameters}
+function evaluate(ri::ReactiveInternalInterfaceConstantTPhi,dydt,domains,T1,T2,phi1,phi2,Gs1,Gs2,cstot,p::W) where {W<:SciMLBase.NullParameters}
     addreactionratecontributions!(dydt,ri.rxnarray,cstot,ri.kfs,ri.krevs,ri.A)
 end
 
@@ -237,11 +237,25 @@ struct Inlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real,FF<:Function} <: Abstrac
 end
 
 function Inlet(domain::V,conddict::Dict{X1,X},F::FF) where {V,X1,X,B<:Real,FF<:Function}
+    T = 0.0
+    P = 0.0
+
     y = makespcsvector(domain.phase,conddict)
-    T = conddict["T"]
-    P = conddict["P"]
     yout = y./sum(y)
-    H = dot(getEnthalpy.(getfield.(domain.phase.species,:thermo),T),yout)
+
+    if haskey(conddict,"T")
+        T = conddict["T"]
+    end
+    if haskey(conddict,"P")
+        P = conddict["P"]
+    end
+
+    if haskey(conddict,"Hin")
+        H = conddict["Hin"]
+    else
+        @assert T != 0.0 && P != 0.0 "T and P need to be provided if Hin is not provided for Inlet"
+        H = dot(getEnthalpy.(getfield.(domain.phase.species,:thermo),T),yout)
+    end
     return Inlet(domain,yout,F,T,P,H)
 end
 
