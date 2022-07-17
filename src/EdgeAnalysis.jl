@@ -98,7 +98,8 @@ Calculate key flux and concentration related quantities for edge analysis
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR,phi = calcthermo(sim.domain,sim.sol.u[end],sim.sol.t[end],SciMLBase.NullParameters())
     rts,frts,rrts = addreactionratecontributionsforwardreverse!(dydt,sim.domain.rxnarray,cs,kfs,krevs,V)
     calcdomainderivatives!(sim.domain,dydt,[];t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
-    return dydt,rts,frts,rrts,cs
+    radrts = rts .* getfield.(sim.domain.phase.reactions,:radicalchange)
+    return dydt,rts,frts,rrts,radrts,cs
 end
 
 """
@@ -150,30 +151,38 @@ Calculate key flux and concentration related quantities for edge analysis
     vphi = Array{Any,1}(undef,length(domains))
     vphi[1] = phi
     rts,frts,rrts = addreactionratecontributionsforwardreverse!(dydt,domain.rxnarray,cstot,kfs,krevs,V)
+    radrts = rts .* getfield.(domain.phase.reactions,:radicalchange)
     rtsall = [rts]
     frtsall = [frts]
     rrtsall = [rrts]
+    radrtsall = [radrts]
     for (i,domain) in enumerate(@views domains[2:end])
         k = i + 1
         @inbounds vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vcpdivR[k],vphi[k] = calcthermo(domain,y,t,SciMLBase.NullParameters())
         @inbounds cstot[domain.indexes[1]:domain.indexes[2]] .= vcs[k]
         rts,frts,rrts = addreactionratecontributionsforwardreverse!(dydt,domain.rxnarray,cstot,vkfs[k],vkrevs[k],vV[k])
+        radrts = rts .* getfield.(domain.phase.reactions,:radicalchange)
         push!(rtsall,rts)
         push!(frtsall,frts)
         push!(rrtsall,rrts)
+        push!(radrtsall,radrts)
     end
     for (i,inter) in enumerate(interfaces)
         if isa(inter,ReactiveInternalInterface)
             @inbounds kfs,krevs = getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
             @inbounds rts,frts,rrts = addreactionratecontributionsforwardreverse!(dydt,inter.rxnarray,cstot,kfs.*p[inter.parameterindexes[1]:inter.parameterindexes[2]],krevs.*p[inter.parameterindexes[1]:inter.parameterindexes[2]],inter.A)
+            radrts = rts .* getfield.(inter.reactions,:radicalchange)
             push!(rtsall,rts)
             push!(frtsall,frts)
             push!(rrtsall,rrts)
+            push!(radrtsall,radrts)
         elseif isa(inter,ReactiveInternalInterfaceConstantTPhi)
             rts,frts,rrts = addreactionratecontributionsforwardreverse!(dydt,inter.rxnarray,cstot,inter.kfs,inter.krevs,inter.A)
+            radrts = rts .* getfield.(inter.reactions,:radicalchange)
             push!(rtsall,rts)
             push!(frtsall,frts)
             push!(rrtsall,rrts)
+            push!(radrtsall,radrts)
         elseif isa(inter,AbstractReactiveInternalInterface)
             typ = typeof(inter)
             error("No handling available for AbstractReactiveInternalInterface: $typ")
@@ -182,7 +191,7 @@ Calculate key flux and concentration related quantities for edge analysis
     for (i,domain) in enumerate(domains)
         @inbounds calcdomainderivatives!(domain,dydt,interfaces;t=t,T=vT[i],P=vP[i],Us=vUs[i],Hs=vHs[i],V=vV[i],C=vC[i],ns=vns[i],N=vN[i],Cvave=vCvave[i])
     end
-    return dydt,collect(flatten(rtsall)),collect(flatten(frtsall)),collect(flatten(rrtsall)),cstot
+    return dydt,collect(flatten(rtsall)),collect(flatten(frtsall)),collect(flatten(rrtsall)),collect(flatten(radrtsall)),cstot
 end
 export calcfluxes
 
@@ -297,14 +306,26 @@ Process flux information into useful quantities for edge analysis
 function processfluxes(sim::SystemSimulation,
         corespcsinds,corerxninds,edgespcsinds,edgerxninds)
 
-    dydt,rts,frts,rrts,cs = calcfluxes(sim)
+    dydt,rts,frts,rrts,radrts,cs = calcfluxes(sim)
 
     corespeciesrates = abs.(dydt[corespcsinds])
     charrate = sqrt(dot(corespeciesrates,corespeciesrates))
+    radprod = 0.0
+    radloss = 0.0
+    for rt in radrts[corerxninds]
+        if rt > 0
+            radprod += abs(rt)
+        else
+            radloss += abs(rt)
+        end
+    end
+    radcharrate = min(radprod,radloss)
     edgespeciesrates = abs.(dydt[edgespcsinds])
     edgereactionrates = rts[edgerxninds]
+    edgeradreactionrates = radrts[edgerxninds]
     corespeciesrateratios = corespeciesrates./charrate
     edgespeciesrateratios = edgespeciesrates./charrate
+    edgerxnradrateratios = abs.(edgeradreactionrates)./radcharrate
     corereactionrates = rts[corerxninds]
     corespeciesconcentrations = cs[corespcsinds]
     corespeciesconsumptionrates = zeros(length(corespeciesconcentrations))
@@ -363,7 +384,7 @@ function processfluxes(sim::SystemSimulation,
         end
     end
 
-    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
+    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,edgerxnradrateratios,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
 end
 
 """
@@ -371,14 +392,26 @@ Process flux information into useful quantities for edge analysis
 """
 function processfluxes(sim::Simulation,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
 
-    dydt,rts,frts,rrts,cs = calcfluxes(sim)
+    dydt,rts,frts,rrts,radrts,cs = calcfluxes(sim)
 
     @inbounds corespeciesrates = abs.(dydt[corespcsinds])
     charrate = sqrt(dot(corespeciesrates,corespeciesrates))
+    radprod = 0.0
+    radloss = 0.0
+    for rt in radrts[corerxninds]
+        if rt > 0
+            radprod += rt
+        else
+            radloss -= rt
+        end
+    end
+    radcharrate = min(radprod,radloss)
     @inbounds edgespeciesrates = abs.(dydt[edgespcsinds])
     @inbounds edgereactionrates = rts[edgerxninds]
+    edgerxnradreactionrates = radrts[edgerxninds]
     corespeciesrateratios = corespeciesrates./charrate
     edgespeciesrateratios = edgespeciesrates./charrate
+    edgerxnradrateratios = abs.(edgerxnradreactionrates)./radcharrate
     @inbounds corereactionrates = rts[corerxninds]
     @inbounds corespeciesconcentrations = cs[corespcsinds]
     corespeciesconsumptionrates = zeros(length(corespeciesconcentrations))
@@ -408,7 +441,7 @@ function processfluxes(sim::Simulation,corespcsinds,corerxninds,edgespcsinds,edg
         end
     end
 
-    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
+    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,edgerxnradrateratios,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
 end
 
 export processfluxes
@@ -515,7 +548,7 @@ whether the simulation should be interrupted or terminated
 """
 function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         edgerxninds,reactantinds,productinds,unimolecularthreshold,bimolecularthreshold,
-        trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,
+        trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolradmovetocore,tolinterruptsimulation,
         ignoreoverallfluxcriterion,filterreactions,maxnumobjsperiter,branchfactor,branchingratiomax,
         branchingindex,terminateatmaxobjects,termination,y0,invalidobjects,firsttime,
         filterthreshold,transitorydict,checktransitory)
@@ -530,10 +563,10 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     terminated = false
     conversion = 0.0
 
-    (dydt,rts,frts,rrts,cs,corespeciesratse,charrate,edgespeciesrates,
-    edgereactionrates,corespeciesrateratios,edgespeciesrateratios,
-    corereactionrates,corespeciesconcentrations,corespeciesproductionrates,
-    corespeciesconsumptionrates) = processfluxes(sim,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
+    (dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,
+    edgereactionrates,edgerxnradrateratios,corespeciesrateratios,edgespeciesrateratios,
+    corereactionrates,corespeciesconcentrations,
+    corespeciesproductionrates,corespeciesconsumptionrates) = processfluxes(sim,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
 
     for i = 1:length(edgespeciesrateratios)
         if @inbounds  edgespeciesrateratios[i] > maxedgespeciesrateratios[i]
@@ -625,6 +658,35 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             @inbounds push!(newobjectinds,tempnewobjectinds[q])
             @inbounds push!(newobjectvals,tempnewobjectvals[q])
             @inbounds push!(newobjecttype,tempnewobjecttype[q])
+        end
+
+        tempnewobjects = []
+        tempnewobjectinds = Array{Int64,1}()
+        tempnewobjectvals = Array{Float64,1}()
+        tempnewobjecttype = []
+    end
+
+    if !ignoreoverallfluxcriterion #radical rate ratios
+        for (i,ind) in enumerate(edgerxninds)
+            rr = edgerxnradrateratios[i]
+            obj = sim.reactions[ind]
+            if rr > tolradmovetocore
+                if !(obj in newobjects || obj in invalidobjects)
+                    push!(tempnewobjects,obj)
+                    push!(tempnewobjectinds,ind)
+                    push!(tempnewobjectvals,rr)
+                    push!(tempnewobjecttype,"rrrad")
+                end
+            end
+        end
+
+        sortedinds = reverse(sortperm(tempnewobjectvals))
+
+        for q in sortedinds
+            push!(newobjects,tempnewobjects[q])
+            push!(newobjectinds,tempnewobjectinds[q])
+            push!(newobjectvals,tempnewobjectvals[q])
+            push!(newobjecttype,tempnewobjecttype[q])
         end
 
         tempnewobjects = []
@@ -728,6 +790,8 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
                 rstr = getrxnstr(obj)
                 if @inbounds newobjecttype[i] == "branching"
                     @info "at time $t sec, reaction $rstr at a branching number of $val exceeded the threshold of 1 for moving to model core"
+                elseif @inbounds newobjecttype[i] == "rrrad"
+                    @info "At time $t sec, reaction $rstr at radical rate ratio $val exceeded the minimum rate for moving to model core of $tolradmovetocore"
                 elseif @inbounds newobjecttype[i] == "transitorysensitivity"
                     sens = val
                     @inbounds spcname = transitoryoutdict[ind]
@@ -764,7 +828,7 @@ export identifyobjects!
 run edge analysis to determine objects (species/reactions) that should be added to model core
 """
 function selectobjects(react,edgereact,coreedgedomains,coreedgeinters,domains,inters,
-                corep,coreedgep,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
+                corep,coreedgep,tolmovetocore,tolradmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,tolbranchrxntocore,branchingratiomax,
                 branchingindex,terminateatmaxobjects,termination,
                 filterthreshold,transitorydict,transitorystepperiod;
@@ -808,7 +872,8 @@ function selectobjects(react,edgereact,coreedgedomains,coreedgeinters,domains,in
         sim = getsim(inte,react,edgereact,coreedgedomains,coreedgeinters,coreedgep,coretoedgespcmap)
         terminated,interrupt,conversion = identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             edgerxninds,reactantindices,productindices,unimolecularthreshold,bimolecularthreshold,
-                trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
+                trimolecularthreshold,maxedgespeciesrateratios,tolmovetocore,tolradmovetocore,
+                tolinterruptsimulation,ignoreoverallfluxcriterion,filterreactions,
                 maxnumobjsperiter,branchfactor,branchingratiomax,
                 branchingindex,terminateatmaxobjects,termination,y0,invalidobjects,firsttime,
                 filterthreshold,transitorydict,checktransitory)
@@ -825,7 +890,7 @@ function selectobjects(react,edgereact,coreedgedomains,coreedgeinters,domains,in
             bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios,t,conversion)
     else
         @error "Solver failed with code $code resurrecting job"
-        dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,
+        dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,edgerxnradrateratios,
         corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,
         corespeciesproductionrates,corespeciesconsumptionrates = processfluxes(sim,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
         @inbounds ind = edgespcsinds[argmax(edgespeciesrates)]
