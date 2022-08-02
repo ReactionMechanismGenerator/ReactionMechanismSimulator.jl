@@ -625,7 +625,7 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         for (i,ind) in enumerate(edgerxninds)
             bnum = branchingnums[i]
             if bnum > 1
-                obj = sim.reactions[ind+numcorerxns]
+                obj = sim.reactions[ind]
                 if !(obj in newobjects || obj in invalidobjects)
                     push!(tempnewobjects,obj)
                     push!(tempnewobjectinds,ind)
