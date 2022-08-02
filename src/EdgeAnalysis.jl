@@ -606,7 +606,45 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         tempnewobjectvals = Array{Float64,1}()
         tempnewobjecttype = []
     end
-    
+
+
+    if length(transitorydict) > 0 && !firsttime
+        transitoryoutdict = Dict()
+        TS = transitorysensitivitiesfulltrapezoidal(sim,t;normalized=false)
+        TS .*= sim.p'
+        TS = TS[:,length(sim.names)+1:end]
+        for (spcname,tol) in transitorydict
+            spcind = findfirst(isequal(spcname),sim.names)
+            for rind in edgerxninds
+                sens = TS[spcind,rind]
+                if abs(sens) > tol
+                    obj = sim.reactions[rind]
+                    if !(obj in newobjects || obj in invalidobjects)
+                        push!(tempnewobjects,obj)
+                        push!(tempnewobjectinds,rind)
+                        transitoryoutdict[rind] = spcname
+                        push!(tempnewobjectvals,sens)
+                        push!(tempnewobjecttype,"transitorysensitivity")
+                    end
+                end
+            end
+        end
+
+        sortedinds = reverse(sortperm(tempnewobjectvals))
+
+        for q in sortedinds
+            push!(newobjects,tempnewobjects[q])
+            push!(newobjectinds,tempnewobjectinds[q])
+            push!(newobjectvals,tempnewobjectvals[q])
+            push!(newobjecttype,tempnewobjecttype[q])
+        end
+
+        tempnewobjects = []
+        tempnewobjectinds = Array{Int64,1}()
+        tempnewobjectvals = Array{Float64,1}()
+        tempnewobjecttype = []
+    end
+
     if length(invalidobjects) + length(newobjects) > maxnumobjsperiter
         if invalidobjectsprintboolean
             @info "Exceeded max number of objects...removing excess objects"
@@ -633,7 +671,14 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
                 @info "At time $t sec, species $name at rate ratio $val exceeded the minimum rate for moving to model core of $tolmovetocore"
             elseif isa(obj,ElementaryReaction)
                 rstr = getrxnstr(obj)
-                @info "at time $t sec, reaction $rstr at a branching number of $val exceeded the threshold of 1 for moving to model core"
+                if newobjecttype[i] == "branching"
+                    @info "at time $t sec, reaction $rstr at a branching number of $val exceeded the threshold of 1 for moving to model core"
+                elseif newobjecttype[i] == "transitorysensitivity"
+                    sens = val
+                    spcname = transitoryoutdict[ind]
+                    tol = transitorydict[spcname]
+                    @info "at time $t sec, reaction $rstr at a transitory sensitivity from $spcname of $sens exceeded the threshold of $tol for moving to model core"
+                end
             end
         end
         
