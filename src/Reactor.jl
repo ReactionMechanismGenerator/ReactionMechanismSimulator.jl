@@ -27,8 +27,8 @@ function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=Sc
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
     jacpforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domain,interfaces,nothing)
     
-    psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetup(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
-    precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _prec(z, r, p, t, y, fy, gamma, delta, lr, preccache)
+    psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetupsundials(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
+    precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _precsundials(z, r, p, t, y, fy, gamma, delta, lr, preccache)
     precsjulia(W::T1,du::T2,u::T3,p::T4,t::T5,newW::T6,Plprev::T7,Prprev::T8,solverdata::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} =  _precsjulia(W,du,u,p,t,newW,Plprev,Prprev,solverdata,tau)
     
     # determine worst sparsity
@@ -179,8 +179,8 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
     jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domains,interfaces,nothing)
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J,y,p,t,domains,interfaces,nothing)
 
-    psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetup(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
-    precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _prec(z, r, p, t, y, fy, gamma, delta, lr, preccache)
+    psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetupsundials(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
+    precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _precsundials(z, r, p, t, y, fy, gamma, delta, lr, preccache)
     precsjulia(W::T1,du::T2,u::T3,p::T4,t::T5,newW::T6,Plprev::T7,Prprev::T8,solverdata::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} =  _precsjulia(W,du,u,p,t,newW,Plprev,Prprev,solverdata,tau)
     
     # determine worst sparsity
@@ -256,8 +256,8 @@ function Reactor(domain::T,y0unlumped::Array{W1,1},tspan::Tuple,reducedmodelmapp
     qssc = dualcache(zeros(length(reducedmodelmappings.qssindexes)),chunk_size)
     reducedmodelcache = ReducedModelCache(yunlumped,dydtunlumped,qssc)
 
-    psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetup(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
-    precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _prec(z, r, p, t, y, fy, gamma, delta, lr, preccache)
+    psetupsundials(p::T1, t::T2, u::T3, du::T4, jok::Bool, jcurPtr::T5, gamma::T6) where {T1,T2,T3,T4,T5,T6} = _psetupsundials(p, t, u, du, jok, jcurPtr, gamma, jacy!, W::SparseMatrixCSC{Float64, Int64}, preccache::Base.RefValue{IncompleteLU.ILUFactorization{Float64, Int64}}, tau::Float64)
+    precsundials(z::T1, r::T2, p::T3, t::T4, y::T5, fy::T6, gamma::T7, delta::T8, lr::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} = _precsundials(z, r, p, t, y, fy, gamma, delta, lr, preccache)
     precsjulia(W::T1,du::T2,u::T3,p::T4,t::T5,newW::T6,Plprev::T7,Prprev::T8,solverdata::T9) where {T1,T2,T3,T4,T5,T6,T7,T8,T9} =  _precsjulia(W,du,u,p,t,newW,Plprev,Prprev,solverdata,tau)
     
     # determine worst sparsity
