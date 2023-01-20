@@ -44,13 +44,13 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
     echangevec = getfield.(rxns,:electronchange)
     if all(echangevec .== 0)
         electronchange = nothing
-    else 
+    else
         electronchange = convert(echangevec,Array{Float64,1})
     end
     reversibility = getfield.(rxns,:reversible)
     return IdealGas(species=species,reactions=rxns,name=name,
-        spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple, 
-        veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns, electronchange=electronchange, 
+        spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
+        veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns, electronchange=electronchange,
         reversibility=reversibility,diffusionlimited=diffusionlimited,)
 end
 export IdealGas
@@ -84,7 +84,7 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
     echangevec = getfield.(rxns,:electronchange)
     if all(echangevec .== 0)
         electronchange = nothing
-    else 
+    else
         electronchange = convert(echangevec,Array{Float64,1})
     end
     reversibility = getfield.(rxns,:reversible)
@@ -125,7 +125,7 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
     echangevec = getfield.(rxns,:electronchange).*F
     if all(echangevec .== 0)
         electronchange = nothing
-    else 
+    else
         electronchange = convert(typeof(Nrp),echangevec)
     end
     reversibility = getfield.(rxns,:reversible)
@@ -209,7 +209,7 @@ function getveckinetics(rxns)
             push!(fs,x)
             if posinds == Array{Int64,1}()
                 push!(posinds,length(rinds))
-            else 
+            else
                 push!(posinds,length(rinds)+posinds[end])
             end
         end
@@ -277,7 +277,9 @@ function getreactionindices(spcs,rxns) where {Q<:AbstractPhase}
             end
             for (key,val) in rxn.kinetics.nameefficiencies
                 ind = findfirst(isequal(key),names)
-                rxn.kinetics.efficiencies[ind] = val
+                if !(ind === nothing)
+                    rxn.kinetics.efficiencies[ind] = val
+                end
             end
         end
     end

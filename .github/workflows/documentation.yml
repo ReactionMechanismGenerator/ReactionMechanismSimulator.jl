@@ -15,15 +15,14 @@ jobs:
       - uses: julia-actions/setup-julia@latest
         with:
           version: 1.6
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: environment.yml
+          python-version: 3.7
+          activate-environment: rms_env
       - name: Install dependencies
         run: |
-            wget https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-            bash miniconda.sh -b -p $HOME/miniconda
-            export PATH=$HOME/miniconda/bin:$PATH
-            conda create -n conda_jl --yes python=3.7 conda
-            source activate conda_jl
-            conda install -c rmg --yes rmg
-            conda update --yes conda
+            julia -e 'ENV["PYTHON"]=ENV["CONDA"] * "/envs/rms_env/bin/python"; using Pkg; Pkg.add("PyCall"); Pkg.build("PyCall")'
             julia --project=docs/ -e 'using Pkg; Pkg.add(PackageSpec(name="StochasticDiffEq",version="6.36.0")); Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate();'
       - name: Build and deploy
         env:

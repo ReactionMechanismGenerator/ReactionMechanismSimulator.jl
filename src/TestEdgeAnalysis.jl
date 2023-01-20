@@ -52,11 +52,10 @@ using Sundials
     coredomain,y0,corep = ConstantTPDomain(phase=coregas,initialconds=initialconds);
     react = Reactor(coredomain,y0,(0.0,1e6);p=corep);
     coreedgedomain,coreedgey0,coreedgep = ConstantTPDomain(phase=coreedgegas,initialconds=initialconds);
-    
+    reactedge = Reactor(coreedgedomain,coreedgey0,(0.0,1e6);p=coreedgep);
     (terminated,resurrected,invalidobjects,unimolecularthreshold,bimolecularthreshold,
-    trimolecularthreshold,maxedgespeciesrateratios) = selectobjects(react,coreedgedomain,[],coredomain,
-        [],corep,coreedgep,0.03,0.03,false,true,5,0.005,1.0,1.0,true,termination,1.0e8)
-        
+    trimolecularthreshold,maxedgespeciesrateratios) = selectobjects(react,reactedge,coreedgedomain,[],coredomain,
+        [],corep,coreedgep,0.03,0.03,false,true,5,0.005,1.0,1.0,true,termination,1.0e8,Dict(),20)
     @test terminated == false
     @test invalidobjects[1].name == "[CH2]CCC"
     @test unimolecularthreshold[5] == true
