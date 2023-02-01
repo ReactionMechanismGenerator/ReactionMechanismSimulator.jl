@@ -95,7 +95,7 @@ RMS purposefully exposes the solver interface provide users with all the options
 Julia's DifferentialEquations package.  The ODEProblem object is a field of the Reactor
 object `react.ode` and can be solved as the user desires. A recommended solver choice is stored in `react.recommendedsolver`. User can also specify their own choice of solver.
 
-Forward sensitivity analysis can also be requested on the Reactor object by setting `forwardsensitivities=true`. Note that adjoint sensitivity analysis is usually much faster and can be done as a postprocessing analysis after the simulation is complete without a need to set `forwardsensitivities=true` during the simulation (this is discussed in the Analysis section). 
+Forward sensitivity analysis can also be requested on the Reactor object by setting `forwardsensitivities=true`. Note that adjoint and threaded sensitivity analyses are usually much faster. Adjoint sensitivity analysis can be done as postprocessing analysis after the simulation is complete without a need to set `forwardsensitivities=true` during the simulation (this are discussed in the Analysis section). Threaded sensitivity analysis will be discussed in the next section.
 
 Example:
 
@@ -108,3 +108,29 @@ sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12;forwardsensitivities
 ```
 
 In general CVODE_BDF tends to work well on these problems.  
+
+## Threaded Sensitivity Analysis
+Instead of solving all of the sensitivity equations at once as is done in raw Forward sensitivity analysis we can
+first solve the equations without sensitivity analysis alone. With an interpolatable solution to the original equations the sensitivities associated with each parameter are decoupled from the sensitivities of every other parameter and can be solved independently. Solving these groups of equations sequentially is often significantly faster than solving the equations together. However, by parallelizing the solution of these equations using multithreading it is possible to achieve dramatic speed ups. This approach is not always competitive with adjoint sensitivities as the adjoint approach requires solution of a much smaller system of equations, however, in practice this approach is often more robust especially for large systems.
+
+In order to take advantage of multithreading you must set the number of threads before launching Julia see the
+documentation <a href="https://docs.julialang.org/en/v1/manual/multi-threading/">here</a>. We provide two methods for this algorithm. The first method below calculates the sensitivities of all variables to all parameters and provides a solution object that can be used in the same way as the output of a solve on a Reactor with forwardsensitivities=true:
+
+```
+using Base.Threads
+nthreads = Threads.nthreads()
+println("Using $nthreads threads")
+
+sol = threadedsensitivities(react; odesolver=react.recommendedsolver,senssolver=react.recommendedsolver,
+        odekwargs=Dict([:abstol=>1e-20,:reltol=>1e-6]),senskwargs=Dict([:abstol=>1e-6,:reltol=>1e-3]))
+```
+
+We also provide a second method shown below. This variant allows the user to specify the indices of the parameters to calculate sensitivities for. However, because not all of the sensitivies are calculated the results cannot be formatted into a solution object that can be fed into a `Simulation` or `SystemSimulation` object. So instead a dictionary mapping the parameter index to an ODE solution of the associated sensitivity equations is provided. Note  that parameters are structured starting in species order with parameters corresponding to the Gibbs free energy of each species and continuing in reaction order with a parameter corresponding to each rate coefficient. The output solution objects are in species + thermodynamic variable order and are the raw sensitivities with no normalization.
+```
+using Base.Threads
+nthreads = Threads.nthreads()
+println("Using $nthreads threads")
+
+soldict = threadedsensitivities(react,indices; odesolver=react.recommendedsolver,senssolver=react.recommendedsolver,
+        odekwargs=Dict([:abstol=>1e-20,:reltol=>1e-6]),senskwargs=Dict([:abstol=>1e-6,:reltol=>1e-3]))
+```
