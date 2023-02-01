@@ -1,6 +1,87 @@
 import SciMLBase: ODESolution, build_solution, LinearInterpolation
 using Sundials
 using Base.Threads
+
+"""
+Calculate sensitivities of all variables to all parameters by first
+starts by solving the original ODE and then solving
+the independent sensitivity ODEs in parallel using multithreading
+
+the solver and keyword arguments used in the ode and sensitivity solves can be specified seperately
+with odesolver, senssolver, odekwargs and senskwargs
+
+returns a solution object that can be used the same way as forward sensitivity output
+"""
+function threadedsensitivities(react; odesolver=nothing,senssolver=nothing,
+        odekwargs=Dict([:abstol=>1e-20,:reltol=>1e-6]),senskwargs=Dict([:abstol=>1e-6,:reltol=>1e-3]))
+
+    if odesolver===nothing
+        odesolver = react.recommendedsolver
+    end
+    if senssolver===nothing
+        senssolver = react.recommendedsolver
+    end
+
+    sol = solve(react.ode, odesolver; odekwargs...)
+
+    reactsens = Reactor(react.domain,react.y0,react.tspan,react.interfaces; p=react.p,
+                forwardsensitivities=true,forwarddiff=react.forwarddiff,modelingtoolkit=react.modelingtoolkit,
+                tau=react.tau)
+
+    salist = generatesensitivityodes(react,sol)
+
+    # Parallelize the SA calculations
+    solutiondictionary = Dict()
+
+    @threads for i in 1:length(react.p)
+        s = solve(salist[i], senssolver; senskwargs...)
+        solutiondictionary[i] = s
+    end
+    bigsol = generatesenssolution(sol,solutiondictionary,reactsens.ode)
+    return bigsol
+end
+
+"""
+Calculate sensitivities of all variables to the set of parameters indicated by paramindices
+by first solving the original ODE and then solving the independent sensitivity ODEs
+in parallel using multithreading
+
+the solver and keyword arguments used in the ode and sensitivity solves can be specified seperately
+with odesolver, senssolver, odekwargs and senskwargs
+
+returns a dictionary mapping the index of the parameter to the ODESolution object
+corresponding to the associated sensitivities of every variable to that parameter
+"""
+function threadedsensitivities(react,paramindices; odesolver=nothing,senssolver=nothing,
+        odekwargs=Dict([:abstol=>1e-20,:reltol=>1e-6]),senskwargs=Dict([:abstol=>1e-6,:reltol=>1e-3]))
+
+    if odesolver===nothing
+        odesolver = react.recommendedsolver
+    end
+    if senssolver===nothing
+        senssolver = react.recommendedsolver
+    end
+
+    sol = solve(react.ode, odesolver; odekwargs...)
+
+    reactsens = Reactor(react.domain,react.y0,react.tspan,react.interfaces; p=react.p,
+                forwardsensitivities=true,forwarddiff=react.forwarddiff,modelingtoolkit=react.modelingtoolkit,
+                tau=react.tau)
+
+    salist = generatesensitivityodes(react,sol)
+
+    # Parallelize the SA calculations
+    solutiondictionary = Dict()
+
+    @threads for i in paramindices
+        s = solve(salist[i], senssolver; senskwargs...)
+        solutiondictionary[i] = s
+    end
+
+    return solutiondictionary
+end
+export threadedsensitivities
+
 """
 generate individual sensitivity ODEs for each parameter
 """
