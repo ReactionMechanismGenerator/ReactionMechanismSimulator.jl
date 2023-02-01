@@ -55,6 +55,7 @@ module ReactionMechanismSimulator
     include("Parse.jl")
     include("ModelReduction.jl")
     include("Reactor.jl")
+    include("ThreadedSensitivities.jl")
     include("Simulation.jl")
     include("TransitorySensitivities.jl")
     include("AutomaticMechanismAnalysis.jl")
