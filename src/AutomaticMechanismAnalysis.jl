@@ -273,7 +273,7 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
     end
     push!(clusternames,"Stables")
 
-    @views dSdtspc = dSdt[length(sim.domain.phase.species)+sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]]
+    @views dSdtspc = dSdt[length(sim.domain.phase.species)+1:end]
 
     #find sensitive reactions
     inds = reverse(sortperm(abs.(dSdtspc)))
