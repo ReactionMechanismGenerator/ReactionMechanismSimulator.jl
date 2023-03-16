@@ -2076,22 +2076,21 @@ end
             kHs = map.(inter.kHs,inter.T)
 
             # evaporation
-            # inlet
-            # d/dV(dni/dt) = dflow_i/dV
-            # flow = sum(inter.kLAs.*inter.cs)/V
-            # flow_i = inter.kLAs[i]*inter.cs[i]/V
-            # d/dV(dni/dt) = dflow_i/dV = -inter.kLAs[i]*inter.cs[i]/(V*V)
-            @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]] .+= -kLAs.*inter.cs/(V*V)
+            # dn/dt .+= kLAs.*inter.V.*inter.cs
+            # dV/dt += sum(kLAs.*inter.V.*inter.cs)*R*T/P
+            # d/dni(dn/dt) += 0
+            # d/dV(dn/dt) += 0
+            # d/dni(dV/dt) += 0
+            # d/dV(dV/dt) += 0
 
             # condensation
-            # outlet
-            # d/dni(dV/dt) = dflow/dni*R*T/P = kLAs[i]/kHs[i]*R*T/P
-            # d/dV(dV/dt) = dflow/dV *R*T/P = 0
-            # d/dV(dni/dt) = dflow_i/dV = 0
-            # flow = sum(kLAs.*ns./kHs)
-            # dflow/dni = kLAs[i]/kHs[i]
-            # dflow/dV = 0
-            # dflow_i/dV = 0
+            # dn/dt .-= kLAs.*inter.V.*cs*R*T./kHs
+            # dV/dt -= sum(kLAs.*inter.V.*cs*R*T./kHs)*R*T/P
+            # d/dni(dni/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]
+            # d/dV(dn/dt) -= kLAs.*inter.V.*cs*(-1/V)*R*T./kHs
+            # d/dni(dV/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]*R*T/P
+            #              -= d/dni(dni/dt)*R*T/P
+            # d/dV(dV/dt) -= sum(d/dV(dn/dt))*R*T/P
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
             end
@@ -2191,11 +2190,17 @@ end
             evap = kLAs.*inter.V.*inter.cs
             cond = kLAs.*inter.V.*cs*R*T./kHs
 
-            #evaporation
-            # inlet
-            # dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
-            # ddnidTdt = flow*(-Us[i]/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
-            # d/dni (dP/dt) = P/T * d/dni(dT/dt)
+            # evaporation
+            # dn/dt .+= kLAs.*inter.V.*inter.cs
+            # dT/dt += sum(kLAs.*inter.V.*inter.cs)*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            # dP/dt += sum(kLAs.*inter.V.*inter.cs)*R*T/V + P/T*dT/dt
+            # d/dni(dni/dt) += 0
+            # d/dni(dT/dt) += sum(kLAs.*inter.V.*inter.cs)*(-Us[i]/N)/(N*Cvave) - dT/dt * (-1/(N*Cvave)) * d/dni(N*Cvave)
+            #              += sum(kLAs.*inter.V.*inter.cs)*(-Us[i]/N)/(N*Cvave) - dT/dt * (-1/(Cvave)) * d/dni(Cvave)
+            #                 Note: Cvave = dot(cpdivR,ns)*R/N-R
+            #                 Note: d/dni(Cvave) = cpdivR[i]*R/N
+            #              += sum(kLAs.*inter.V.*inter.cs)*(-Us[i]/N)/(N*Cvave) - dT/dt * (dCvavedni/Cvave)
+            # d/dni(dP/dt) += P/T*d/dni(dT/dt)
             flow = sum(evap)
             @fastmath dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -2206,12 +2211,18 @@ end
             end
 
             # condensation
-            # outlet
-            # flow = sum(kLAs.*ns./kHs)
-            # dflowdni = kLAs[i]/kHs[i]
-            # dTdt = flow*(P*V/N)/(N*Cvave)
-            # ddnidTdt = ( dflowdni *P*V/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave) = (kLAs[i]/kHs[i]*P*V/N)/(N*Cvave) -dTdt*(dCvavedni/Cvave)
-            # d/dni (dP/dt) = dflowdni *R*T/V + P/T * d/dni(dT/dt) = kLAs[i]/kHs[i]*R*T/V + P/T * d/dni(dT/dt)
+            # dn/dt .-= kLAs.*inter.V.*cs*R*T./kHs
+            # dT/dt -= (P*V/N*sum(kLAs.*inter.V.*cs*R*T./kHs))/(N*Cvave)
+            # dP/dt -= sum(kLAs.*inter.V.*cs*R*T./kHs)*R*T/V + P/T*dT/dt
+            # d/dni(dni/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]
+            # d/dni(dT/dt) -= (P*V/N*kLAs[i]*inter.V/V*R*T/kHs[i])/(N*Cvave) + dT/dt * (-1/(N*Cvave)) * d/dni(N*Cvave)
+            #              -= (P*V/N*kLAs[i]*inter.V/V*R*T/kHs[i])/(N*Cvave) + dT/dt * (-1/(Cvave)) * d/dni(Cvave)
+            #                 Note: Cvave = dot(cpdivR,ns)*R/N-R
+            #                 Note: d/dni(Cvave) = cpdivR[i]*R/N
+            #              -= (P*V/N*kLAs[i]*inter.V/V*R*T/kHs[i])/(N*Cvave) - dT/dt * (dCvavedni/Cvave)
+            #              -= (P*V/N*d/dni(dni/dt))/(N*Cvave) - dT/dt * (dCvavedni/Cvave)
+            # d/dni(dP/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]*R*T/V + P/T*d/dni(dT/dt)
+            #              -= d/dni(dni/dt)*R*T/V + P/T*d/dni(dT/dt)
             flow = sum(cond)
             @fastmath dTdt = (P*V/N*flow)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -2357,16 +2368,25 @@ end
             evap = kLAs.*inter.V.*inter.cs
             
             # evaporation
-            # inlet
-            # dTdt = flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
-            # ddnidTdt = flow*(-Hs[i]/N)/(N*Cpave)-dTdt*(dCpavedni/Cpave)
-            # d/dni (dV/dt) = V/T * d/dni(dT/dt)
-            # d/dV (dT/dt) = flow*(dot(Hs, ns)/N)/V/(N*Cpave)
-            # d/dV (dV/dt) = dflow/dV*R*T/P + dT/dt/T + V/T * d/dV(dT/dt) = flow/V*R*T/P + dT/dt/T + V/T * d/dV(dT/dt) = flow/N + dT/dt/T + V/T * d/dV(dT/dt)
-            # d/dV(dni/dt) = dflow_i/dV = kLAs[i]*inter.cs[i]
-            # dflowdV = sum(kLAs.*inter.cs) = flow/V
-            # flow_i = kLAs[i]*inter.cs[i]*V
-            # dflow_i/dV = kLAs[i]*inter.cs[i]
+            # dn/dt .+= kLAs.*inter.V.*inter.cs
+            # dT/dt += sum(kLAs.*inter.V.*inter.cs)*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
+            # dV/dt += sum(kLAs.*inter.V.*inter.cs)*R*T/P + dT/dt*V/T
+            # d/dni(dn/dt) += 0
+            # d/dV(dn/dt) += 0
+            # d/dni(dT/dt) += sum(kLAs.*inter.V.*inter.cs)*(-Hs[i]/N)/(N*Cpave) - dTdt/(N*Cpave) * d/dni(N*Cpave)
+            #              += sum(kLAs.*inter.V.*inter.cs)*(-Hs[i]/N)/(N*Cpave) - dTdt/(Cpave) * d/dni(Cpave)
+            #                 Note: Cpave = dot(cpdivR,ns)*R/N-R
+            #                 Note: d/dni(Cpave) = cpdivR[i]*R/N
+            #              += sum(kLAs.*inter.V.*inter.cs)*(-Hs[i]/N)/(N*Cpave) - dTdt * (dCpavedni/Cpave)
+            # d/dV(dT/dt) += sum(kLAs.*inter.V.*inter.cs)*(dot(Hs,ns)/N^2*dN/dV)/(N*Cpave) + dT/dt * (-1/(N*Cpave)) * d/dV(N*Cpave)
+            #                Note: dN/dV = d(PV/RT)/dV = P/RT
+            #                Note: Cpave = dot(cpdivR,ns)*R/N = dot(cpdivR,ns)*R*(RT/PV)
+            #                Note: d/dV(Cpave) = dot(cpdivR,ns)*R*(RT/PV)*(-1/V) = -Cpave/V
+            #                Note: d/dV(N*Cpave) = dN/dV*Cpave + N*dCpave/dV = P/RT*Cpave - (PV/RT)*Cpave/V = 0
+            #             += sum(kLAs.*inter.V.*inter.cs)*(dot(Hs,ns)/N^2*P/RT)/(N*Cpave) + 0
+            #             += sum(kLAs.*inter.V.*inter.cs)*(dot(Hs,ns)/N/V)/(N*Cpave)
+            # d/dni(dV/dt) += d/dni(dT/dt)*V/T
+            # d/dV(dV/dt) += d/dV(dT/dt)*V/T + dT/dt/T
             flow = sum(evap)
             @fastmath H = dot(Hs,ns)/N
             @fastmath dTdt = flow*(inter.H - H)/(N*Cpave)
@@ -2382,15 +2402,16 @@ end
             @inbounds @fastmath jac[domain.indexes[4],domain.indexes[4]] += flow/N + dTdt/T + V/T*ddVdTdt
 
             # condensation
-            # outlet
-            # dTdt = 0
-            # d/dni (dV/dt) = dflow/dni *R*T/P = kLAs[i]/kHs[i]*R*T/P
-            # d/dV(dV/dt) = dflowdV *R*T/P = 0
-            # d/dV(dni/dt) = dflow_i/dV = 0
-            # flow_i = kLAs[i]*ns[i]/kHs[i]
-            # dflow/dni = kLAs[i]/kHs[i]
-            # dflow/dV = 0
-            # dflow_i/dV = 0
+            # dn/dt .-= kLAs.*inter.V.*cs*R*T./kHs
+            # dT/dt -= 0
+            # dV/dt -= sum(kLAs.*inter.V.*cs*R*T./kHs)*R*T/P
+            # d/dni(dni/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]
+            # d/dV(dn/dt) .-= kLAs.*inter.V.*cs*(-1/V)*R*T./kHs
+            # d/dni(dT/dt) -= 0
+            # d/dV(dT/dt) -= 0
+            # d/dni(dV/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]*R*T/P
+            #              -= ddnidnidt*R*T/P
+            # d/dV(dV/dt) -= sum(d/dV(dn/dt))*R*T/P
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
             end
@@ -2464,7 +2485,7 @@ end
             # dn/dt .-= inter.F(t)*ns./N
             # dV/dt -= inter.F(t)*R*T/P
             # d/dni(dni/dt) -= inter.F(t)/N
-            # d/dV(dni/dt) -= -inter.F(t)*ns/N^2 * dN/dV
+            # d/dV(dn/dt) -= -inter.F(t)*ns/N^2 * dN/dV
             #                 Note: dN/dV = d(PV/RT)/dV = P/RT
             #              -= -inter.F(t)*ns/N^2 * P/RT
             #              -= -inter.F(t)*ns/N/V
@@ -2488,16 +2509,13 @@ end
             @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[3]] .+= -kLAs.*inter.cs/(V*V)
 
             # condensation
-            # outlet
-            # d/dni(dV/dt) = dflow/dni*R*T/P = kLAs[i]/kHs[i]*R*T/P
-            # d/dV(dV/dt) = dflow/dV *R*T/P = 0
-            # d/dV(dni/dt) = dflow_i/dV = 0
-            # dflow/dni = 0
-            # dflow/dV = 0
-            # flow = sum(kLAs.*ns./kHs)
-            # dflowdni = kLAs[i]/kHs[i]
-            # dflowdV = 0
-            # dflow_i/dV = 0
+            # dn/dt .-= kLAs.*inter.V.*cs*R*T./kHs
+            # dV/dt -= sum(kLAs.*inter.V.*cs*R*T./kHs)*R*T/P
+            # d/dni(dni/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]
+            # d/dV(dn/dt) -= kLAs.*inter.V.*cs.*(-1/V)*R*T./kHs
+            # d/dni(dV/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]*R*T/P
+            #              -= d/dni(dni/dt)*R*T/P
+            # d/dV(dV/dt) -= sum(d/dV(dn/dt))*R*T/P
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
             end
@@ -2593,10 +2611,13 @@ end
             cond = kLAs.*inter.V.*cs*R*T./kHs
             
             # evaporation
-            # inlet
-            # dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
-            # ddnidTdt = flow*(-Us[i]/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
-            # d/dni (dP/dt) = P/T * d/dni(dT/dt)
+            # dn/dt .+= kLAs.*inter.V.*inter.cs
+            # dT/dt += sum(kLAs.*inter.V.*inter.cs)*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            # dP/dt += sum(kLAs.*inter.V.*inter.cs)*R*T/V + dT/dt*P/T
+            # d/dni(dni/dt) += 0
+            # d/dni(dT/dt) += sum(kLAs.*inter.V.*inter.cs)*(-Us[i]/N)/(N*Cvave) + dT/dt * (-1/N*Cvave) * d/dni(N*Cvave)
+            #              += sum(kLAs.*inter.V.*inter.cs)*(-Us[i]/N)/(N*Cvave) + dT/dt * (-1/Cvave) * d/dni(Cvave)
+            # d/dni(dP/dt) += d/dni(dT/dt)*P/T
             flow = sum(evap)
             @fastmath dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -2606,14 +2627,14 @@ end
                 @inbounds @fastmath jac[domain.indexes[4],i] += P/T*ddnidTdt
             end
 
-
             # condensation
-            # outlet
-            # flow = sum(kLAs.*ns./kHs)
-            # dflowdni = kLAs[i]/kHs[i]
-            # dTdt = flow*(P*V/N)/(N*Cvave)
-            # ddnidTdt = ( dflowdni *P*V/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave) = (kLAs[i]/kHs[i]*P*V/N)/(N*Cvave) -dTdt*(dCvavedni/Cvave)
-            # d/dni (dP/dt) = dflowdni *R*T/V + P/T * d/dni(dT/dt) = kLAs[i]/kHs[i]*R*T/V + P/T * d/dni(dT/dt)
+            # dn/dt .-= kLAs.*inter.V.*cs*R*T./kHs
+            # dT/dt -= (P*V/N*sum(kLAs.*inter.V.*cs*R*T./kHs))/(N*Cvave)
+            # dP/dt -= sum(kLAs.*inter.V.*cs*R*T./kHs)*R*T/V + dT/dt*P/T
+            # d/dni(dni/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]
+            # d/dni(dT/dt) -= (P*V/N*ddnidnidt)/(N*Cvave) - dTdt*(dCvavedni/Cvave)
+            # d/dni(dP/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]*R*T/V + P/T*ddnidTdt
+            #              -= d/dni(dni/dt)*R*T/V + P/T*ddnidTdt
             flow = sum(cond)
             @fastmath dTdt = (P*V/N*flow)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -2750,16 +2771,23 @@ end
             evap = kLAs.*inter.V.*inter.cs
             
             # evaporation
-            # inlet
-            # dTdt = flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
-            # ddnidTdt = flow*(-Hs[i]/N)/(N*Cpave)-dTdt*(dCpavedni/Cpave)
-            # d/dni (dV/dt) = V/T * d/dni(dT/dt)
-            # d/dV (dT/dt) = flow*(dot(Hs, ns)/N)/V/(N*Cpave)
-            # d/dV (dV/dt) = dflow/dV*R*T/P + dT/dt/T + V/T * d/dV(dT/dt) = flow/V*R*T/P + dT/dt/T + V/T * d/dV(dT/dt) = flow/N + dT/dt/T + V/T * d/dV(dT/dt)
-            # d/dV(dni/dt) = dflow_i/dV = kLAs[i]*inter.cs[i]
-            # dflowdV = sum(kLAs.*inter.cs) = flow/V
-            # flow_i = kLAs[i]*inter.cs[i]*V
-            # dflow_i/dV = kLAs[i]*inter.cs[i]
+            # dn/dt .+= kLAs.*inter.V.*inter.cs
+            # dT/dt += sum(kLAs.*inter.V.*inter.cs)*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
+            # dV/dt += sum(kLAs.*inter.V.*inter.cs)*R*T/P + dT/dt*V/T
+            # d/dni(dni/dt) += 0
+            # d/dV(dni/dt) += 0
+            # d/dni(dT/dt) += sum(kLAs.*inter.V.*inter.cs)*(-Hs[i]/N)/(N*Cpave) + dTdt * (-1/(N*Cpave)) * d/dni(N*Cpave)
+            #              += sum(kLAs.*inter.V.*inter.cs)*(-Hs[i]/N)/(N*Cpave) + dTdt * (-1/(Cpave)) * d/dni(Cpave)
+            #                 Note: Cpave = dot(cpdivR,ns)*R/N
+            #                 Note: dCpavedni = cpdivR[i]*R/N
+            # d/dV(dT/dt) += sum(kLAs.*inter.V.*inter.cs)*(dot(Hs,ns)/N^2*dN/dV)/(N*Cpave) + dTdt * (-1/(N*Cpave)) * d/dV(N*Cpave)
+            #                Note: dN/dV = d(PV/RT)/dV = P/RT
+            #                Note: Cpave = dot(cpdivR,ns)*R/N
+            #                Note: d/dV(Cpave) = dot(cpdivR,ns)*R*(RT/PV)*(-1/V) = -Cpave/V
+            #                Note: d(N*Cpave)/dV = (dN/dV*Cpave + N*dCpave/dV) = (P/RT*Cpave + PV/RT(-Cpave/V)) = 0
+            #             += sum(kLAs.*inter.V.*inter.cs)*(dot(Hs,ns)/N/V)/(N*Cpave)
+            # d/dni(dV/dt) += V/T*d/dni(dT/dt)
+            # d/dV(dV/dt) += d/dV(dT/dt)*V/T + dT/dt/T
             flow = sum(evap)
             @fastmath H = dot(Hs,ns)/N
             @fastmath dTdt = flow*(inter.H - H)/(N*Cpave)
@@ -2775,15 +2803,16 @@ end
             @inbounds @fastmath jac[domain.indexes[4],domain.indexes[4]] += flow/N + dTdt/T + V/T*ddVdTdt
 
             # condensation
-            # outlet
-            # dTdt = 0
-            # d/dni (dV/dt) = dflow/dni *R*T/P = kLAs[i]/kHs[i]*R*T/P
-            # d/dV(dV/dt) = dflowdV *R*T/P = 0
-            # d/dV(dni/dt) = dflow_i/dV = 0
-            # flow_i = kLAs[i]*ns[i]/kHs[i]
-            # dflow/dni = kLAs[i]/kHs[i]
-            # dflow/dV = 0
-            # dflow_i/dV = 0
+            # dn/dt .-= kLAs.*inter.V.*cs*R*T./kHs
+            # dT/dt -= 0
+            # dV/dt -= sum(kLAs.*inter.V.*cs*R*T./kHs)*R*T/P
+            # d/dni(dni/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]
+            # d/dV(dn/dt) -= kLAs.*inter.V.*cs.*(-1/V)*R*T./kHs
+            # d/dni(dT/dt) -= 0
+            # d/dV(dT/dt) -= 0
+            # d/dni(dV/dt) -= kLAs[i]*inter.V/V*R*T/kHs[i]*R*T/P
+            #              -= d/dni(dni/dt)*R*T/P
+            # d/dV(dV/dt) -= sum(d/dV(dn/dt))*R*T/P
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= kLAs[i]/kHs[i]
             end
@@ -2853,10 +2882,16 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
             kLAs = map.(inter.kLAs,T)
 
-            #evaporation
+            # evaporation
+            # dn/dt .-= kLAs.*ns
+            # d/dni(dni/dt) -= kLAs[i]
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= kLAs[i]
             end
+
+            # condensation
+            # dn/dt .+= kLAs.*inter.molefractions*inter.P/kHs*V
+            nothing
         elseif isa(inter,VolumetricFlowRateOutlet) && domain == inter.domain
             # dn/dt .-= inter.Vout(t)*ns/V
             # d/dni(dni/dt) -= inter.Vout(t)/V
