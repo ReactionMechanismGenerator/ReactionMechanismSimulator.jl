@@ -1707,8 +1707,9 @@ end
             kHs = map.(inter.kHs,inter.T)
             evap = kLAs.*inter.V.*inter.cs
             cond = kLAs.*inter.V.*cs*R*T./kHs
-
-            dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
+            net_evap = evap .- cond
+            dydt[d.indexes[1]:d.indexes[2]] .+= net_evap
+            dydt[d.indexes[3]] += sum(net_evap)*R*T/P
         elseif isa(inter,VolumetricFlowRateInlet) && d == inter.domain
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.Vin(t)*inter.cs
             dydt[d.indexes[3]] += inter.Vin(t)
