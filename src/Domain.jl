@@ -1705,8 +1705,8 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
-            evap = kLAs.*inter.cs*V
-            cond = kLAs.*ns./kHs
+            evap = kLAs.*inter.V.*inter.cs
+            cond = kLAs.*inter.V.*cs*R*T./kHs
 
             dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
         elseif isa(inter,VolumetricFlowRateInlet) && d == inter.domain
@@ -1749,8 +1749,8 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
-            evap = kLAs.*inter.cs*V
-            cond = kLAs.*ns./kHs
+            evap = kLAs.*inter.V.*inter.cs
+            cond = kLAs.*inter.V.*cs*R*T./kHs
             dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
 
             flow = sum(evap)
@@ -1797,8 +1797,8 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
-            evap = kLAs.*inter.cs*V
-            cond = kLAs.*ns./kHs
+            evap = kLAs.*inter.V.*inter.cs
+            cond = kLAs.*inter.V.*cs*R*T./kHs
             dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
 
             flow = sum(evap)
@@ -1845,8 +1845,8 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
-            evap = kLAs.*inter.cs*V
-            cond = kLAs.*ns./kHs
+            evap = kLAs.*inter.V.*inter.cs
+            cond = kLAs.*inter.V.*cs*R*T./kHs
             dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
 
             flow = sum(evap)
@@ -1895,8 +1895,8 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
-            evap = kLAs.*inter.cs*V
-            cond = kLAs.*ns./kHs
+            evap = kLAs.*inter.V.*inter.cs
+            cond = kLAs.*inter.V.*cs*R*T./kHs
             dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
 
             flow = sum(evap)
@@ -1944,8 +1944,8 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
-            evap = kLAs.*inter.cs*V
-            cond = kLAs.*ns./kHs
+            evap = kLAs.*inter.V.*inter.cs
+            cond = kLAs.*inter.V.*cs*R*T./kHs
             dydt[d.indexes[1]:d.indexes[2]] .+= (evap .- cond)
 
             flow = sum(evap)
