@@ -2188,8 +2188,8 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
-            evap = kLAs.*inter.cs*V
-            cond = kLAs.*ns./kHs
+            evap = kLAs.*inter.V.*inter.cs
+            cond = kLAs.*inter.V.*cs*R*T./kHs
 
             #evaporation
             # inlet
@@ -2354,7 +2354,7 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
-            evap = kLAs.*inter.cs*V
+            evap = kLAs.*inter.V.*inter.cs
             
             # evaporation
             # inlet
@@ -2589,8 +2589,8 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
-            evap = kLAs.*inter.cs*V
-            cond = kLAs.*ns./kHs
+            evap = kLAs.*inter.V.*inter.cs
+            cond = kLAs.*inter.V.*cs*R*T./kHs
             
             # evaporation
             # inlet
@@ -2747,7 +2747,7 @@ end
         elseif isa(inter,kLAkHCondensationEvaporationWithReservoir) && domain == inter.domain
             kLAs = map.(inter.kLAs,inter.T)
             kHs = map.(inter.kHs,inter.T)
-            evap = kLAs.*inter.cs*V
+            evap = kLAs.*inter.V.*inter.cs
             
             # evaporation
             # inlet
