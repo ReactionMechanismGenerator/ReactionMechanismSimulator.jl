@@ -2034,6 +2034,9 @@ end
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
     jacobianynsderiv!(jac,domain,domain.rxnarray,domain.efficiencyinds,cs,kfs,krevs,T,V,C)
 
+    # dV/dt = sum(dn/dt)*R*T/P
+    # d/dni(dV/dt) = sum(d/dni(dn/dt))*R*T/P
+    # d/dV(dV/dt) = sum(d/dV(dn/dt))*R*T/P
     @simd for i in domain.indexes[1]:domain.indexes[2]
         @views @inbounds @fastmath jac[domain.indexes[3],i] = sum(jac[domain.indexes[1]:domain.indexes[2],i])*R*T/P
     end
@@ -2043,52 +2046,24 @@ end
         @inbounds jac[ind,:] .= 0.
     end
 
-    ########################## General derivation for inlet type interface for ConstantTPDomain ###################
-    # To get d/dni (dV/dt) for in ConstantPDomain:
-        # V = N*R*T/P
-        # dV/dt = dNdt*R*T/P = flow*R*T/P
-        # d/dni (dV/dt) = 0
-
-    # To get d/dV (dV/dt) = 0
-
-    # d/dV (dni/dt) = dflow_i/dV
-
-    # tldr:
-    # d/dV (dni/dt) = dflow_i/dV
-
-    ############################ General derivation for outlet type interface for ConstantTPDomain #################
-    # To get d/dni (dV/dt) ConstantPDomain:
-        # V = N*R*T/P
-        # dV/dt = dNdt*R*T/P = flow*R*T/P
-        # d/dni (dV/dt) = d/dni (flow*R*T/P) = dflowdni*R*T/P
-
-    # d/dV(dV/dt) = dflowdV *R*T/P
-
-    # d/dV(dni/dt) = dflow_i/dV
-
-    # tldr:
-    # d/dni(dV/dt) = dflow/dni*R*T/P
-    # d/dV(dV/dt) = dflow/dV *R*T/P
-    # d/dV(dni/dt) = dflow_i/dV 
-
     @simd for inter in interfaces
 
         if isa(inter,Inlet) && domain == inter.domain
-            # inlet
-            # d/dV(dni/dt) = dflow_i/dV
-            # flow_i = flow*inter.y
-            # dflow_i/dV = 0
+            # dn/dt .+= inter.y.*inter.F(t)
+            # dV/dt += inter.F(t)*R*T/P
+            # d/dni(dn/dt) += 0
+            # d/dV(dn/dt) += 0
+            # d/dni(dV/dt) += 0
+            # d/dV(dV/dt) += 0
             nothing
 
         elseif isa(inter,Outlet) && domain == inter.domain
-            # outlet
-            # d/dni(dV/dt) = dflow/dni*R*T/P = 0
-            # d/dV(dV/dt) = dflow/dV *R*T/P = 0
-            # d/dV(dni/dt) = dflow_i/dV
-            # flow_i = flow*ns[i]/N
-            # N = P*V/(R*T)
-            # dN/dV = P/(R*T)
-            # dflow_i/dV = -flow*ns[i]/N^2 *P/(R*T) = -flow*ns[i]/N/V
+            # dn/dt .-= inter.F(t).*ns./N = inter.F(t).*ns*(RT/PV)
+            # dV/dt -= inter.F(t)*R*T/P
+            # d/dni(dni/dt) -= inter.F(t)/N
+            # d/dV(dn/dt) -= inter.F(t)*ns*(RT/PV)*(-1/V) = inter.F(t)*ns/N*(-1/V) = -inter.F(t)*ns/(N*V)
+            # d/dni(dV/dt) -= 0
+            # d/dV(dV/dt) -= 0
 
             flow = inter.F(t)
             @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -2157,6 +2132,13 @@ end
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
 
+    # dT/dt = -dot(Us,dn/dt)/(N*Cvave)
+    # dP/dt = sum(dn/dt)*R*T/V + P/T*dT/dt
+    # d/dni(dT/dt) = -dot(Us,d/dni(dn/dt))/(N*Cvave) + dT/dt/(N*Cvave) * d/dni(N*Cvave)
+    #              = -dot(Us,d/dni(dn/dt))/(N*Cvave) + dT/dt/(Cvave) * d/dni(Cvave)
+    #                Note: Cvave = dot(cpdivR,ns)*R/N-R
+    #                Note: d/dni(Cvave) = cpdivR[i]*R/N
+    # d/dni(dP/dt) = sum(d/dni(dn/dt))*R*T/V + P/T*d/dni(dT/dt)
     for i in domain.indexes[1]:domain.indexes[2]
         @inbounds @fastmath dCvavedni = cpdivR[i]*R/N
         @views @inbounds @fastmath jac[domain.indexes[3],i] = -dot(Us,jac[domain.indexes[1]:domain.indexes[2],i])/(N*Cvave)+dot(Us,dydt[domain.indexes[1]:domain.indexes[2]])/(N*Cvave*Cvave)*dCvavedni
@@ -2167,91 +2149,17 @@ end
         @inbounds jac[ind,:] .= 0.
     end
 
-    ############# General derivation for constantVDomain's inlet ############
-    # To get dT/dt for constantVDomain:
-        # First law of thermodynamics for open simple system
-            # dU/dt = -P dV/dt + sum Hin,i dNin,i/dt - sum Hout,i dNout,i/dt
-        #  For constantVDomain with only inlet
-            # dU/dt = sum Hin,i dNin,i/dt
-            # dU/dt = d(NUave)/dt = dN/dt Uave + N dUave/dt
-            # N dUave/dt = N Cvave dT/dt
-            # For dN/dt Uave,
-                # When only considering inlet's influences, dN/dt = sum dNin,i/dt := flow
-                # Uave = dot(Us, ns)/N
-                # dN/dt Uave = flow * dot(Us, ns)/N
-            # sum Hin,i dNin,i/dt = Hinave sum dNin,i/dt = inter.H * flow
-            # Combining all, flow * dot(Us, ns)/N + N Cvave dT/dt = inter.H * flow
-            # Rearrange
-                # dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
-
-    # To get d/dni (dT/dt) for constantVDomain:
-        # Cvave = dot(cpdivR,ns)*R/N-R
-            # dCvave/dni = cpdivR[i]*R/N (N is calculated from N = PV/(R*T)
-        # ddnidTdt = 1/(N*Cvave) * d/dni(flow*(inter.H - dot(Us,ns)/N)) + flow*(inter.H - dot(Us,ns)/N) * d/dni(1/(N*Cvave))
-            # First term 1/(N*Cvave)*d/dni(flow*(inter.H - dot(Us,ns)/N))
-                # = flow * (-Us[i]/N)/(N*Cvave)
-            # Second term flow*(inter.H - dot(Us,ns)/N) * d/dni(1/(N*Cvave)) 
-                # = flow * (inter.H - dot(Us,ns)/N) * (- 1/N 1/Cvave^2 (d/dni Cvave))
-                # = -dT/dt * (dCvave/dni)/(Cvave)
-        # Combining all
-            # ddnidTdt = flow*(-Us[i]/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
-
-    # To get d/dni (dP/dt) for evaporation in ConstantVDomain:
-        # P = N*R*T/V
-        # dP/dt = dNdt*R*T/V + N*R/V*dT/dt = flow*R*T/V + P/T * dT/dt
-        # d/dni (dP/dt) = d/dni (flow*R*T/V)-->0 + P/T * d/dni(dT/dt) = P/T * d/dni(dT/dt)
-
-    # tldr:
-    # dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
-    # ddnidTdt = flow*(-Us[i]/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
-    # d/dni (dP/dt) = P/T * d/dni(dT/dt)
-
-    ############# General derivation for constantVDomain's inlet type interface ############
-    # To get dT/dt for constantVDomain:
-        # First law of thermodynamics for open simple system
-            # dU/dt = -P dV/dt + sum Hin,i dNin,i/dt - sum Hout,i dNout,i/dt
-        #  For constantVDomain with only outlet
-            # dU/dt = - sum Hout,i dNout,i/dt
-            # dU/dt = d(NUave)/dt = dN/dt Uave + N dUave/dt
-            # N dUave/dt = N Cvave dT/dt
-            # For dN/dt Uave,
-                # When only considering outlet's influences, dN/dt = sum dNout,i/dt := flow
-                # Uave = dot(Us, ns)/N
-                # dN/dt Uave = flow * dot(Us, ns)/N
-            # sum Hout,i dNout,i/dt = Have sum dNout,i/dT = Have * flow
-            # Sine H = U + P*V, Have = Uave + P*V/N = dot(Us, ns)/N + P*V/N
-            # Combining all, flow * dot(Us, ns)/N + N Cvave dT/dt = flow * dot(Us, ns)/N + P*V/N
-            # Rearrange
-                # dTdt = flow*(P*V/N)/(N*Cvave)
-
-    # To get d/dni (dT/dt) for condensation constantVDomain:
-        # Cvave = dot(cpdivR,ns)*R/N
-            # dCvave/dni = cpdivR[i]*R/N (N is calculated from N = PV/(R*T)
-        # ddnidTdt = 1/(N*Cvave) * d/dni(flow*P*V/N) + flow*(P*V/N) * d/dni(1/(N*Cvave))
-            # First term 1/(N*Cvave)*d/dni(flow*P*V/N) 
-                # = ( dflowdni *P*V/N)/(N*Cvave)
-            # Second term flow*(P*V/N) * d/dni(1/(N*Cvave))
-                # = flow*(P*V/N) * (- 1/N 1/Cvave^2 (d/dni Cvave))
-                # = -dT/dt * (dCvave/dni)/(Cvave)
-        # Combining all
-            # ddnidTdt = ( dflowdni *P*V/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
-
-    # To get d/dni (dP/dt) for condensation in ConstantVDomain:
-        # P = N*R*T/V
-        # dP/dt = dNdt*R*T/V + N*R/V*dT/dt = flow*R*T/V + P/T * dT/dt
-        # d/dni (dP/dt) = d/dni (flow*R*T/V) + P/T * d/dni(dT/dt) = dflowdni *R*T/V + P/T * d/dni(dT/dt)
-
-    # tldr:
-    # dTdt = flow*(P*V/N)/(N*Cvave)
-    # ddnidTdt = ( dflowdni *P*V/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
-    # d/dni (dP/dt) = dflowdni *R*T/V + P/T * d/dni(dT/dt)
-
     for inter in interfaces
         if isa(inter,Inlet) && domain == inter.domain
-            # inlet
-            # dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
-            # ddnidTdt = flow*(-Us[i]/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
-            # d/dni (dP/dt) = P/T * d/dni(dT/dt)
+            # dn/dt .+= inter.y.*inter.F(t)
+            # dTdt += inter.F(t)*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            # dP/dt += inter.F(t)*R*T/V + P/T*dTdt
+            # d/dni(dn/dt) += 0
+            # d/dni(dTdt) += inter.F(t)*(-Us[i]/N)/(N*Cvave) - dTdt/(N*Cvave) * d/dni(N*Cvave)
+            #             += inter.F(t)*(-Us[i]/N)/(N*Cvave) - dTdt/(Cvave) * d/dni(Cvave)
+            #                Note: Cvave = dot(cpdivR,ns)*R/N-R
+            #                Note: d/dni(Cvave) = cpdivR[i]*R/N
+            # d/dni(dP/dt) += P/T*d/dni(dTdt)
             flow = inter.F(t)
             @fastmath dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -2261,11 +2169,16 @@ end
                 @inbounds @fastmath jac[domain.indexes[4],i] += P/T*ddnidTdt
             end
         elseif isa(inter,Outlet) && domain == inter.domain
-            # outlet
-            # dflow/dni = 0
-            # dTdt = flow*(P*V/N)/(N*Cvave)
-            # ddnidTdt = ( dflowdni *P*V/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave) = -dTdt*(dCvavedni/Cvave)
-            # d/dni (dP/dt) = dflowdni *R*T/V + P/T * d/dni(dT/dt) = P/T * d/dni(dT/dt)
+            # dn/dt .-= inter.F(t).*ns./N
+            # dT/dt -= (P*V/N*inter.F(t))/(N*Cvave)
+            # dP/dt -= inter.F(t)*R*T/V + P/T*dT/dt
+            # d/dni(dni/dt) -= inter.F(t)/N
+            # d/dni(dT/dt) -= dT/dt * (-1/(N*Cvave)) * d/dni(N*Cvave)
+            #              -= dT/dt * (-1/(Cvave)) * d/dni(Cvave)
+            #                 Note: Cvave = dot(cpdivR,ns)*R/N-R
+            #                 Note: d/dni(Cvave) = cpdivR[i]*R/N
+            #              -= -dT/dt * (dCvavedni/Cvave)
+            # d/dni(dP/dt) -= P/T*d/dni(dT/dt)
             flow = inter.F(t)
             @fastmath dTdt = (P*V/N*flow)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -2361,6 +2274,21 @@ end
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
 
+    # dT/dt = -dot(Hs,dn/dt)/(N*Cpave)
+    # dV/dt = sum(dn/dt)*R*T/P + dT/dt*V/T
+    # d/dni(dT/dt) = -dot(Hs,d/dni(dn/dt))/(N*Cpave) + dTdt * (-1/(N*Cpave)) * d/dni(N*Cpave)
+    #              = -dot(Hs,d/dni(dn/dt))/(N*Cpave) + dTdt * (-1/(Cpave)) * d/dni(Cpave)
+    #                Note: Cpave = dot(cpdivR,ns)*R/N-R
+    #                Note: d/dni(Cpave) = cpdivR[i]*R/N
+    #              = -dot(Hs,d/dni(dn/dt))/(N*Cpave) - dTdt * (dCpavedni/Cpave)
+    # d/dV(dT/dt) = -dot(Hs,d/dV(dn/dt))/(N*Cpave) + dT/dt * (-1/(N*Cpave)) * d/dV(N*Cpave)
+    #               Note: dN/dV = d(PV/RT)/dV = P/RT
+    #               Note: Cpave = dot(cpdivR,ns)*R/N-R
+    #               Note: d/dV(Cpave) = Cpave * (-1/N) * dN/dV = Cpave * (-1/N) * P/RT
+    #               Note: d(N*Cpave)/dV = (dN/dV*Cpave + N*dCpave/dV) = P/RT*Cpave - Cpave * P/RT = 0
+    #             = -dot(Hs,d/dV(dn/dt))/(N*Cpave)
+    # d/dni(dV/dt) = sum(d/dni(dn/dt))*R*T/P + d/dni(dT/dt)*V/T
+    # d/dV(dV/dt) = sum(d/dV(dn/dt))*R*T/P + d/dV(dT/dt)*V/T + dT/dt/T
     @fastmath Cpave = Cvave+R
     @views @inbounds @fastmath dTdt = -dot(Hs,dydt[domain.indexes[1]:domain.indexes[2]])/(N*Cpave)
     @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -2374,104 +2302,6 @@ end
     @simd for ind in domain.constantspeciesinds
         @inbounds jac[ind,:] .= 0.
     end
-
-    ########################## General derivation for inlet type interface for ConstantPDomain ###################
-    # To get dT/dt for constantPDomain:
-        # First law of thermodynamics for open simple system.
-            # dU/dt = -P dV/dt + sum Hin,i dNin,i/dt - sum Hout,i dNout,i/dt
-        #  For constantPDomain with only inlet
-            # With H = U + PV, dH/dt = dU/dt + dP/dt-->0 * V + P * dV/dt
-            # dU/dt = dH/dt - P * dV/dt
-            # dH/dt = d(NHave)/dt = dN/dt Have + N dHave/dt
-            # N dHave/dt = N Cpave dT/dt
-            # For dN/dt Have,
-                # When only considering inlet's influences, dN/dt = sum dNin,i/dt := flow
-                # Have = dot(Us, ns)/N
-                # dN/dt Have = flow * dot(Hs, ns)/N
-            # sum Hin,i dNin,i/dt = Hinave sum dNin,i/dt = inter.H * flow
-            # Combining all, flow * dot(Hs, ns)/N + N Cpave dT/dt - P * dV/dt = - P dV/dt + inter.H * flow 
-            # Rearrange
-                # dTdt = flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
-
-    # To get d/dni (dT/dt) for constantPDomain:
-        # Cpave = dot(cpdivR,ns)*R/N
-            # dCpave/dni = cpdivR[i]*R/N (N is calculated from N = PV/(R*T)
-        # ddnidTdt = 1/(N*Cpave) * d/dni(flow*(inter.H - dot(Hs,ns)/N)) + flow*(inter.H - dot(Hs,ns)/N) * d/dni(1/(N*Cpave))
-            # First term 1/(N*Cpave)*d/dni(flow*(inter.H - dot(Hs,ns)/N)) 
-                # = flow * (-Hs[i]/N)/(N*Cpave)
-            # Second term flow*(inter.H - dot(Hs,ns)/N) * d/dni(1/(N*Cpave)) 
-                # = flow * (inter.H - dot(Hs,ns)/N) * (- 1/N 1/Cpave^2 (d/dni Cpave))
-                # = -dT/dt * (dCoave/dni)/(Cpave)
-        # Combining all
-            # ddnidTdt = flow*(-Hs[i]/N)/(N*Cpave)-dTdt*(dCpavedni/Cpave)
-
-    # To get d/dni (dV/dt) for in ConstantPDomain:
-        # V = N*R*T/P
-        # dV/dt = dNdt*R*T/P + N*R/P*dT/dt = flow*R*T/P + V/T * dT/dt
-        # d/dni (dV/dt) = d/dni (flow*R*T/P)-->0 + V/T * d/dni(dT/dt) = V/T * d/dni(dT/dt)
-
-    # To get d/dV (dT/dt) 
-        # = 1/(N*Cpave) * d/dV (flow*(inter.H - dot(Hs,ns)/N)) + flow*(inter.H - dot(Hs,ns)/N) * d/dV (1/(N*Cpave))
-        # N = P*V/(R*T)
-        # dN/dV = P/(R*T)
-        # First term: 1/(N*Cpave) * d/dV (flow*(inter.H - dot(Hs,ns)/N))
-            # = 1/(N*Cpave) * flow * (-dot(Hs, ns)) * (-1) * 1/N^2 * P/(R*T)
-            # = flow * (dot(Hs, ns)/N) / (N*Cpave) * P/(N*R*T)
-            # = flow * (dot(Hs, ns)/N) / (N*Cpave) * 1/V
-            # = flow*(dot(Hs, ns)/N)/V/(N*Cpave)
-        # Second term: flow*(inter.H - dot(Hs,ns)/N) * d/dV (1/(N*Cpave))
-            # Cpave = dot(cpdivR,ns)/N
-            # d/dV(1/(dot(cpdivR,ns))) = 0
-        # Combining: d/dV (dT/dt) = flow*(dot(Hs, ns)/N)/V/(N*Cpave)
-
-    # To get d/dV (dV/dt)
-        # dV/dt = flow*R*T/P + V/T * dT/dt
-        # d/dV (flow*R*T/P) = dflowdV *R*T/P
-        # d/dV (dV/dt) = dflowdV*R*T/P + dT/dt/T + V/T * d/dV(dT/dt)
-
-    #To get d/dV(dni/dt) = dflow_i/dV
-
-    # tldr:
-    # dTdt = flow*(inter.H - dot(Hs,ns)/N)/(N*Cpave)
-    # ddnidTdt = flow*(-Hs[i]/N)/(N*Cpave)-dTdt*(dCpavedni/Cpave)
-    # d/dni (dV/dt) = V/T * d/dni(dT/dt)
-    # d/dV (dT/dt) = flow*(dot(Hs, ns)/N)/V/(N*Cpave)
-    # d/dV (dV/dt) = dflow/dV*R*T/P + dT/dt/T + V/T * d/dV(dT/dt)
-    # d/dV(dni/dt) = dflow_i/dV
-
-    ############################ General derivation for ConstantPDomain outlet type interface #################
-    # To get dT/dt for constantPDomain:
-        # First law of thermodynamics for open simple system
-            # dU/dt = -P dV/dt + sum Hin,i dNin,i/dt - sum Hout,i dNout,i/dt
-        #  For constantPDomain with only outlet
-            # With H = U + PV, dH/dt = dU/dt + dP/dt-->0 * V + P * dV/dt
-            # dU/dt = dH/dt - P * dV/dt
-            # dH/dt = d(NHave)/dt = dN/dt Have + N dHave/dt
-            # N dHave/dt = N Cpave dT/dt
-            # For dN/dt Have,
-                # When only considering outlet's influences, dN/dt = sum dNout,i/dt := flow
-                # Have = dot(Us, ns)/N
-                # dN/dt Have = flow * dot(Hs, ns)/N
-                
-            # sum Hout,i dNout,i/dt = Have sum dNout,i/dT = Have * flow = dot(Hs, ns)/N * flow
-            # Combining all, flow * dot(Hs, ns)/N + N Cpave dT/dt - P * dV/dt = - P dV/dt + dot(Hs, ns)/N * flow 
-            # Rearrange
-                # dTdt = 0
-
-    # To get d/dni (dV/dt) ConstantPDomain:
-        # V = N*R*T/P
-        # dV/dt = dNdt*R*T/P + N*R/P*dT/dt = flow*R*T/P + V/T * dT/dt-->0 = flow*R*T/P  
-        # d/dni (dV/dt) = d/dni (flow*R*T/P) = dflowdni *R*T/P
-
-    # d/dV(dV/dt) = dflowdV *R*T/P
-
-    #To get d/dV(dni/dt) = dflow_i/dV
-
-    # tldr:
-    # dTdt = 0
-    # d/dni (dV/dt) = dflow/dni *R*T/P
-    # d/dV(dV/dt) = dflowdV *R*T/P
-    # d/dV(dni/dt) = dflow_i/dV
 
     @simd for inter in interfaces
         if isa(inter,Inlet) && domain == inter.domain
@@ -2501,15 +2331,18 @@ end
             @inbounds @fastmath jac[domain.indexes[4],domain.indexes[4]] += dTdt/T + V/T*ddVdTdt
             @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]] .+= flow*ns/N/V
         elseif isa(inter,Outlet) && domain == inter.domain
+            # dn/dt .-= inter.F(t).*ns./N
+            # dT/dt -= 0
+            # dV/dt -= inter.F(t)*R*T/P
+            # d/dni(dni/dt) -= inter.F(t)/N
+            # d/dV(dni/dt) -= -inter.F(t).*ns./(N^2) * dN/dV
+            #              -= -inter.F(t).*ns./(N^2) * P/RT
+            #              -= -inter.F(t).*ns./N/V
+            # d/dni(dT/dt) -= 0
+            # d/dV(dT/dt) -= 0
+            # d/dni(dV/dt) -= 0
+            # d/dV(dV/dt) -= 0
             flow = inter.F(t)
-            # outlet
-            # dTdt = 0
-            # d/dni (dV/dt) = dflow/dni *R*T/P = 0
-            # d/dV(dV/dt) = dflowdV *R*T/P = 0
-            # d/dV(dni/dt) = dflow_i/dV = -flow*ns[i]/N/V
-            # flow_i = flow*ns[i]/N 
-            # N = P*V/(R*T), dNdV = P/(R*T)
-            # dflow_i/dV = -flow*ns[i]/N^2 * P/(R*T) = -flow*ns[i]/N/V
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= flow/N
             end
@@ -2603,6 +2436,9 @@ end
     ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
     jacobianynsderiv!(jac,domain,domain.rxnarray,domain.efficiencyinds,cs,kfs,krevs,T,V,C)
 
+    # dV/dt = sum(dn/dt)*R*T/P + Calculus.derivative(d.T,t)*V/T - Calculus.derivative(d.P,t)*V/P
+    # d/dni(dV/dt) = sum(d/dni(dn/dt))*R*T/P
+    # d/dV(dV/dt) = sum(d/dV(dn/dt))*R*T/P + Calculus.derivative(d.T,t)/T - Calculus.derivative(d.P,t)/P
     @simd for i in domain.indexes[1]:domain.indexes[2]
         @views @inbounds @fastmath jac[domain.indexes[3],i] = sum(jac[domain.indexes[1]:domain.indexes[2],i])*R*T/P
     end
@@ -2615,18 +2451,25 @@ end
     @simd for inter in interfaces
 
         if isa(inter,Inlet) && domain == inter.domain
-            # inlet
-            # d/dV (dni/dt) = dflow_i/dV = d(flow*inter.y)/V = 0
+            # dn/dt .+= inter.y.*inter.F(t)
+            # dV/dt += inter.F(t)*R*T/P
+            # d/dni(dni/dt) += 0
+            # d/dV(dni/dt) += 0
+            # d/dni(dV/dt) += 0
+            # d/dV(dV/dt) += 0
             nothing
         
         elseif isa(inter,Outlet) && domain == inter.domain
+            # dn/dt .-= inter.F(t)*ns./N
+            # dV/dt -= inter.F(t)*R*T/P
+            # d/dni(dni/dt) -= inter.F(t)/N
+            # d/dV(dni/dt) -= -inter.F(t)*ns/N^2 * dN/dV
+            #                 Note: dN/dV = d(PV/RT)/dV = P/RT
+            #              -= -inter.F(t)*ns/N^2 * P/RT
+            #              -= -inter.F(t)*ns/N/V
+            # d/dni(dV/dt) -= 0
+            # d/dV(dV/dt) -= 0
             flow = inter.F(t)
-            # outlet
-            # d/dni(dV/dt) = dflow/dni*R*T/P = 0
-            # d/dV(dV/dt) = dflow/dV *R*T/P
-            # d/dV(dni/dt) = dflow_i/dV = -flow*ns[i]/N/V
-            # dflow/dni = 0
-            # dflow/dV = 0
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= flow/N
             end
@@ -2692,6 +2535,14 @@ end
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
 
+    # dT/dt = (-dot(Us,dn/dt)-P*dV/dt(t))/(N*Cvave)
+    # dP/dt = sum(dn/dt)*R*T/V + dT/dt*P/T - P/V*dVdt
+    # d/dni(dT/dt) = -dot(Us, d/dni(dn/dt))/(N*Cvave) + dT/dt * (-1/N*Cvave) * d/dni(N*Cvave)
+    #              = -dot(Us, d/dni(dn/dt))/(N*Cvave) + dT/dt * (-1/Cvave) * d/dni(Cvave)
+    #                Note: Cvave = dot(cpdivR,ns)*R/N-R
+    #                Note: d/dni(Cvave) = cpdivR[i]*R/N
+    #              = -dot(Us, d/dni(dn/dt))/(N*Cvave) - dT/dt * (d/dni(Cvave)/Cvave)
+    # d/dni(dP/dt) = sum(d/dni(dn/dt))*R*T/V + d/dni(dT/dt)*P/T
     dVdt = Calculus.derivative(domain.V,t)
     @simd for i in domain.indexes[1]:domain.indexes[2]
         @fastmath @inbounds dCvavedni = cpdivR[i]*R/N
@@ -2705,10 +2556,15 @@ end
 
     @simd for inter in interfaces
         if isa(inter,Inlet) && domain == inter.domain
-            # inlet
-            # dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
-            # ddnidTdt = flow*(-Us[i]/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave)
-            # d/dni (dP/dt) = P/T * d/dni(dT/dt)
+            # dn/dt .+= inter.y.*inter.F(t)
+            # dT/dt += inter.F(t)*(inter.H - dot(Us,ns)/N)/(N*Cvave)
+            # dP/dt += inter.F(t)*R*T/V + dT/dt*P/T
+            # d/dni(dni/dt) += 0
+            # d/dT(dn/dt) += 0
+            # d/dP(dn/dt) += 0
+            # d/dni(dT/dt) += inter.F(t)*(-Us[i]/N)/(N*Cvave) + dT/dt * (-1/N*Cvave) * d/dni(N*Cvave)
+            #              += inter.F(t)*(-Us[i]/N)/(N*Cvave) + dT/dt * (-1/Cvave) * d/dni(Cvave)
+            # d/dni(dP/dt) += d/dni(dT/dt)*P/T
             flow = inter.F(t)
             @fastmath dTdt = flow*(inter.H - dot(Us,ns)/N)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -2718,11 +2574,13 @@ end
                 @inbounds @fastmath jac[domain.indexes[4],i] += P/T*ddnidTdt
             end
         elseif isa(inter,Outlet) && domain == inter.domain
-            # outlet
-            # dflow/dni = 0
-            # dTdt = flow*(P*V/N)/(N*Cvave)
-            # ddnidTdt = ( dflowdni *P*V/N)/(N*Cvave)-dTdt*(dCvavedni/Cvave) = -dTdt*(dCvavedni/Cvave)
-            # d/dni (dP/dt) = dflowdni *R*T/V + P/T * d/dni(dT/dt) = P/T * d/dni(dT/dt)
+            # dn/dt .-= inter.F(t)*ns./N
+            # dT/dt -= (P*V/N*inter.F(t))/(N*Cvave)
+            # dP/dt -= inter.F(t)*R*T/V + dT/dt*P/T
+            # d/dni(dni/dt) -= inter.F(t)/N
+            # d/dni(dT/dt) -= dT/dt * (-1/N*Cvave) * d/dni(N*Cvave)
+            #              -= dT/dt * (-1/Cvave) * d/dni(Cvave)
+            # d/dni(dP/dt) -= d/dni(dT/dt)*P/T
             flow = inter.F(t)
             @fastmath dTdt = (P*V/N*flow)/(N*Cvave)
             @simd for i in domain.indexes[1]:domain.indexes[2]
@@ -2819,6 +2677,14 @@ end
     addreactionratecontributions!(dydt,domain.rxnarray,cs,kfs,krevs)
     dydt .*= V
 
+    # dT/dt = (-dot(Hs,dn/dt)+V*dPdt(t))/(N*Cpave)
+    # dV/dt = sum(dn/dt)*R*T/P + dT/dt*V/T - dPdt(t)*V/P
+    # d/dni(dT/dt) = -dot(Hs,d/dni(dn/dt))/(N*Cpave)-dTdt*(dCpavedni/Cpave)
+    # d/dV(dT/dt) = (-dot(Hs,d/dV(dn/dt)) + dPdt(t))/(N*Cpave) + dT/dt * (-1/(N*Cpave)) * d/dV(N*Cpave)
+    #               Note: d(N*Cpave)/dV = (dN/dV*Cpave + N*dCpave/dV) = P/RT*Cpave - Cpave * P/RT = 0
+    #             = (-dot(Hs,d/dV(dn/dt)) + dPdt(t))/(N*Cpave) + dT/dt * (-1/(N*Cpave))
+    # d/dni(dV/dt) = sum(d/dni(dn/dt))*R*T/P + V/T*d/dni(dT/dt)
+    # d/dV(dV/dt) = sum(d/dV(dn/dt))*R*T/P + d/dV(dT/dt)*V/T + dT/dt/T - dPdt(t)/P
     @fastmath Cpave = Cvave+R
     dPdt = Calculus.derivative(domain.P,t)
     @views @inbounds @fastmath dTdt = (-dot(Hs,dydt[domain.indexes[1]:domain.indexes[2]])+V*dPdt)/(N*Cpave)
@@ -2862,15 +2728,18 @@ end
             @inbounds @fastmath jac[domain.indexes[4],domain.indexes[4]] += dTdt/T + V/T*ddVdTdt
             @views @inbounds @fastmath jac[domain.indexes[1]:domain.indexes[2],domain.indexes[4]] .+= flow*ns/N/V
         elseif isa(inter,Outlet) && domain == inter.domain
+            # dn/dt .-= inter.F(t).*ns./N
+            # dT/dt -= 0
+            # dV/dt -= inter.F(t)*R*T/P
+            # d/dni(dni/dt) -= inter.F(t)/N
+            # d/dV(dn/dt) -= -inter.F(t).*ns./N^2 * dN/dV
+            #                Note: dN/dV = d(PV/RT)/dV = P/RT
+            #             -= inter.F(t).*ns./N/V
+            # d/dni(dT/dt) -= 0
+            # d/dV(dT/dt) -= 0
+            # d/dni(dV/dt) -= 0
+            # d/dV(dV/dt) -= 0
             flow = inter.F(t)
-            # outlet
-            # dTdt = 0
-            # d/dni (dV/dt) = dflow/dni *R*T/P = 0
-            # d/dV(dV/dt) = dflowdV *R*T/P = 0
-            # d/dV(dni/dt) = dflow_i/dV = -flow*ns[i]/N/V
-            # flow_i = flow*ns[i]/N 
-            # N = P*V/(R*T), dNdV = P/(R*T)
-            # dflow_i/dV = -flow*ns[i]/N^2 * P/(R*T) = -flow*ns[i]/N/V
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= flow/N
             end
@@ -2975,6 +2844,10 @@ end
 
     @simd for inter in interfaces
         if isa(inter,Outlet) && domain == inter.domain
+            # dn/dt .-= inter.F(t).*ns./N
+            # Note N = sum(ns) for liquid phase
+            # d/dni(dni/dt) -= inter.F(t)/N - inter.F(t)*ns[i]/(N*N)
+            # d/dnj(dni/dt) -= -inter.F(t)*ns[i]/(N*N)
             flow = inter.F(t)
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= flow/N
@@ -2988,6 +2861,8 @@ end
                 @inbounds @fastmath jac[i,i] -= kLAs[i]
             end
         elseif isa(inter,VolumetricFlowRateOutlet) && domain == inter.domain
+            # dn/dt .-= inter.Vout(t)*ns/V
+            # d/dni(dni/dt) -= inter.Vout(t)/V
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i,i] -= inter.Vout(t)/V
             end
