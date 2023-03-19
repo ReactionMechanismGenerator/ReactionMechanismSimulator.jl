@@ -787,7 +787,7 @@ function selectobjects(react,edgereact,coreedgedomains,coreedgeinters,domains,in
     firsttime = true
 
     nsteps = 0
-    while t < tf && code == :Success
+    while t < tf && Symbol(code) == :Success
         step!(inte)
         nsteps += 1
         code = check_error(inte)
@@ -808,7 +808,7 @@ function selectobjects(react,edgereact,coreedgedomains,coreedgeinters,domains,in
         end
     end
 
-    if code == :Success
+    if Symbol(code) == :Success
         return (terminated,false,invalidobjects,unimolecularthreshold,
             bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios,t,conversion)
     else
