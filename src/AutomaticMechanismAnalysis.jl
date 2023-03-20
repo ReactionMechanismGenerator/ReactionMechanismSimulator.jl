@@ -273,11 +273,11 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
     end
     push!(clusternames,"Stables")
 
-    @views dSdtspc = dSdt[length(sim.domain.phase.species)+1:end]
+    @views dSdtrxn = dSdt[length(sim.domain.phase.species)+1:end]
 
     #find sensitive reactions
-    inds = reverse(sortperm(abs.(dSdtspc)))
-    dSdtmax = maximum(abs.(dSdtspc))
+    inds = reverse(sortperm(abs.(dSdtrxn)))
+    dSdtmax = maximum(abs.(dSdtrxn))
     maxthresh = dSdtmax*tol
 
     if N == 0
@@ -286,10 +286,10 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
         N = length(inds)
     end
     inds = inds[1:N]
-    mval = abs(dSdtspc[inds[1]])
+    mval = abs(dSdtrxn[inds[1]])
     minval = mval*tol
     k = 1
-    while k < length(inds) && abs(dSdtspc[inds[k]]) >= minval
+    while k < length(inds) && abs(dSdtrxn[inds[k]]) >= minval
         k += 1
     end
     sensinds = inds[1:k]
@@ -301,9 +301,9 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
         clusterfluxfracts =  getclusterfluxfracts(sim,clustersordered,rxnind,clusterprodfluxes,clusterlossfluxes,rts)
         radprodlossfract = getradprodlossfract(sim,rxnind,rts)
         if eliminate
-            branches,rps = eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=branchthreshold,pathbranchthreshold=pathbranchthreshold)
+            branches,rps = eliminatereasons(spcind,rxnind,branches,rps,dSdtrxn;branchthreshold=branchthreshold,pathbranchthreshold=pathbranchthreshold)
         end
-        push!(rxnanalysis,ReactionAnalysis(branches,rps,clusternames,clusterfluxfracts,radprodlossfract,spcind,spcname,rxnind,dSdtspc[rxnind]))
+        push!(rxnanalysis,ReactionAnalysis(branches,rps,clusternames,clusterfluxfracts,radprodlossfract,spcind,spcname,rxnind,dSdtrxn[rxnind]))
     end
     return rxnanalysis
 end
@@ -607,7 +607,7 @@ If the sensitivity is >0 increasing the rate coefficient increases concentration
 so it can't be rate limited downstream so forward reaction paths don't make sense
 Same for sensitivity <0 for reverse paths
 """
-function eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=0.9,pathbranchthreshold=0.2)
+function eliminatereasons(spcind,rxnind,branches,rps,dSdtrxn;branchthreshold=0.9,pathbranchthreshold=0.2)
     branchesout = Array{Branching,1}()
     for branch in branches
         ind = findfirst(isequal(rxnind),branch.rxninds)
@@ -619,9 +619,9 @@ function eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=0.9
     end
     rpouts = Array{ReactionPath,1}()
     for rp in rps
-        if rp.forward && dSdtspc[rxnind] > 0 #increasing forward (loss) paths should decrease spc concentration
+        if rp.forward && dSdtrxn[rxnind] > 0 #increasing forward (loss) paths should decrease spc concentration
             continue
-        elseif !rp.forward && dSdtspc[rxnind] < 0 #increasing reverse (production) paths should increase spc concentration
+        elseif !rp.forward && dSdtrxn[rxnind] < 0 #increasing reverse (production) paths should increase spc concentration
             continue
         else
             rind = findfirst(isequal(rxnind),rp.rxninds)
