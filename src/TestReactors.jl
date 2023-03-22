@@ -196,15 +196,27 @@ dps = getadjointsensitivities(sim,"H2",CVODE_BDF(linear_solver=:GMRES);sensealg=
 react2 = Reactor(domain,y0,(0.0,150.11094);p=p,forwardsensitivities=true)
 sol2 = solve(react2.ode,CVODE_BDF(linear_solver=:GMRES),abstol=1e-21,reltol=1e-7); #solve the ode associated with the reactor
 sim2 = Simulation(sol2,domain)
+solthreaded = threadedsensitivities(Reactor(domain,y0,(0.0,150.11094);p=p,forwardsensitivities=false);
+        odekwargs=Dict([:abstol=>1e-21,:reltol=>1e-7]),senskwargs=Dict([:abstol=>1e-21,:reltol=>1e-7]))
+simthreaded = Simulation(solthreaded,domain)
 
 x,dp = extract_local_sensitivities(sol2,150.11094);
+xth,dpth = extract_local_sensitivities(solthreaded,150.11094);
+
 ind = findfirst(isequal("H2"),sim2.names)
 dpvs = [v[ind] for v in dp]
+dpvsth = [v[ind] for v in dpth]
 dpvs[length(domain.phase.species)+1:end] .*= domain.p[length(domain.phase.species)+1:end]
+dpvsth[length(domain.phase.species)+1:end] .*= domain.p[length(domain.phase.species)+1:end]
 dpvs ./= sol2(150.11094)[ind]
+dpvsth ./= solthreaded(150.11094)[ind]
+
 rerr = (dpvs .- dps')./dpvs
+rerrth = (dpvsth .- dps')./dpvsth
 rerr = [isinf(x) ? 0.0 : x for x in rerr]
+rerrth = [isinf(x) ? 0.0 : x for x in rerrth]
 @test all((abs.(rerr) .> 1e-1).==false)
+@test all((abs.(rerrth) .> 1e-1).==false)
 end;
 
 #Constant T and P Ideal Gas

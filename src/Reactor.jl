@@ -10,11 +10,18 @@ using PreallocationTools
 abstract type AbstractReactor end
 export AbstractReactor
 
-struct Reactor{D,Q,F1,F2,F3} <: AbstractReactor
+struct Reactor{D,G1,G2,Q,F1,F2,F3} <: AbstractReactor
     domain::D
+    interfaces::G1
+    y0::AbstractArray
+    tspan::Tuple
+    p::G2
     ode::ODEProblem
     recommendedsolver::Q
     forwardsensitivities::Bool
+    forwarddiff::Bool
+    modelingtoolkit::Bool
+    tau::Float64
     precsundials::F1 #function to calculate preconditioner for Sundials solvers
     psetupsundials::F2 #function to compute preconditioner \ residue for Sundials solvers
     precsjulia::F3 #function to calculate preconditioner for Julia solvers
@@ -81,7 +88,7 @@ function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=Sc
             ode = ODEProblem(odefcn,y0,tspan,p)
         end
     end
-    return Reactor(domain,ode,recsolver,forwardsensitivities,precsundials,psetupsundials,precsjulia)
+    return Reactor(domain,interfaces,y0,tspan,p,ode,recsolver,forwardsensitivities,forwarddiff,modelingtoolkit,tau,precsundials,psetupsundials,precsjulia)
 end
 function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLBase.NullParameters();forwardsensitivities=false,modelingtoolkit=false,tau=1e-3) where {T<:Tuple,W1<:Tuple,Z,X,W2}
     #adjust indexing
@@ -224,7 +231,7 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
             ode = ODEProblem(odefcn,y0,tspan,p)
         end
     end
-    return Reactor(domains,ode,recsolver,forwardsensitivities,precsundials,psetupsundials,precsjulia),y0,p
+    return Reactor(domains,interfaces,y0,tspan,p,ode,recsolver,forwardsensitivities,false,modelingtoolkit,tau,precsundials,psetupsundials,precsjulia),y0,p
 end
 
 struct ReducedModelCache{X1,X2,X3}
@@ -299,7 +306,7 @@ function Reactor(domain::T,y0unlumped::Array{W1,1},tspan::Tuple,reducedmodelmapp
             ode = ODEProblem(odefcn,y0,tspan,p)
         end
     end
-    return Reactor(domain,ode,recsolver,forwardsensitivities,precsundials,psetupsundials,precsjulia)
+    return Reactor(domain,interfaces,y0,tspan,p,ode,recsolver,forwardsensitivities,forwarddiff,modelingtoolkit,tau,precsundials,psetupsundials,precsjulia)
 end
 export Reactor
 
