@@ -14,7 +14,8 @@ export AbstractReaction
     electronchange::Int64 = 0
     radicalchange::Int64 = -100
     reversible::Bool = true
-    pairs::V5 = @SArray [@SArray [""]]
+    pairs::V5 = [[""]]
+    comment::String = ""
 end
 export ElementaryReaction
 
@@ -83,8 +84,14 @@ end
 function choosepairs(rxn::T) where {T<:AbstractReaction}
     pairs = []
     for (i,r) in enumerate(rxn.reactants)
-        ind = argmax([getsimilarity(r,p) for p in rxn.products])
-        push!(pairs,[r.name,rxn.products[ind].name])
+        sims = [getsimilarity(r,p) for p in rxn.products]
+        if length(sims) == 2 && sims[1] == sims[2] #add both if the same
+            push!(pairs,[r.name,rxn.products[1].name])
+            push!(pairs,[r.name,rxn.products[2].name])
+        else
+            ind = argmax(sims)
+            push!(pairs,[r.name,rxn.products[ind].name])
+        end
     end
     return pairs
 end

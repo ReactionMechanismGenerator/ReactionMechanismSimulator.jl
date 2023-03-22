@@ -1,3 +1,5 @@
+using Base.Iterators
+
 struct ReactionPath
     forward::Bool
     spcsinds::Array{Int64,1}
@@ -201,6 +203,8 @@ export getbranching
 struct ReactionAnalysis
     branchings::Array{Branching,1}
     paths::Array{ReactionPath,1}
+    clusternames::Array{String,1}
+    clusterprodlossfracts::Array{Float64,1}
     radprodlossfract::Float64
     spcind::Int64
     spcname::String
@@ -216,8 +220,8 @@ function gettransitoryadjoint(sim,t,spcname,spcind,transitorysensitivitymethod)
     if applicable(transitorysensitivitymethod,sim,t,spcname)
         return transitorysensitivitymethod(sim,t,spcname)
     else
-        dSdt = transitorysensitivitymethod(sim,t)
-        return dSdt[spcind+sim.domain.indexes[1]-1,:]
+        dSdt,tau = transitorysensitivitymethod(sim,t)
+        return @views dSdt[spcind,:],tau
     end
 end
 
@@ -237,7 +241,7 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
 
     spcind = findfirst(isequal(spcname),sim.names)
     @assert spcind != nothing "$spcname not found"
-    dSdt = gettransitoryadjoint(sim,t,spcname,spcind,transitorysensitivitymethod)
+    (dSdt,tau) = gettransitoryadjoint(sim,t,spcname,spcind,transitorysensitivitymethod)
 
     rop = rops(sim,t)
     ropp = zeros(size(rop))
@@ -254,11 +258,26 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
     end
     rts = rates(sim,t)
 
-    @views dSdtspc = dSdt[length(sim.domain.phase.species)+sim.domain.parameterindexes[1]:sim.domain.parameterindexes[2]]
+    clusters = gettimescaleclusters(sim,t,tau/100.0)
+    reactives,stable = breakintoreactivestableclusters(clusters)
+    clustersordered = vcat(reactives,stable)
+    clusterprodfluxes,clusterlossfluxes = getclusterfluxes(sim,clustersordered,rts)
+    clusterns = [[sim.species[j].name for j in cluster] for cluster in reactives]
+    clusternames = String[]
+    for j in 1:length(clusterns)
+        if length(clusterns[j]) > 10 #truncate names
+            push!(clusternames,string(clusterns[j][1:10])[1:end-1]*"...]")
+        else
+            push!(clusternames,string(clusterns[j]))
+        end
+    end
+    push!(clusternames,"Stables")
+
+    @views dSdtrxn = dSdt[length(sim.domain.phase.species)+1:end]
 
     #find sensitive reactions
-    inds = reverse(sortperm(abs.(dSdtspc)))
-    dSdtmax = maximum(abs.(dSdtspc))
+    inds = reverse(sortperm(abs.(dSdtrxn)))
+    dSdtmax = maximum(abs.(dSdtrxn))
     maxthresh = dSdtmax*tol
 
     if N == 0
@@ -267,10 +286,10 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
         N = length(inds)
     end
     inds = inds[1:N]
-    mval = abs(dSdtspc[inds[1]])
+    mval = abs(dSdtrxn[inds[1]])
     minval = mval*tol
     k = 1
-    while k < length(inds) && abs(dSdtspc[inds[k]]) >= minval
+    while k < length(inds) && abs(dSdtrxn[inds[k]]) >= minval
         k += 1
     end
     sensinds = inds[1:k]
@@ -279,11 +298,12 @@ function analyzespc(sim,spcname,t;N=10,tol=1e-3,branchthreshold=0.9,
     rxnanalysis = Array{ReactionAnalysis,1}()
     for rxnind in sensinds
         branches,rps = getbranchpathinfo(sim,spcind,rxnind,ropp,ropl,rts;steptol=steptol,branchtol=branchtol)
+        clusterfluxfracts =  getclusterfluxfracts(sim,clustersordered,rxnind,clusterprodfluxes,clusterlossfluxes,rts)
         radprodlossfract = getradprodlossfract(sim,rxnind,rts)
         if eliminate
-            branches,rps = eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=branchthreshold,pathbranchthreshold=pathbranchthreshold)
+            branches,rps = eliminatereasons(spcind,rxnind,branches,rps,dSdtrxn;branchthreshold=branchthreshold,pathbranchthreshold=pathbranchthreshold)
         end
-        push!(rxnanalysis,ReactionAnalysis(branches,rps,radprodlossfract,spcind,spcname,rxnind,dSdtspc[rxnind]))
+        push!(rxnanalysis,ReactionAnalysis(branches,rps,clusternames,clusterfluxfracts,radprodlossfract,spcind,spcname,rxnind,dSdtrxn[rxnind]))
     end
     return rxnanalysis
 end
@@ -305,6 +325,234 @@ function getradprodlossfract(sim,rxnind,rts)
     end
 end
 export getradprodlossfract
+
+"""
+compute matrix where each element ij is the timescale at which species i and j
+react
+"""
+function gettimescaleconnectivity(sim::Simulation,t)
+    tsc = ones(length(sim.species),length(sim.species))*Inf
+    cs,kfs,krevs = calcthermo(sim.domain,sim.sol(t),t)[[2,9,10]]
+    V = getdomainsize(sim,t)
+    rxnarray = sim.domain.rxnarray
+    for i = 1:length(kfs)
+        rcs = [cs[j-sim.domain.indexes[1]+1]>0 ? cs[j-sim.domain.indexes[1]+1] : 0.0 for j = rxnarray[1:4,i] if j != 0]
+        n = argmin(rcs)
+        kf = kfs[i]*reduce(*,rcs)/rcs[n]
+        pcs = [cs[j-sim.domain.indexes[1]+1]>0 ? cs[j-sim.domain.indexes[1]+1] : 0.0 for j = rxnarray[5:8,i] if j != 0]
+        m = argmin(pcs)
+        kr = krevs[i]*reduce(*,pcs)/pcs[m]
+        tstar = 1.0/(kf+kr)
+        nind = rxnarray[n,i]-sim.domain.indexes[1]+1
+        mind = rxnarray[m+4,i]-sim.domain.indexes[1]+1
+        if tsc[nind,mind] > tstar
+            tsc[nind,mind] = tstar
+            tsc[mind,nind] = tstar
+        end
+    end
+    return tsc
+end
+
+"""
+compute matrix where each element ij is the timescale at which species i and j
+react
+"""
+function gettimescaleconnectivity(ssys::SystemSimulation,t)
+    tsc = ones(length(ssys.species),length(ssys.species))*Inf
+    domains = getfield.(ssys.sims,:domain)
+    Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter,:reactions)])
+    Nspcs = sum([length(sim.domain.phase.species) for sim in ssys.sims])
+    cstot = zeros(Nspcs)
+    vns = Array{Any,1}(undef,length(domains))
+    vcs = Array{Any,1}(undef,length(domains))
+    vT = Array{Any,1}(undef,length(domains))
+    vP = Array{Any,1}(undef,length(domains))
+    vV = Array{Any,1}(undef,length(domains))
+    vC = Array{Any,1}(undef,length(domains))
+    vN = Array{Any,1}(undef,length(domains))
+    vmu = Array{Any,1}(undef,length(domains))
+    vkfs = Array{Any,1}(undef,length(domains))
+    vkrevs = Array{Any,1}(undef,length(domains))
+    vHs = Array{Any,1}(undef,length(domains))
+    vUs = Array{Any,1}(undef,length(domains))
+    vGs = Array{Any,1}(undef,length(domains))
+    vdiffs = Array{Any,1}(undef,length(domains))
+    vCvave = Array{Any,1}(undef,length(domains))
+    vphi = Array{Any,1}(undef,length(domains))
+    ropvec = spzeros(Nrxns)
+    start = 0
+
+    for (k,sim) in enumerate(ssys.sims)
+        vns[k],vcs[k],vT[k],vP[k],vV[k],vC[k],vN[k],vmu[k],vkfs[k],vkrevs[k],vHs[k],vUs[k],vGs[k],vdiffs[k],vCvave[k],vphi[k] = calcthermo(sim.domain,ssys.sol(t),t)
+        cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
+        kfs = vkfs[k]
+        krevs = vkrevs[k]
+        cs = vcs[k]
+        V = vV[k]
+        rxnarray = sim.domain.rxnarray
+        for i = 1:length(kfs)
+            rcs = [cs[j] for j = rxnarray[1:4,i] if j != 0]
+            pcs = [cs[j] for j = rxnarray[5:8,i] if j != 0]
+            n = argmin(rcs)
+            m = argmin(pcs)
+            kn = kfs[i]*reduce(*,rcs)/cs[n]
+            km = krevs[i]*reduce(*,pcs)/cs[m]
+            tstar = 1.0/(kn+km)
+            if tsc[n,m] > tstar
+                tsc[n,m] = tstar
+                tsc[m,n] = tstar
+            end
+        end
+    end
+    for inter in ssys.interfaces
+        if hasproperty(inter,:reactions)
+            kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
+            rxnarray = inter.rxnarray
+            for i = 1:length(kfs)
+                rcs = [cs[j] for j = rxnarray[1:4,i] if j != 0]
+                pcs = [cs[j] for j = rxnarray[5:8,i] if j != 0]
+                n = argmin(rcs)
+                m = argmin(pcs)
+                kn = kfs[i]*reduce(*,rcs)/cs[n]
+                km = krevs[i]*reduce(*,pcs)/cs[m]
+                tstar = 1.0/(kn+km)
+                if tsc[n,m] > tstar
+                    tsc[n,m] = tstar
+                    tsc[m,n] = tstar
+                end
+            end
+        end
+    end
+    return tsc
+end
+
+"""
+divide species into clusters by the timescale of their interactions
+any two species that can be connected by a sequence of timescales as or
+shorter than tau are in the same cluster
+"""
+function gettimescaleclusters(sim,t,tau)
+    tsc = gettimescaleconnectivity(sim,t)
+    clusters = Array{Set,1}()
+    for i = 1:length(sim.species)
+        newcluster = true
+        for cluster in clusters
+            for ind in cluster
+                if ind == i
+                    newcluster = false
+                    break
+                end
+            end
+            if !newcluster
+                break
+            end
+        end
+        if newcluster
+            push!(clusters,findconnectedspcs(tsc,i,tau))
+        end
+    end
+    return clusters
+end
+
+"""
+Find the Set of species indicies that are connected to Species ind at timescales
+as or faster than tau
+"""
+function findconnectedspcs(tsc,ind,tau)
+    s = Set(ind)
+    tosearch = Set(findall(tsc[ind,:].<=tau))
+    while length(tosearch) != 0
+        item = pop!(tosearch)
+        push!(s,item)
+        union!(tosearch,setdiff(Set(findall(tsc[item,:].<=tau)),s))
+    end
+    return s
+end
+
+"""
+divide a set of clusters into reactive clusters if they have more than
+Nreactive elements and a combined stable cluster if they are <=Nreactive
+"""
+function breakintoreactivestableclusters(clusters,Nreactive=4)
+    reactives = Array{Set,1}()
+    stable = Set()
+    for cluster in clusters
+        if length(cluster) > Nreactive
+            push!(reactives,cluster)
+        else
+            stable = union(cluster,stable)
+        end
+    end
+    return reactives,stable
+end
+
+"""
+get inter-cluster total flux matrix
+"""
+function getclusterfluxes(sim,clusters,rts)
+    clusterprod = zeros(length(clusters))
+    clusterloss = zeros(length(clusters))
+    clusternetvec = zeros(length(clusters))
+    for (i,rxn) in enumerate(sim.reactions)
+        rt = rts[i]
+        for n in rxn.reactantinds
+            for (j,cluster) in enumerate(clusters)
+                if n in cluster
+                    clusternetvec[j] -= rt
+                end
+            end
+        end
+        for n in rxn.productinds
+            for (j,cluster) in enumerate(clusters)
+                if n in cluster
+                    clusternetvec[j] += rt
+                end
+            end
+        end
+        for (j,clusterflux) in enumerate(clusternetvec)
+            if clusterflux > 0
+                clusterprod[j] += abs(clusterflux)
+            elseif clusterflux < 0
+                clusterloss[j] += abs(clusterflux)
+            end
+        end
+        clusternetvec .= 0.0
+    end
+    return clusterprod,clusterloss
+end
+
+"""
+Get the matrix of the flux fractions of the reaction associated with
+motions between clusters
+"""
+function getclusterfluxfracts(sim,clusters,rxnind,clusterprod,clusterloss,rts)
+    clusternetvec = zeros(length(clusters))
+    clusterprodlossfract = zeros(length(clusters))
+    rxn = sim.reactions[rxnind]
+    rt = rts[rxnind]
+    for n in rxn.reactantinds
+        for (j,cluster) in enumerate(clusters)
+            if n in cluster
+                clusternetvec[j] -= rt
+            end
+        end
+    end
+    for n in rxn.productinds
+        for (j,cluster) in enumerate(clusters)
+            if n in cluster
+                clusternetvec[j] += rt
+            end
+        end
+    end
+    for (j,clusterflux) in enumerate(clusternetvec)
+        if clusterflux > 0
+            clusterprodlossfract[j] = clusterflux/clusterprod[j]
+        elseif clusterflux < 0
+            clusterprodlossfract[j] = clusterflux/clusterloss[j]
+        end
+    end
+    return clusterprodlossfract
+end
 
 """
 Identify species coupled to the target species whose pathways could
@@ -359,7 +607,7 @@ If the sensitivity is >0 increasing the rate coefficient increases concentration
 so it can't be rate limited downstream so forward reaction paths don't make sense
 Same for sensitivity <0 for reverse paths
 """
-function eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=0.9,pathbranchthreshold=0.2)
+function eliminatereasons(spcind,rxnind,branches,rps,dSdtrxn;branchthreshold=0.9,pathbranchthreshold=0.2)
     branchesout = Array{Branching,1}()
     for branch in branches
         ind = findfirst(isequal(rxnind),branch.rxninds)
@@ -371,9 +619,9 @@ function eliminatereasons(spcind,rxnind,branches,rps,dSdtspc;branchthreshold=0.9
     end
     rpouts = Array{ReactionPath,1}()
     for rp in rps
-        if rp.forward && dSdtspc[rxnind] > 0 #increasing forward (loss) paths should decrease spc concentration
+        if rp.forward && dSdtrxn[rxnind] > 0 #increasing forward (loss) paths should decrease spc concentration
             continue
-        elseif !rp.forward && dSdtspc[rxnind] < 0 #increasing reverse (production) paths should increase spc concentration
+        elseif !rp.forward && dSdtrxn[rxnind] < 0 #increasing reverse (production) paths should increase spc concentration
             continue
         else
             rind = findfirst(isequal(rxnind),rp.rxninds)
@@ -389,7 +637,7 @@ export eliminatereasons
 """
 Generate a string report from the analysis objects
 """
-function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
+function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,branchfract=0.01)
     spcname = sim.names[ra.spcind]
     rstr = getrxnstr(sim.domain.phase.reactions[ra.rxnind])
     sens = round(ra.sens,sigdigits=6)
@@ -431,7 +679,22 @@ function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
         end
         s *= "\n"
     end
-    if abs(ra.radprodlossfract) > radbranchfract
+
+    #cluster analysis
+    for i = 1:length(ra.clusterprodlossfracts)
+        if abs(ra.clusterprodlossfracts[i]) > branchfract
+            cluster = ra.clusternames[i]
+            fract = abs(ra.clusterprodlossfracts[i])
+            if ra.clusterprodlossfracts[i] > 0
+                s *= "Reaction accounts for $fract of the net production for cluster $cluster \n"
+            else
+                s *= "Reaction accounts for $fract of the net loss for cluster $cluster \n"
+            end
+        end
+    end
+
+    #radical analysis
+    if abs(ra.radprodlossfract) > branchfract
         radfract = round(abs(ra.radprodlossfract),sigdigits=6)
         if ra.radprodlossfract > 0
             s *= "Reaction accounts for $radfract of the net radical production \n"
@@ -447,7 +710,7 @@ export getrxnanalysisstring
 """
 Print out a string report from the analysis objects
 """
-function printrxnanalysis(sim,ra;branchingcutoff=1e-2,radbranchfract=0.01)
-    return println(getrxnanalysisstring(sim,ra;branchingcutoff=branchingcutoff,radbranchfract=radbranchfract))
+function printrxnanalysis(sim,ra;branchingcutoff=1e-2,branchfract=0.01)
+    return println(getrxnanalysisstring(sim,ra;branchingcutoff=branchingcutoff,branchfract=branchfract))
 end
 export printrxnanalysis

@@ -21,6 +21,7 @@ struct EmptySpecies <: AbstractSpecies end
     molecularweight::Float64 = 0.0
     henrylawconstant::N1 = EmptyHenryLawConstant()
     liquidvolumetricmasstransfercoefficient::N2 = EmptyLiquidVolumetricMassTransferCoefficient()
+    comment::String = ""
 end
 export Species
 

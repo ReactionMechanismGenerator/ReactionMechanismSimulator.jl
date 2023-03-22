@@ -506,9 +506,11 @@ function plotrxntransitorysensitivities(bsol,name,t;dSdt=nothing,tau=nothing,tol
 
     if dSdt === nothing
         if tau === nothing
-            dSdt = transitorysensitivitiesfulltrapezoidal(bsol,t)[ind,length(bsol.names)+1:end]
+            (dSdt,tau) = transitorysensitivitiesfulltrapezoidal(bsol,t)
+            dSdt = dSdt[ind,length(bsol.names)+1:end]
         else
-            dSdt = transitorysensitivitiesfulltrapezoidal(bsol,t,tau)[ind,length(bsol.names)+1:end]
+            (dSdt,tau) = transitorysensitivitiesfulltrapezoidal(bsol,t;tau=tau)
+            dSdt = dSdt[ind,length(bsol.names)+1:end]
         end
     else
         dSdt = dSdt[length(bsol.names)+1:end]
@@ -551,9 +553,11 @@ function plotthermotransitorysensitivities(bsol,name,t;dSdt=nothing,tau=nothing,
 
     if dSdt === nothing
         if tau === nothing
-            dSdt = transitorysensitivitiesfulltrapezoidal(bsol,t)[ind,1:length(bsol.names)]
+            (dSdt,tau) = transitorysensitivitiesfulltrapezoidal(bsol,t)
+            dSdt = dSdt[ind,1:length(bsol.names)]
         else
-            dSdt = transitorysensitivitiesfulltrapezoidal(bsol,t,tau)[ind,1:length(bsol.names)]
+            (dSdt,tau) = transitorysensitivitiesfulltrapezoidal(bsol,t;tau=tau)
+            dSdt = dSdt[ind,1:length(bsol.names)]
         end
     else
         dSdt = dSdt[1:length(bsol.names)]

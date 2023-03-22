@@ -42,11 +42,7 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
     echangevec = getfield.(rxns,:electronchange)
-    if all(echangevec .== 0)
-        electronchange = nothing
-    else
-        electronchange = convert(echangevec,Array{Float64,1})
-    end
+    electronchange = convert(Array{Float64,1},echangevec)
     reversibility = getfield.(rxns,:reversible)
     return IdealGas(species=species,reactions=rxns,name=name,
         spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
@@ -82,11 +78,7 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
     echangevec = getfield.(rxns,:electronchange)
-    if all(echangevec .== 0)
-        electronchange = nothing
-    else
-        electronchange = convert(echangevec,Array{Float64,1})
-    end
+    electronchange = convert(Array{Float64,1},echangevec)
     reversibility = getfield.(rxns,:reversible)
 
     return IdealDiluteSolution(species=species,reactions=rxns,solvent=solvent,name=name,
@@ -123,11 +115,7 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
     echangevec = getfield.(rxns,:electronchange).*F
-    if all(echangevec .== 0)
-        electronchange = nothing
-    else
-        electronchange = convert(typeof(Nrp),echangevec)
-    end
+    electronchange = convert(Array{Float64,1},echangevec)
     reversibility = getfield.(rxns,:reversible)
     return IdealSurface(species=species,reactions=rxns,name=name,
         spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
