@@ -739,7 +739,11 @@ function rates(ssys::Q,t::X) where {Q<:SystemSimulation,X<:Real}
         index += length(vkfs[k])
     end
     for inter in ssys.interfaces
-        if hasproperty(inter,:reactions)
+        if inter isa FragmentBasedReactiveFilmGrowthInterfaceConstantT
+            kfs,krevs=getkfskrevs(inter)
+            @views rts[index:index+length(kfs)-1] = getrates(inter.rxnarray,cstot,kfs,krevs).*vV[inter.domaininds[1]]
+            index += length(kfs)
+        elseif hasproperty(inter,:reactions)
             kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
             rts[index:index+length(kfs)-1] = getrates(inter.rxnarray,cstot,kfs,krevs).*inter.A
             index += length(kfs)
