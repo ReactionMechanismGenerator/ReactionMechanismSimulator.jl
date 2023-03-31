@@ -1,0 +1,1243 @@
+Phases:
+- Species:
+  - isfragment: true
+    name: AR
+    radicalelectrons: 1
+    smiles: '[CH2]C(=C)C'
+    thermo:
+      polys:
+      - Tmax: 1069.2290041596066
+        Tmin: 100.0
+        coefs:
+        - 2.7681411047739966
+        - 0.019427272260143763
+        - 2.309943699039939e-05
+        - -3.6559982279878015e-08
+        - 1.3191334474283659e-11
+        - 12171.603189950083
+        - 9.467173559710254
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1069.2290041596066
+        coefs:
+        - 8.716434693169534
+        - 0.01895786775130378
+        - -6.801318705656869e-06
+        - 1.1369808968261301e-09
+        - -7.77450044815324e-14
+        - 9654.400328767655
+        - -25.45088880305813
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragment: true
+    name: AH
+    radicalelectrons: 0
+    smiles: C=C(C)C
+    thermo:
+      polys:
+      - Tmax: 1212.1072066128684
+        Tmin: 100.0
+        coefs:
+        - 2.649056189069699
+        - 0.027409929988262607
+        - -3.629934735162745e-08
+        - -1.0805780519134882e-08
+        - 3.977569334761118e-12
+        - -6266.503422351279
+        - 8.48840573552693
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1212.1072066128684
+        coefs:
+        - 6.905228531030212
+        - 0.02416342593213344
+        - -9.382654436305919e-06
+        - 1.6850317593776892e-09
+        - -1.1469860843037008e-13
+        - -8091.589471824512
+        - -16.136278867208684
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragment: true
+    name: KR
+    radicalelectrons: 1
+    smiles: '[CH2]C(C)C'
+    thermo:
+      polys:
+      - Tmax: 997.9757733440789
+        Tmin: 100.0
+        coefs:
+        - 2.2252353552003497
+        - 0.030974074729798514
+        - 8.894188319333526e-06
+        - -2.9177901639888624e-08
+        - 1.2329987836039487e-11
+        - 4881.618533430215
+        - 13.263070533239983
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 997.9757733440789
+        coefs:
+        - 8.644014730256067
+        - 0.02404598986305129
+        - -8.948467421503492e-06
+        - 1.6167787536458216e-09
+        - -1.1273148173313758e-13
+        - 2664.3072704520455
+        - -22.381087477404737
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: CC(C)C
+    radicalelectrons: 0
+    smiles: CC(C)C
+    thermo:
+      polys:
+      - Tmax: 987.0776318542729
+        Tmin: 100.0
+        coefs:
+        - 2.1859442811329206
+        - 0.030431248261185442
+        - 1.8338936582581282e-05
+        - -4.0409282647223565e-08
+        - 1.644826949144052e-11
+        - -20201.45221627235
+        - 10.661257897050012
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 987.0776318542729
+        coefs:
+        - 8.848099773626398
+        - 0.026118326645079105
+        - -9.579308692914178e-06
+        - 1.7289546116645932e-09
+        - -1.2100707091086052e-13
+        - -22621.769307966737
+        - -26.990997731400444
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragment: true
+    name: inert(S)
+    radicalelectrons: 0
+    smiles: CCCCCCCCCCCCCCCCCCCCC
+    thermo:
+      polys:
+      - Tmax: 1329.351546001312
+        Tmin: 100.0
+        coefs:
+        - -8.130124498175627
+        - 0.2737430294029646
+        - -0.00019613983790460943
+        - 7.617329322164963e-08
+        - -1.2755982343661165e-11
+        - -76510.08506987938
+        - 77.78447765043747
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1329.351546001312
+        coefs:
+        - 28.860551737393674
+        - 0.16243978342887883
+        - -7.054995461795347e-05
+        - 1.3190928065756515e-08
+        - -9.115420818997723e-13
+        - -86344.91147579116
+        - -111.2054656442631
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: CC=CC(CC)C(C)CC
+    radicalelectrons: 0
+    smiles: CC=CC(CC)C(C)CC
+    thermo:
+      polys:
+      - Tmax: 1220.7330169011386
+        Tmin: 100.0
+        coefs:
+        - -1.777372093598332
+        - 0.11094979745119742
+        - -5.872651293252384e-05
+        - 8.806941757581838e-09
+        - 1.71130809839378e-12
+        - -26890.345479044656
+        - 36.633205369950495
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1220.7330169011386
+        coefs:
+        - 19.481179144669543
+        - 0.06237779547946951
+        - -2.495292531810325e-05
+        - 4.5126035191282834e-09
+        - -3.071008641204201e-13
+        - -33651.67824260283
+        - -76.60225555300126
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragment: true
+    name: CDB
+    radicalelectrons: 0
+    smiles: CCC=CCC
+    thermo:
+      polys:
+      - Tmax: 1236.8396735116903
+        Tmin: 100.0
+        coefs:
+        - 3.8035248988487007
+        - 0.040047661547307684
+        - 7.152023164856327e-06
+        - -2.3068980117528137e-08
+        - 7.884395984171388e-12
+        - -12496.882930971067
+        - 5.976746911422851
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1236.8396735116903
+        coefs:
+        - 12.042973721367272
+        - 0.03529705419126256
+        - -1.3641576222505495e-05
+        - 2.4522931699740756e-09
+        - -1.672997711733158e-13
+        - -16209.866412001602
+        - -42.295717640990524
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: C=CC(C)C(CC)CCC
+    radicalelectrons: 0
+    smiles: C=CC(C)C(CC)CCC
+    thermo:
+      polys:
+      - Tmax: 1144.119294025068
+        Tmin: 100.0
+        coefs:
+        - -1.7756960756291802
+        - 0.11027093708180555
+        - -5.304478531694187e-05
+        - 7.253523987726455e-10
+        - 4.934840094273578e-12
+        - -24847.029318109337
+        - 37.25490697273664
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1144.119294025068
+        coefs:
+        - 19.47680501101117
+        - 0.062403061711206985
+        - -2.4943623323490935e-05
+        - 4.544857611526145e-09
+        - -3.12268228142777e-13
+        - -31440.21404858918
+        - -75.69832081375117
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: CCC1CC=CCC1CC
+    radicalelectrons: 0
+    smiles: CCC1CC=CCC1CC
+    thermo:
+      polys:
+      - Tmax: 1079.093020391319
+        Tmin: 100.0
+        coefs:
+        - 2.5495974531239223
+        - 0.06578142288073148
+        - 3.751314864070288e-05
+        - -7.648502403980112e-08
+        - 2.8350721011586255e-11
+        - -21922.22074954562
+        - 10.080221345933005
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1079.093020391319
+        coefs:
+        - 17.280791232234556
+        - 0.06086069571178236
+        - -2.47118581944411e-05
+        - 4.626365344475196e-09
+        - -3.2613869628908276e-13
+        - -27994.25709820202
+        - -75.51433801713821
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: '[CH2]C(C=C)CC(=C)C'
+    radicalelectrons: 1
+    smiles: '[CH2]C(C=C)CC(=C)C'
+    thermo:
+      polys:
+      - Tmax: 1084.0757971732887
+        Tmin: 100.0
+        coefs:
+        - -0.08209540795415511
+        - 0.07910733123093712
+        - -4.4323188364805106e-05
+        - 5.869535905278431e-09
+        - 2.4468381992559642e-12
+        - 19757.13004537559
+        - 28.62285671667486
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1084.0757971732887
+        coefs:
+        - 14.75430942998018
+        - 0.04141009818447835
+        - -1.5748508452815e-05
+        - 2.801522142020697e-09
+        - -1.9051143571270103e-13
+        - 15538.742825246482
+        - -48.77167140539346
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: C=C[CH]CCC(=C)C
+    radicalelectrons: 1
+    smiles: C=C[CH]CCC(=C)C
+    thermo:
+      polys:
+      - Tmax: 1407.111731516628
+        Tmin: 100.0
+        coefs:
+        - 4.165905724892381
+        - 0.061509674648575284
+        - -2.321822812576755e-05
+        - -1.447594876958244e-09
+        - 2.0224048598477204e-12
+        - 11870.605912219244
+        - 6.560539499740955
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1407.111731516628
+        coefs:
+        - 19.299091543446036
+        - 0.03530656218957333
+        - -1.321147463288697e-05
+        - 2.3044704657664824e-09
+        - -1.5318069646497235e-13
+        - 5947.032806478326
+        - -77.53241932191686
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: '[CH2]C(C=C)CC(C)C'
+    radicalelectrons: 1
+    smiles: '[CH2]C(C=C)CC(C)C'
+    thermo:
+      polys:
+      - Tmax: 1030.2423468580205
+        Tmin: 100.0
+        coefs:
+        - -0.1939644634663058
+        - 0.07935651408815649
+        - -2.8038544551650434e-05
+        - -1.4421785369169047e-08
+        - 9.965999981848888e-12
+        - 5683.566801208326
+        - 29.253896078048744
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1030.2423468580205
+        coefs:
+        - 15.035231952692609
+        - 0.046141746350341656
+        - -1.740861256625292e-05
+        - 3.114398316443907e-09
+        - -2.138775789488635e-13
+        - 1170.368128724981
+        - -51.34629431075637
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: C=C[CH]CCC(C)C
+    radicalelectrons: 1
+    smiles: C=C[CH]CCC(C)C
+    thermo:
+      polys:
+      - Tmax: 1069.868734251581
+        Tmin: 100.0
+        coefs:
+        - -0.21540007480914633
+        - 0.0785866865318112
+        - -2.425806715388319e-05
+        - -1.7260105298514277e-08
+        - 1.0246033986058502e-11
+        - -1620.3780369901647
+        - 27.229702110212646
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1069.868734251581
+        coefs:
+        - 15.655231575153847
+        - 0.046923858917565196
+        - -1.8665448648774997e-05
+        - 3.4323712317207885e-09
+        - -2.3886866122799827e-13
+        - -6600.081199171356
+        - -57.81062422431928
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: CCC1C2C=CC(C2)C1CC
+    radicalelectrons: 0
+    smiles: CCC1C2C=CC(C2)C1CC
+    thermo:
+      polys:
+      - Tmax: 1021.684259918741
+        Tmin: 100.0
+        coefs:
+        - 2.281649020503352
+        - 0.062151944199714974
+        - 6.945172467198375e-05
+        - -1.1801883143492426e-07
+        - 4.450634095056422e-11
+        - -13099.856941859827
+        - 11.247609861287739
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1021.684259918741
+        coefs:
+        - 17.607536636348826
+        - 0.06500806574751707
+        - -2.702820693319216e-05
+        - 5.15464848695574e-09
+        - -3.686124563687627e-13
+        - -19512.210714442852
+        - -79.07511852756443
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: C=C(C)CC1[CH]C=CC1
+    radicalelectrons: 1
+    smiles: C=C(C)CC1[CH]C=CC1
+    thermo:
+      polys:
+      - Tmax: 1120.3176845247579
+        Tmin: 100.0
+        coefs:
+        - 2.3858891038446326
+        - 0.06531742629192447
+        - -3.8107891223296395e-06
+        - -3.069803122204394e-08
+        - 1.3119903784061039e-11
+        - 13805.471549986847
+        - 11.429453277510893
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1120.3176845247579
+        coefs:
+        - 17.756539373502953
+        - 0.04292452460790735
+        - -1.7325450910567e-05
+        - 3.2276509855646883e-09
+        - -2.265792793158494e-13
+        - 8322.746683082365
+        - -73.57020333729193
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: C=C(C)CC1[CH]CC=C1
+    radicalelectrons: 1
+    smiles: C=C(C)CC1[CH]CC=C1
+    thermo:
+      polys:
+      - Tmax: 1024.6693233414187
+        Tmin: 100.0
+        coefs:
+        - 0.44845423090633957
+        - 0.06003831819992961
+        - 2.2189022474053963e-05
+        - -6.289026445263918e-08
+        - 2.5697230283243786e-11
+        - 21037.11106927611
+        - 25.92224334145347
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1024.6693233414187
+        coefs:
+        - 14.878689364126778
+        - 0.04570052368965353
+        - -1.8295789813196402e-05
+        - 3.4456300130974767e-09
+        - -2.457016635541974e-13
+        - 15875.319737355054
+        - -54.8043243962334
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: CC(C)CC1[CH]C=CC1
+    radicalelectrons: 1
+    smiles: CC(C)CC1[CH]C=CC1
+    thermo:
+      polys:
+      - Tmax: 987.5048255749751
+        Tmin: 100.0
+        coefs:
+        - 0.35015010288003195
+        - 0.054997775613320185
+        - 6.331161382054572e-05
+        - -1.1463299508752086e-07
+        - 4.5649732199269476e-11
+        - -285.6009258881382
+        - 23.079634252262814
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 987.5048255749751
+        coefs:
+        - 17.684920262145777
+        - 0.046527130873143224
+        - -1.7612281234943425e-05
+        - 3.3171656595393623e-09
+        - -2.4078355534637767e-13
+        - -6719.854454407359
+        - -75.576215257429
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: CC(C)CC1[CH]CC=C1
+    radicalelectrons: 1
+    smiles: CC(C)CC1[CH]CC=C1
+    thermo:
+      polys:
+      - Tmax: 1012.468117538899
+        Tmin: 100.0
+        coefs:
+        - 0.29979074579180914
+        - 0.060702543819498474
+        - 3.712252696108934e-05
+        - -8.159486765984731e-08
+        - 3.261905795492827e-11
+        - 6965.1549844127885
+        - 26.686395466711247
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1012.468117538899
+        coefs:
+        - 15.437961987065203
+        - 0.04997594499198504
+        - -1.969971645709562e-05
+        - 3.6991727336927106e-09
+        - -2.6421942881705814e-13
+        - 1384.1760540429939
+        - -58.95719404119965
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: CC=CC(CC)C1CC=CC1
+    radicalelectrons: 0
+    smiles: CC=CC(CC)C1CC=CC1
+    thermo:
+      polys:
+      - Tmax: 1011.4473939581061
+        Tmin: 100.0
+        coefs:
+        - -0.9571064206323394
+        - 0.08396396458023751
+        - 2.6012292355017942e-05
+        - -8.499601535231654e-08
+        - 3.5856369648637584e-11
+        - -8856.520097905917
+        - 32.76930230980421
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1011.4473939581061
+        coefs:
+        - 20.183199618540282
+        - 0.05868102874470727
+        - -2.2984278446307283e-05
+        - 4.307243884266079e-09
+        - -3.0760409278772294e-13
+        - -16116.188256384768
+        - -84.2082969816638
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: CC=CC(CC)C1C=CCC1
+    radicalelectrons: 0
+    smiles: CC=CC(CC)C1C=CCC1
+    thermo:
+      polys:
+      - Tmax: 1175.4160330803486
+        Tmin: 100.0
+        coefs:
+        - 3.362024151587591
+        - 0.08228929570740083
+        - -3.0261064297851306e-06
+        - -3.6642607906371016e-08
+        - 1.4710787713906595e-11
+        - -10117.756555890192
+        - 5.982766197964596
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1175.4160330803486
+        coefs:
+        - 23.00472588683553
+        - 0.05651436338416898
+        - -2.2545032785918076e-05
+        - 4.154507516270365e-09
+        - -2.889188809208449e-13
+        - -17572.559178063944
+        - -104.02524548151295
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: CCCC(CC)C1C=CC=C1
+    radicalelectrons: 0
+    smiles: CCCC(CC)C1C=CC=C1
+    thermo:
+      polys:
+      - Tmax: 1232.6868342865287
+        Tmin: 100.0
+        coefs:
+        - 3.012307840736895
+        - 0.09140404498556189
+        - -2.7635264101019634e-05
+        - -1.403430868767306e-08
+        - 7.715583432842303e-12
+        - -10199.331197335494
+        - 7.890104191737358
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1232.6868342865287
+        coefs:
+        - 24.896683294377212
+        - 0.05308193676398303
+        - -2.0783597924385508e-05
+        - 3.774529891899063e-09
+        - -2.595205855234017e-13
+        - -18078.409373733975
+        - -112.34207119711512
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - isfragmentintermediate: true
+    name: CCCC(CC)C1C=C=CC1
+    radicalelectrons: 0
+    smiles: CCCC(CC)C1C=C=CC1
+    thermo:
+      polys:
+      - Tmax: 1063.4138835502904
+        Tmin: 100.0
+        coefs:
+        - -1.4626225835198472
+        - 0.10031041704522357
+        - -2.3256669095741454e-05
+        - -3.201718124564896e-08
+        - 1.6697355505976745e-11
+        - 28394.17384530049
+        - 33.33456211806181
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1063.4138835502904
+        coefs:
+        - 19.85322640884757
+        - 0.06063910272829858
+        - -2.4436326663462476e-05
+        - 4.542898915421574e-09
+        - -3.187424223027065e-13
+        - 21570.259422254807
+        - -81.58177165028025
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  name: film
+- Species:
+  - name: 2-BUTENE(L)
+    radicalelectrons: 0
+    smiles: CC=CC
+    thermo:
+      polys:
+      - Tmax: 1157.7761998268982
+        Tmin: 100.0
+        coefs:
+        - 2.5199962079773233
+        - 0.027681135540235467
+        - 9.442487579318785e-07
+        - -1.2501454954956439e-08
+        - 4.671653522566011e-12
+        - -6095.496900617432
+        - 8.938488382416665
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1157.7761998268982
+        coefs:
+        - 6.042158101958463
+        - 0.026007394185730063
+        - -1.04844255397479e-05
+        - 1.90882942644363e-09
+        - -1.3060214242044807e-13
+        - -7614.46901323757
+        - -11.607614750807532
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: m1_allyl(L)
+    radicalelectrons: 1
+    smiles: '[CH2]C=CC'
+    thermo:
+      polys:
+      - Tmax: 995.0105699795218
+        Tmin: 100.0
+        coefs:
+        - 2.6851457976752022
+        - 0.020774458002264184
+        - 2.1995826692955985e-05
+        - -3.855710116488287e-08
+        - 1.4972268405679372e-11
+        - 12557.539001081517
+        - 10.738389359302133
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 995.0105699795218
+        coefs:
+        - 7.602706791751575
+        - 0.020798208095860762
+        - -7.877795058126996e-06
+        - 1.4501386393073424e-09
+        - -1.0266322758156975e-13
+        - 10599.153249732466
+        - -17.88487147149193
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: 1,3-BUTADIENE(L)
+    radicalelectrons: 0
+    smiles: C=CC=C
+    thermo:
+      polys:
+      - Tmax: 914.170196151926
+        Tmin: 100.0
+        coefs:
+        - 2.6062567963187946
+        - 0.014278644841585472
+        - 4.609838525234009e-05
+        - -7.14105617760153e-08
+        - 2.899212900020293e-11
+        - 9829.989127992592
+        - 9.036377130798604
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 914.170196151926
+        coefs:
+        - 7.821626876637019
+        - 0.019402234922544597
+        - -8.159521555960983e-06
+        - 1.5947070898009175e-09
+        - -1.1691485968442866e-13
+        - 7708.803729676643
+        - -22.043077592755907
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: CYCLOPENTADIENE(L)
+    radicalelectrons: 0
+    smiles: C1=CCC=C1
+    thermo:
+      polys:
+      - Tmax: 883.2663785496762
+        Tmin: 100.0
+        coefs:
+        - 2.6473445690292916
+        - 0.003943155291589655
+        - 8.889003705350473e-05
+        - -1.2096279694351182e-07
+        - 4.82143326508e-11
+        - 11727.770474860747
+        - 8.958193463387493
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 883.2663785496762
+        coefs:
+        - 6.1394278374585625
+        - 0.02541511618356132
+        - -1.0895818882643242e-05
+        - 2.1462533671958255e-09
+        - -1.579127000286119e-13
+        - 9656.416869202641
+        - -15.689071364313502
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  - name: '[CH]1C=CC=C1(L)'
+    radicalelectrons: 1
+    smiles: '[CH]1C=CC=C1'
+    thermo:
+      polys:
+      - Tmax: 945.521604000798
+        Tmin: 100.0
+        coefs:
+        - 2.6544110845062168
+        - 0.015271676841943454
+        - 4.2958286058890345e-05
+        - -6.566703810424132e-08
+        - 2.590126578662117e-11
+        - 27213.382523563367
+        - 11.192945542118235
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 945.521604000798
+        coefs:
+        - 8.149771978965695
+        - 0.019832224536683454
+        - -8.392814944883888e-06
+        - 1.6448247781037504e-09
+        - -1.2066319381098262e-13
+        - 24931.13053067923
+        - -21.584537039405358
+        type: NASApolynomial
+      type: NASA
+    type: Species
+  name: liquid
+Reactions:
+- comment: AR + 2-BUTENE(L) <=> [CH2]C=CC(L) + AH
+  fragmentbasedproducts:
+  - m1_allyl(L)
+  - AH
+  fragmentbasedreactants:
+  - AR
+  - 2-BUTENE(L)
+  kinetics:
+    A: 1.739999999999998e-08
+    Ea: 56902.4
+    n: 4.34
+    type: Arrhenius
+  products:
+  - m1_allyl(L)
+  - AH
+  radicalchange: 0
+  reactants:
+  - AR
+  - 2-BUTENE(L)
+  type: ElementaryReaction
+- comment: 2-BUTENE(L) + KR -> [CH2]C=CC(L) + inert(S)
+  fragmentbasedproducts:
+  - m1_allyl(L)
+  - inert(S)
+  fragmentbasedreactants:
+  - 2-BUTENE(L)
+  - KR
+  kinetics:
+    A: 4.600700000000001e-14
+    Ea: 10675.7
+    n: 5.62546
+    type: Arrhenius
+  products:
+  - m1_allyl(L)
+  - CC(C)C
+  radicalchange: 0
+  reactants:
+  - 2-BUTENE(L)
+  - KR
+  reversible: false
+  type: ElementaryReaction
+- comment: 2-BUTENE(L) + CDB ene reaction
+  forwardable: false
+  fragmentbasedproducts:
+  - 2-BUTENE(L)
+  - CDB
+  fragmentbasedreactants:
+  - CDB
+  kinetics:
+    A: 5600000000000.0
+    Ea: 258973.7794393386
+    n: 0.0
+    type: Arrhenius
+  products:
+  - 2-BUTENE(L)
+  - CDB
+  radicalchange: 0
+  reactants:
+  - CC=CC(CC)C(C)CC
+  type: ElementaryReaction
+- comment: 2-BUTENE(L) + CDB ene reaction
+  forwardable: false
+  fragmentbasedproducts:
+  - 2-BUTENE(L)
+  - CDB
+  fragmentbasedreactants:
+  - CDB
+  kinetics:
+    A: 5600000000000.0
+    Ea: 249680.5822654271
+    n: 0.0
+    type: Arrhenius
+  products:
+  - 2-BUTENE(L)
+  - CDB
+  radicalchange: 0
+  reactants:
+  - C=CC(C)C(CC)CCC
+  type: ElementaryReaction
+- comment: 1,3-BUTADIENE(L) + CDB Diels-Alder addition
+  fragmentbasedproducts:
+  - CDB
+  fragmentbasedreactants:
+  - 1,3-BUTADIENE(L)
+  - CDB
+  kinetics:
+    A: 7.746700000000001e-07
+    Ea: 95785.5
+    n: 2.60671
+    type: Arrhenius
+  products:
+  - CCC1CC=CCC1CC
+  radicalchange: 0
+  reactants:
+  - 1,3-BUTADIENE(L)
+  - CDB
+  reversible: false
+  type: ElementaryReaction
+- comment: 1,3-BUTADIENE(L) + AR radical addition
+  fragmentbasedproducts:
+  - KR
+  - CDB
+  - AH
+  - AH
+  fragmentbasedreactants:
+  - 1,3-BUTADIENE(L)
+  - AR
+  kinetics:
+    A: 0.05600000000000001
+    Ea: 55856.4
+    n: 2.41
+    type: Arrhenius
+  products:
+  - '[CH2]C(C=C)CC(=C)C'
+  radicalchange: 0
+  reactants:
+  - 1,3-BUTADIENE(L)
+  - AR
+  reversible: false
+  type: ElementaryReaction
+- comment: 1,3-BUTADIENE(L) + AR radical addition
+  fragmentbasedproducts:
+  - AR
+  - CDB
+  - AH
+  fragmentbasedreactants:
+  - 1,3-BUTADIENE(L)
+  - AR
+  kinetics:
+    A: 0.09960000000000009
+    Ea: 36861.00000000003
+    n: 2.41
+    type: Arrhenius
+  products:
+  - C=C[CH]CCC(=C)C
+  radicalchange: 0
+  reactants:
+  - 1,3-BUTADIENE(L)
+  - AR
+  reversible: false
+  type: ElementaryReaction
+- comment: 1,3-BUTADIENE(L) + KR radical addition
+  fragmentbasedproducts:
+  - KR
+  - CDB
+  - AH
+  fragmentbasedreactants:
+  - 1,3-BUTADIENE(L)
+  - KR
+  kinetics:
+    A: 0.0026800000000000005
+    Ea: 27154.20000000002
+    n: 2.41
+    type: Arrhenius
+  products:
+  - '[CH2]C(C=C)CC(C)C'
+  radicalchange: 0
+  reactants:
+  - 1,3-BUTADIENE(L)
+  - KR
+  reversible: false
+  type: ElementaryReaction
+- comment: 1,3-BUTADIENE(L) + KR radical addition
+  fragmentbasedproducts:
+  - AR
+  - CDB
+  fragmentbasedreactants:
+  - 1,3-BUTADIENE(L)
+  - KR
+  kinetics:
+    A: 0.00478
+    Ea: 8158.799999999999
+    n: 2.41
+    type: Arrhenius
+  products:
+  - C=C[CH]CCC(C)C
+  radicalchange: 0
+  reactants:
+  - 1,3-BUTADIENE(L)
+  - KR
+  reversible: false
+  type: ElementaryReaction
+- comment: CYCLOPENTADIENE(L) + CDB Diels-Alder addition
+  fragmentbasedproducts:
+  - CDB
+  fragmentbasedreactants:
+  - CYCLOPENTADIENE(L)
+  - CDB
+  kinetics:
+    A: 293.333
+    Ea: 96500.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - CCC1C2C=CC(C2)C1CC
+  radicalchange: 0
+  reactants:
+  - CYCLOPENTADIENE(L)
+  - CDB
+  reversible: false
+  type: ElementaryReaction
+- comment: AR + CYCLOPENTADIENE(L) radical addition
+  fragmentbasedproducts:
+  - AR
+  - CDB
+  - AH
+  - AH
+  - AH
+  fragmentbasedreactants:
+  - AR
+  - CYCLOPENTADIENE(L)
+  kinetics:
+    A: 0.04760000000000004
+    Ea: 43053.4
+    n: 2.41
+    type: Arrhenius
+  products:
+  - C=C(C)CC1[CH]C=CC1
+  radicalchange: 0
+  reactants:
+  - AR
+  - CYCLOPENTADIENE(L)
+  reversible: false
+  type: ElementaryReaction
+- comment: AR + CYCLOPENTADIENE(L) radical addition
+  fragmentbasedproducts:
+  - KR
+  - CDB
+  - AH
+  - AH
+  - AH
+  - AH
+  fragmentbasedreactants:
+  - AR
+  - CYCLOPENTADIENE(L)
+  kinetics:
+    A: 0.05600000000000001
+    Ea: 54559.399999999994
+    n: 2.41
+    type: Arrhenius
+  products:
+  - C=C(C)CC1[CH]CC=C1
+  radicalchange: 0
+  reactants:
+  - AR
+  - CYCLOPENTADIENE(L)
+  reversible: false
+  type: ElementaryReaction
+- comment: KR + CYCLOPENTADIENE(L) radical addition
+  fragmentbasedproducts:
+  - AR
+  - CDB
+  - AH
+  - AH
+  fragmentbasedreactants:
+  - KR
+  - CYCLOPENTADIENE(L)
+  kinetics:
+    A: 0.0010517194487640435
+    Ea: 12606.924073852977
+    n: 2.4379428440528197
+    type: Arrhenius
+  products:
+  - CC(C)CC1[CH]C=CC1
+  radicalchange: 0
+  reactants:
+  - KR
+  - CYCLOPENTADIENE(L)
+  reversible: false
+  type: ElementaryReaction
+- comment: KR + CYCLOPENTADIENE(L) radical addition
+  fragmentbasedproducts:
+  - KR
+  - CDB
+  - AH
+  - AH
+  - AH
+  fragmentbasedreactants:
+  - KR
+  - CYCLOPENTADIENE(L)
+  kinetics:
+    A: 0.00039436024140371967
+    Ea: 31128.949999999997
+    n: 2.605
+    type: Arrhenius
+  products:
+  - CC(C)CC1[CH]CC=C1
+  radicalchange: 0
+  reactants:
+  - KR
+  - CYCLOPENTADIENE(L)
+  reversible: false
+  type: ElementaryReaction
+- comment: AR + CYCLOPENTADIENE(L) <=> AH + [CH]1C=CC=C1(L)
+  fragmentbasedproducts:
+  - AH
+  - '[CH]1C=CC=C1(L)'
+  fragmentbasedreactants:
+  - AR
+  - CYCLOPENTADIENE(L)
+  kinetics:
+    A: 7.720000000000002e-09
+    Ea: 28032.80000000002
+    n: 4.34
+    type: Arrhenius
+  products:
+  - AH
+  - '[CH]1C=CC=C1(L)'
+  radicalchange: 0
+  reactants:
+  - AR
+  - CYCLOPENTADIENE(L)
+  type: ElementaryReaction
+- comment: KR + CYCLOPENTADIENE(L) -> inert(S) + [CH]1C=CC=C1(L)
+  fragmentbasedproducts:
+  - inert(S)
+  - '[CH]1C=CC=C1(L)'
+  fragmentbasedreactants:
+  - KR
+  - CYCLOPENTADIENE(L)
+  kinetics:
+    A: 2.4400000000000003e-09
+    Ea: 4184.0
+    n: 4.34
+    type: Arrhenius
+  products:
+  - CC(C)C
+  - '[CH]1C=CC=C1(L)'
+  radicalchange: 0
+  reactants:
+  - KR
+  - CYCLOPENTADIENE(L)
+  reversible: false
+  type: ElementaryReaction
+- comment: CYCLOPENTADIENE(L) + CDB ene reaction
+  forwardable: false
+  fragmentbasedproducts:
+  - CYCLOPENTADIENE(L)
+  - CDB
+  fragmentbasedreactants:
+  - CDB
+  - CDB
+  - AH
+  - AH
+  - AH
+  - AH
+  kinetics:
+    A: 50446400.0
+    Ea: 198349.00000000012
+    n: 1.58724
+    type: Arrhenius
+  products:
+  - CYCLOPENTADIENE(L)
+  - CDB
+  radicalchange: 0
+  reactants:
+  - CC=CC(CC)C1CC=CC1
+  type: ElementaryReaction
+- comment: CYCLOPENTADIENE(L) + CDB ene reaction
+  forwardable: false
+  fragmentbasedproducts:
+  - CYCLOPENTADIENE(L)
+  - CDB
+  fragmentbasedreactants:
+  - CDB
+  - CDB
+  - AH
+  - AH
+  - AH
+  kinetics:
+    A: 25223200.0
+    Ea: 201380.33138020296
+    n: 1.58724
+    type: Arrhenius
+  products:
+  - CYCLOPENTADIENE(L)
+  - CDB
+  radicalchange: 0
+  reactants:
+  - CC=CC(CC)C1C=CCC1
+  type: ElementaryReaction
+- comment: CYCLOPENTADIENE(L) + CDB ene reaction
+  forwardable: false
+  fragmentbasedproducts:
+  - CYCLOPENTADIENE(L)
+  - CDB
+  fragmentbasedreactants:
+  - CDB
+  - CDB
+  kinetics:
+    A: 2935200000.0
+    Ea: 194061.90914502225
+    n: 0.988661
+    type: Arrhenius
+  products:
+  - CYCLOPENTADIENE(L)
+  - CDB
+  radicalchange: 0
+  reactants:
+  - CCCC(CC)C1C=CC=C1
+  type: ElementaryReaction
+- comment: CYCLOPENTADIENE(L) + CDB ene reaction
+  forwardable: false
+  fragmentbasedproducts:
+  - CYCLOPENTADIENE(L)
+  - CDB
+  fragmentbasedreactants:
+  - CDB
+  - CDB
+  kinetics:
+    A: 1467600000.0
+    Ea: 60172.46105126701
+    n: 0.988661
+    type: Arrhenius
+  products:
+  - CYCLOPENTADIENE(L)
+  - CDB
+  radicalchange: 0
+  reactants:
+  - CCCC(CC)C1C=C=CC1
+  type: ElementaryReaction
+Solvents:
+- mu:
+    A: 7.5117
+    B: 294.68
+    C: -2.794
+    D: 0.0
+    E: 0.0
+    type: RiedelViscosity
+  name: benzene
+  type: Solvent
+Units: {}
