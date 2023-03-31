@@ -3225,6 +3225,12 @@ export getreactionindices
             diffusion=spc.diffusion,
             radius=spc.radius,
             radicalelectrons=spc.radicalelectrons,
+            molecularweight=spc.molecularweight,
+            henrylawconstant=spc.henrylawconstant,
+            liquidvolumetricmasstransfercoefficient=spc.liquidvolumetricmasstransfercoefficient,
+            comment=spc.comment,
+            isfragment=spc.isfragment,
+            isfragmentintermediate=spc.isfragmentintermediate
         )
         @inbounds senstooriginspcind[i] = spcind
     end
