@@ -641,6 +641,17 @@ export addreactionratecontributionsforwardreverse!
     calcdomainderivatives!(domain,dydt,interfaces;t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
     return dydt
 end
+
+function dydtreactor!(dydt::RC,y::U,t::Z,domain::FragmentBasedConstantTrhoDomain{W,Y},interfaces::B;p::RV=SciMLBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B<:AbstractArray,Z<:Real,U,J<:Integer,W<:IdealDiluteSolution,Y<:Integer}
+    dydt .= 0.0
+    massindex = domain.indexes[3]
+    ns,cs,T,P,V,C,N,mu,kfs,krevs,Hs,Us,Gs,diffs,Cvave,cpdivR = calcthermo(domain,y,t,p)
+    addreactionratecontributions!(dydt,domain.fragmentbasedrxnarray,domain.rxnarray,cs,kfs,krevs,massindex,domain.Mws,domain.fragmentindexes)
+    dydt .*= V
+    calcdomainderivatives!(domain,dydt,interfaces;t=t,T=T,P=P,Us=Us,Hs=Hs,V=V,C=C,ns=ns,N=N,Cvave=Cvave)
+    return dydt
+end
+
 @inline function dydtreactor!(dydt::RC,y::U,t::Z,domains::Q,interfaces::B;p::RV=SciMLBase.NullParameters(),sensitivity::Bool=true) where {RC,RV,B,Z,U,Q<:Tuple}    
     cstot = similar(y)
     cstot .= 0.0
