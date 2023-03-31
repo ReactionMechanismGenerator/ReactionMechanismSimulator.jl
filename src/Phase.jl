@@ -188,6 +188,15 @@ function FragmentBasedIdealFilm(species, reactions; name="", diffusionlimited=fa
         reversibility=reversibility,forwardability=forwardability,diffusionlimited=diffusionlimited)
 end
 export FragmentBasedIdealFilm
+
+function getphasespecies(phase::FragmentBasedIdealPhase)
+    return phase.fragments
+end
+
+function getphasespecies(phase::AbstractPhase)
+    return phase.species
+end
+
 """
 construct the stochiometric matrix for the reactions and the reaction molecule # change
 """
