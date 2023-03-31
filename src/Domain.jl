@@ -1679,7 +1679,7 @@ export calcthermo
             kLAs = map.(inter.kLAs,T)
             kHs = map.(inter.kHs,T)
             evap = kLAs.*ns
-            cond = kLAs.*inter.molefractions*inter.P/R/inter.T./kHs*V
+            cond = kLAs.*inter.molefractions.*inter.P./kHs*V
 
             dydt[d.indexes[1]:d.indexes[2]] .-= (evap .- cond)
         elseif isa(inter,VolumetricFlowRateInlet) && d == inter.domain
