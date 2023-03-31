@@ -35,6 +35,30 @@ jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 end;
 
+@testset "Test liquid phase Constant T Constant V reactor with volumetric flow rate inlet and outlet simulation" begin
+    #Constant T and V Ideal Dilute Liquid
+    initialconds = Dict(["T"=>450.0,"V"=>1.0e-6*1e6,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6]) #Set simulation Initial Temp and Pressure
+    domain,y0,p = ConstantTVDomain(phase=liq,initialconds=initialconds) #Define the domain (encodes how system thermodynamic properties calculated)
+
+    inlet = VolumetricFlowRateInlet(domain,Dict(["T"=>450.0,"P"=>1.e5,"octane"=>6.154e-3*1e6,"oxygen"=>4.953e-6*1e6]),x->1.0) #set the inlet flow rate and conditions
+    outlet = VolumetricFlowRateOutlet(domain,x->1.0) #set the outlet flow rate
+    interfaces = [inlet,outlet]
+    react = Reactor(domain,y0,(0.0,140000.01),interfaces;p=p) #Create the reactor object
+    
+    sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-8); #solve the ode associated with the reactor
+
+    #analytic jacobian vs. ForwardDiff jacobian
+    t=32977.61568;
+    y=sol(t)
+    ja=jacobiany(y,p,t,domain,[],nothing);
+    j=jacobianyforwarddiff(y,p,t,domain,[],nothing);
+    @test all((abs.(ja.-j) .> 1e-4.*abs.(j).+1e-16).==false)
+    
+    jpa=jacobianp(y,p,t,domain,[],nothing);
+    jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
+    @test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
+end;
+
     @testset "Test liquid phase Constant T Constant V reactor simulation with kLAkHCondensationEvaporationWithReservoir" begin
         phaseDict = readinput("../src/testing/constantkLAkH.rms")
 
