@@ -357,6 +357,28 @@ function readinputyml(fname::String)
         rxn["reactantinds"] = MVector(rxn["reactantinds"]...)
         rxn["productinds"] =  [r.index for r in rxn["products"]]
         rxn["productinds"] = MVector(rxn["productinds"]...)
+        if "fragmentbasedreactants" in keys(rxn)
+            rxn["fragmentbasedreactants"] = convert(Array{Any},rxn["fragmentbasedreactants"])
+            rxn["fragmentbasedproducts"] = convert(Array{Any},rxn["fragmentbasedproducts"])
+            for (i,item) in enumerate(rxn["fragmentbasedreactants"])
+                spc,ph = spcdict[item]
+                push!(phs,ph)
+                rxn["fragmentbasedreactants"][i] = spc
+            end
+            for (i,item) in enumerate(rxn["fragmentbasedproducts"])
+                spc,ph = spcdict[item]
+                push!(phs,ph)
+                rxn["fragmentbasedproducts"][i] = spc
+            end
+            rxn["fragmentbasedreactants"] = [r for r in rxn["fragmentbasedreactants"]]
+            rxn["fragmentbasedreactants"] = SVector(rxn["fragmentbasedreactants"]...)
+            rxn["fragmentbasedproducts"] = [r for r in rxn["fragmentbasedproducts"]]
+            rxn["fragmentbasedproducts"] = SVector(rxn["fragmentbasedproducts"]...)
+            rxn["fragmentbasedreactantinds"] =  [r.index for r in rxn["fragmentbasedreactants"]]
+            rxn["fragmentbasedreactantinds"] = MVector(rxn["fragmentbasedreactantinds"]...)
+            rxn["fragmentbasedproductinds"] =  [r.index for r in rxn["fragmentbasedproducts"]]
+            rxn["fragmentbasedproductinds"] = MVector(rxn["fragmentbasedproductinds"]...)
+        end
         if "efficiencies" in keys(rxn["kinetics"])
             rxn["kinetics"]["efficiencies"] = Dict{Int64,Float64}([spcdict[name][1].index=>val-1.0 for (name,val) in rxn["kinetics"]["efficiencies"]]) #in RMS we correct [M] rather than calculate it so we subtract 1
         end
