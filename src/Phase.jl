@@ -136,6 +136,58 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
 end
 export IdealSurface
 
+@with_kw struct FragmentBasedIdealFilm{W<:Tuple,W2,W3} <: FragmentBasedIdealPhase
+    name::String = ""
+    species::Array{Species,1}
+    fragments::Array{Species,1}
+    fragmentintermediates::Array{Species,1}
+    reactions::Array{ElementaryReaction,1}
+    stoichmatrix::W2
+    Nrp::Array{Float64,1}
+    rxnarray::Array{Int64,2}
+    veckinetics::W
+    veckineticsinds::Array{Int64,1}
+    vecthermo::NASAvec
+    otherreactions::Array{ElementaryReaction,1}
+    electronchange::W3
+    spcdict::Dict{String,Int64}
+    reversibility::Array{Bool,1}
+    forwardability::Array{Bool,1}
+    diffusionlimited::Bool = false
+end
+
+function FragmentBasedIdealFilm(species, reactions; name="", diffusionlimited=false)
+    @assert diffusionlimited==false "diffusionlimited=true not supported for FragmentBasedIdealFilm"
+    vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
+    rxns = vcat(reactions[vecinds],reactions[otherrxninds])
+    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
+        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
+        radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs,
+        fragmentbasedreactants=rxn.fragmentbasedreactants,fragmentbasedreactantinds=rxn.fragmentbasedreactantinds,
+        fragmentbasedproducts=rxn.fragmentbasedproducts,fragmentbasedproductinds=rxn.fragmentbasedproductinds,
+        comment=rxn.comment) for (i,rxn) in enumerate(rxns)]
+    therm = getvecthermo(species)
+    rxnarray = getreactionindices(species,rxns)
+    M,Nrp = getstoichmatrix(rxnarray,species)
+    echangevec = getfield.(rxns,:electronchange)
+    if all(echangevec .== 0)
+        electronchange = nothing
+    else 
+        electronchange = convert(echangevec,Array{Float64,1})
+    end
+    reversibility = getfield.(rxns,:reversible)
+    forwardability = getfield.(rxns,:forwardable)
+
+    fragments = [spc for spc in species if spc.isfragment]
+    fragmentintermediates = [spc for spc in species if spc.isfragmentintermediate]
+
+    return FragmentBasedIdealFilm(species=species,fragments=fragments,fragmentintermediates=fragmentintermediates,
+        reactions=rxns,name=name,
+        spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
+        veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,
+        reversibility=reversibility,forwardability=forwardability,diffusionlimited=diffusionlimited)
+end
+export FragmentBasedIdealFilm
 """
 construct the stochiometric matrix for the reactions and the reaction molecule # change
 """
