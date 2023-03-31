@@ -278,7 +278,11 @@ function rops(ssys::SystemSimulation,t)
         start += length(vkfs[k])
     end
     for inter in ssys.interfaces
-        if hasproperty(inter,:reactions)
+        if inter isa FragmentBasedReactiveFilmGrowthInterfaceConstantT
+            kfs,krevs=getkfskrevs(inter)
+            rops!(ropmat,inter.rxnarray,inter.fragmentbasedrxnarray,cstot,kfs,krevs,vV[inter.domaininds[1]],start)
+            start += length(kfs) 
+        elseif hasproperty(inter,:reactions)
             kfs,krevs=getkfskrevs(inter,vT[inter.domaininds[1]],vT[inter.domaininds[2]],vphi[inter.domaininds[1]],vphi[inter.domaininds[2]],vGs[inter.domaininds[1]],vGs[inter.domaininds[2]],cstot)
             rops!(ropmat,inter.rxnarray,cstot,kfs,krevs,inter.A,start)
             start += length(kfs)
