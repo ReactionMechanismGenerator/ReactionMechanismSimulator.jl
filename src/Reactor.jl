@@ -161,7 +161,18 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
     end
     
     for (i,inter) in enumerate(interfaces)
-        if isa(inter, AbstractReactiveInternalInterface)
+        if isa(inter, FragmentBasedReactiveFilmGrowthInterfaceConstantT)
+            indfilm = findfirst(isequal(inter.domainfilm),domains)
+            ind2 = findfirst(isequal(inter.domain2),domains)
+            inter.domaininds[1] = indfilm
+            inter.domaininds[2] = ind2
+            inter.parameterindexes[1] = length(p)+1
+            inter.parameterindexes[2] = length(p)+length(ps[i+length(domains)])
+            rxnarray, fragmentbasedrxnarray = getfragmentbasedinterfacereactioninds(inter.domainfilm,inter.domain2,inter.reactions)
+            inter.rxnarray .= rxnarray
+            inter.fragmentbasedrxnarray .= fragmentbasedrxnarray
+            p = vcat(p,ps[i+length(domains)])
+        elseif isa(inter, AbstractReactiveInternalInterface)
             ind1 = findfirst(isequal(inter.domain1),domains)
             ind2 = findfirst(isequal(inter.domain2),domains)
             inter.domaininds[1] = ind1
