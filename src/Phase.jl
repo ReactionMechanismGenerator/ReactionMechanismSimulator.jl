@@ -33,24 +33,27 @@ include("Reaction.jl")
     otherreactions::Array{ElementaryReaction,1}
     electronchange::W3
     reversibility::Array{Bool,1}
+    forwardability::Array{Bool,1}
     diffusionlimited::Bool = false
 end
 
 function IdealGas(species,reactions; name="",diffusionlimited=false)
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
-    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
-        productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,reversible=rxn.reversible,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
+        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
+        radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
     echangevec = getfield.(rxns,:electronchange)
     electronchange = convert(Array{Float64,1},echangevec)
     reversibility = getfield.(rxns,:reversible)
+    forwardability = getfield.(rxns,:forwardable)
     return IdealGas(species=species,reactions=rxns,name=name,
-        spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
-        veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns, electronchange=electronchange,
-        reversibility=reversibility,diffusionlimited=diffusionlimited,)
+        spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple, 
+        veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns, electronchange=electronchange, 
+        reversibility=reversibility,forwardability=forwardability,diffusionlimited=diffusionlimited,)
 end
 export IdealGas
 
@@ -69,25 +72,28 @@ export IdealGas
     electronchange::W3
     spcdict::Dict{String,Int64}
     reversibility::Array{Bool,1}
+    forwardability::Array{Bool,1}
     diffusionlimited::Bool = true
 end
 
 function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited=true)
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
-    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
-        productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,reversible=rxn.reversible,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
+        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
+        radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
     echangevec = getfield.(rxns,:electronchange)
     electronchange = convert(Array{Float64,1},echangevec)
     reversibility = getfield.(rxns,:reversible)
+    forwardability = getfield.(rxns,:forwardable)
 
     return IdealDiluteSolution(species=species,reactions=rxns,solvent=solvent,name=name,
         spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
         veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,
-        reversibility=reversibility,diffusionlimited=diffusionlimited)
+        reversibility=reversibility,forwardability=forwardability,diffusionlimited=diffusionlimited)
 end
 export IdealDiluteSolution
 
@@ -105,6 +111,7 @@ export IdealDiluteSolution
     electronchange::W3
     spcdict::Dict{String,Int64}
     reversibility::Array{Bool,1}
+    forwardability::Array{Bool,1}
     sitedensity::Float64
     diffusionlimited::Bool = false
 end
@@ -112,18 +119,20 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
     @assert diffusionlimited==false "diffusionlimited=true not supported for IdealSurface"
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
-    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
-        productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,electronchange=rxn.electronchange,reversible=rxn.reversible,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
+        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
+        radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
     echangevec = getfield.(rxns,:electronchange).*F
     electronchange = convert(Array{Float64,1},echangevec)
     reversibility = getfield.(rxns,:reversible)
+    forwardability = getfield.(rxns,:forwardable)
     return IdealSurface(species=species,reactions=rxns,name=name,
         spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple,
         veckineticsinds=posinds,vecthermo=therm,otherreactions=otherrxns,electronchange=electronchange,
-        reversibility=reversibility,sitedensity=sitedensity,diffusionlimited=diffusionlimited)
+        reversibility=reversibility,forwardability=forwardability,sitedensity=sitedensity,diffusionlimited=diffusionlimited)
 end
 export IdealSurface
 
