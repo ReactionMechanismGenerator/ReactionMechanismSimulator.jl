@@ -384,3 +384,114 @@ function getinterfaceignoremasstransferspcinds(domaingas,domainliq,ignoremasstra
     end
     return indices
 end
+
+struct FragmentBasedReactiveFilmGrowthInterfaceConstantT{D1,D2,Q<:AbstractReaction,M1} <: AbstractReactiveInternalInterface
+    domainfilm::D1
+    domain2::D2
+    reactions::Array{Q,1}
+    rxnarray::Array{Int64,2}
+    fragmentbasedrxnarray::Array{Int64,2}
+    stoichmatrix::M1
+    Nrp1::Array{Float64,1}
+    Nrp2::Array{Float64,1}
+    kfs::Array{Float64,1}
+    krevs::Array{Float64,1}
+    T::Float64
+    parameterindexes::Array{Int64,1}
+    domaininds::Array{Int64,1}
+    p::Array{Float64,1}
+    reversibililty::Array{Bool,1}
+    forwardability::Array{Bool,1}
+    Mws::Array{Float64,1}
+end
+
+function FragmentBasedReactiveFilmGrowthInterfaceConstantT(domainfilm,domain2,reactions)
+    @assert isa(domainfilm.phase,FragmentBasedIdealFilm)
+    @assert domainfilm.T == domain2.T
+    T = domainfilm.T
+
+    rxnarray, fragmentbasedrxnarray = getfragmentbasedinterfacereactioninds(domainfilm,domain2,reactions)
+    
+    kfs = getkf.(reactions,nothing,T,0.0,0.0,Ref([]),0.0,0.0)
+    Kc = getKc.(reactions,domainfilm.phase,domain2.phase,Ref(domainfilm.Gs),Ref(domain2.Gs),T,0.0)
+    krevs = kfs./Kc
+
+    M,Nrp1,Nrp2 = getstoichmatrix(domainfilm,domain2,reactions)
+    reversibility = Array{Bool,1}(getfield.(reactions,:reversible))
+    forwardability = Array{Bool,1}(getfield.(reactions,:forwardable))
+
+    Mws = vcat(getfield.(domainfilm.phase.fragments,:molecularweight),getfield.(domain2.phase.species,:molecularweight))
+    return FragmentBasedReactiveFilmGrowthInterfaceConstantT(domainfilm,domain2,reactions,rxnarray,fragmentbasedrxnarray,M,Nrp1,Nrp2,kfs,krevs,T,[1,length(reactions)],
+    [0,1],kfs[1:end],reversibility,forwardability,Mws),kfs[1:end]
+end
+export FragmentBasedReactiveFilmGrowthInterfaceConstantT
+
+function getfragmentbasedinterfacereactioninds(domainfilm,domain2,reactions)
+    # find maximum number of species in fragment-based reaction and names of fragment-based species
+    maxnumfragmentbasedreacprod = 0
+    for rxn in reactions
+        numfragmentbasedreac = length(rxn.fragmentbasedreactants)
+        numfragmentbasedprod = length(rxn.fragmentbasedproducts)
+        maxnumfragmentbasedreacprod = max(maxnumfragmentbasedreacprod,numfragmentbasedreac,numfragmentbasedprod)
+    end
+    fragmentbasedrxnarray = zeros(Int64,(maxnumfragmentbasedreacprod*2,length(reactions)))
+    rxnarray = zeros(Int64, (8,length(reactions)))
+
+    N1 = length(domainfilm.phase.fragments)
+    for (i,rxn) in enumerate(reactions)
+        for (j,r) in enumerate(rxn.reactants)
+            if !r.isfragmentintermediate
+                isfirst = true
+                ind = findfirst(isequal(r),domainfilm.phase.fragments)
+                if ind === nothing
+                    isfirst = false
+                    ind = findfirst(isequal(r),domain2.phase.species)
+                end
+                rxnarray[j,i] = isfirst ? ind : ind+N1
+            end
+        end
+        for (j,r) in enumerate(rxn.fragmentbasedreactants)
+            isfirst = true
+            ind = findfirst(isequal(r),domainfilm.phase.fragments)
+            if ind === nothing
+                isfirst = false
+                ind = findfirst(isequal(r),domain2.phase.species)
+            end
+            fragmentbasedrxnarray[j,i] = isfirst ? ind : ind+N1
+        end
+        for (j,r) in enumerate(rxn.products)
+            if !r.isfragmentintermediate
+                isfirst = true
+                ind = findfirst(isequal(r),domainfilm.phase.fragments)
+                if ind === nothing
+                    isfirst = false
+                    ind = findfirst(isequal(r),domain2.phase.species)
+                end
+                rxnarray[j+4,i] = isfirst ? ind : ind+N1
+            end
+        end
+        for (j,r) in enumerate(rxn.fragmentbasedproducts)
+            isfirst = true
+            ind = findfirst(isequal(r),domainfilm.phase.fragments)
+            if ind === nothing
+                isfirst = false
+                ind = findfirst(isequal(r),domain2.phase.species)
+            end
+            fragmentbasedrxnarray[j+maxnumfragmentbasedreacprod,i] = isfirst ? ind : ind+N1
+        end
+    end
+    return rxnarray, fragmentbasedrxnarray
+end
+
+export getfragmentbasedinterfacereactioninds
+
+function getkfskrevs(ri::FragmentBasedReactiveFilmGrowthInterfaceConstantT)
+    return ri.kfs,ri.krevs
+end
+
+function evaluate(ri::FragmentBasedReactiveFilmGrowthInterfaceConstantT,dydt,domainfilm,Vfilm,cstot)
+    kfs, krevs = getkfskrevs(ri)
+    addreactionratecontributions!(dydt,ri.fragmentbasedrxnarray,ri.rxnarray,cstot,kfs,krevs,Vfilm,domainfilm.indexes[3],ri.Mws,domainfilm.indexes[1]:domainfilm.indexes[2])
+end
+
+export evaluate
