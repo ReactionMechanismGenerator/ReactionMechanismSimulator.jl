@@ -42,7 +42,7 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
         products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
-        radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+        radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs,comment=rxn.comment) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
@@ -81,7 +81,7 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
         products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
-        radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+        radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs,comment=rxn.comment) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
@@ -121,7 +121,7 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
         products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
-        radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+        radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs,comment=rxn.comment) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
