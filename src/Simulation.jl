@@ -419,6 +419,37 @@ function rops!(ropvec,rarray,cs,kfs,krevs,V,start,ind)
 end
 
 
+function rops!(ropmat,rarray,fragmentbasedrxnarray,cs,kfs,krevs,V,start)
+    numfragmentbasedreacprod, numrxns = size(fragmentbasedrxnarray)
+    half = Int(numfragmentbasedreacprod/2)
+    for i = 1:length(kfs)
+        R = getrate(rarray,cs,kfs,krevs,V,i)
+        
+        for j = 1:half
+            if fragmentbasedrxnarray[j,i] != 0
+                @fastmath ropmat[fragmentbasedrxnarray[j,i]] -= R
+            end
+        end
+
+        for j = half+1:numfragmentbasedreacprod
+            if fragmentbasedrxnarray[j,i] != 0
+                @fastmath ropmat[fragmentbasedrxnarray[j,i]] += R
+            end
+        end
+    end
+end
+
+function rops!(ropvec,rarray,fragmentbasedrxnarray,cs,kfs,krevs,V,start,ind)
+    numfragmentbasedreacprod, numrxns = size(fragmentbasedrxnarray)
+    half = Int(numfragmentbasedreacprod/2)
+    for i = 1:length(kfs)
+        @views c = count(isequal(ind),fragmentbasedrxnarray[half+1:end,i])-count(isequal(ind),fragmentbasedrxnarray[1:half,i])
+        if c != 0.0
+            R = getrate(rarray,cs,kfs,krevs,V,i)
+            @fastmath @inbounds ropvec[i+start] = c*R
+        end
+    end
+end
 
 """
 Calculates sensitivities with respect to `target` at the time point at the end of the simulation
