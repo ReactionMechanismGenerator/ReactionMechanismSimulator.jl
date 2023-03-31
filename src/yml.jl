@@ -140,6 +140,7 @@ function obj2dict(obj,spcs,names;label="solvent")
         D["type"] = "ElementaryReaction"
         D["radicalchange"] = sum([getradicals(x) for x in obj.products])-sum([getradicals(x) for x in obj.reactants])
         D["reversible"] = obj.reversible
+        D["forwardable"] = obj.forwardable
     elseif pybuiltin("isinstance")(obj,arrhenius.Arrhenius)
         D["type"] = "Arrhenius"
         D["A"] = obj.A.value_si
@@ -238,11 +239,15 @@ function canteradict2rmsdict(canteradict,spcs,names,units,dict_type;numreactants
     elseif dict_type == :reaction #reaction
         equation = canteradict["equation"]
         reversible = true
+        forwardable = true
         if occursin(" <=> ",equation) #reversible
             reactants, products = split(canteradict["equation"]," <=> ")
         elseif occursin(" => ",equation) #irreversible
             reactants, products = split(canteradict["equation"]," => ")
             reversible = false
+        elseif occursin(" <= ",equation) #not forwardable
+            reactants, products = split(canteradict["equation"]," <= ")
+            forwardable = false
         end
         reactants = _interpretstoichstring(reactants,names)
         products = _interpretstoichstring(products,names)
@@ -251,6 +256,7 @@ function canteradict2rmsdict(canteradict,spcs,names,units,dict_type;numreactants
         D["products"] = products
         D["kinetics"] = kinetics
         D["reversible"] = reversible
+        D["forwardable"] = forwardable
         D["type"] = "ElementaryReaction"
     elseif dict_type == :kinetics
         if haskey(canteradict,"type")
