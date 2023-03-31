@@ -12,6 +12,9 @@ export IdealPhase
 struct EmptyPhase <: AbstractPhase end
 export EmptyPhase
 
+abstract type FragmentBasedIdealPhase <: IdealPhase end
+export FragmentBasedIdealPhase
+
 include("Calculators/Ratevec.jl")
 include("Calculators/Thermovec.jl")
 include("Reaction.jl")
