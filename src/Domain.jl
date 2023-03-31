@@ -711,6 +711,115 @@ function ConstantTAPhiDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies
 end
 export ConstantTAPhiDomain
 
+"""
+Fragment based constant T, rho domain is designed to simulate film growth with fragment based model.
+It simulates the growth of mass of a swollen film caused by the chemical reaction between 
+the functional groups (fragments) on the solid and 
+the liquid phase reactants encapsulated in the film.
+mass: the mass of the solid part in the swollen film
+rho: the density of the solid part in the swollen film
+"""
+mutable struct FragmentBasedConstantTrhoDomain{N<:AbstractPhase, S<:Integer, W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
+    phase::N
+    indexes::Q #assumed to be in ascending order
+    parameterindexes::Q
+    constantspeciesinds::Array{S,1}
+    T::Float64
+    rho::Float64
+    A::Float64
+    kfs::Array{W,1}
+    krevs::Array{W,1}
+    kfsnondiff::Array{W,1}
+    efficiencyinds::Array{I,1}
+    Gs::Array{W,1}
+    rxnarray::Array{Int64,2}
+    mu::W
+    diffusivity::Array{W,1}
+    jacobian::Array{W,2}
+    sensitivity::Bool
+    alternativepformat::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
+    p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
+end
+
+function FragmentBasedConstantTrhoDomain(;phase::Z,initialconds::Dict{X,E},constantspecies::Array{X4,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {X,E,X1,E1,X3,X4,Z<:AbstractPhase}
+
+    T = 0.0
+    rho = 0.0
+    mass = 0.0
+    P = 1.0e8
+    A = 0.0
+
+    fragmentnames = getfield.(getphasespecies(phase), :name)
+
+    y0 = zeros(length(fragmentnames)+1) #track mass
+
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "A"
+            A = val
+        elseif key == "rho"
+            rho = val
+        elseif key == "mass"
+            mass = val
+            y0[end] = val
+        else
+            ind = findfirst(isequal(key),fragmentnames)
+            @assert typeof(ind)<: Integer  "$key not found in fragment list: $fragmentnames"
+            y0[ind] = val
+        end
+    end
+    @assert T != 0.0
+    @assert rho != 0.0
+    @assert mass != 0.0
+    @assert A != 0.0
+
+    ns = y0[1:end-1]
+    N = sum(ns)
+    V = mass/rho
+
+    if length(constantspecies) > 0
+        for spc in constantspecies
+            @assert spc in fragmentnames "$spc is not in the fragment list: $fragmentnames"
+        end
+        constspcinds = [findfirst(isequal(k),fragmentnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
+    Gs = calcgibbs(phase,T)
+    if :solvent in fieldnames(typeof(phase)) && typeof(phase.solvent) != EmptySolvent
+        mu = phase.solvent.mu(T)
+    else
+        mu = 0.0
+    end
+    if phase.diffusionlimited
+        diffs = [x(T=T,mu=mu,P=P) for x in getfield.(getphasespecies(phase),:diffusion)]
+    else
+        diffs = Array{Float64,1}()
+    end
+
+    C = N/V
+    kfs,krevs = getkfkrevs(phase,T,P,C,N,ns,Gs,diffs,V,0.0)
+    kfsnondiff = getkfs(phase,T,P,C,ns,V,0.0)
+
+    p = vcat(Gs,kfsnondiff)
+    if sparse
+        jacobian=zeros(typeof(T),length(getphasespecies(phase)),length(getphasespecies(phase)))
+    else
+        jacobian=zeros(typeof(T),length(getphasespecies(phase)),length(getphasespecies(phase)))
+    end
+    rxnarray = getreactionindices(phase)
+    return FragmentBasedConstantTrhoDomain(phase,[1,length(fragmentnames),length(fragmentnames)+1],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+        T,rho,A,kfs,krevs,kfsnondiff,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,false,MVector(false),MVector(0.0),p,Dict("mass"=>length(fragmentnames)+1)), y0, p
+end
+
+export FragmentBasedConstantTrhoDomain
+
 @inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W3=SciMLBase.NullParameters()) where {W3<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q} #no parameter input
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
