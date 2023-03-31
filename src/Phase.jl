@@ -289,7 +289,7 @@ function getvecthermo(spcs)
 end
 export getvecthermo
 
-function getC0(ph::X,T) where {X<:Union{IdealDiluteSolution,IdealGas}}
+function getC0(ph::X,T) where {X<:Union{FragmentBasedIdealFilm,IdealDiluteSolution,IdealGas}}
     return 1.0e5/(R*T)
 end
 
