@@ -74,6 +74,9 @@ function parseentry(q,units=nothing)
             return upreferred(Quantity(q,units)).val
         end
     elseif isa(q,AbstractArray)
+        if length(q) == 0
+            return q
+        end
         if units == nothing
             if typeof(q[1]) <: AbstractArray
                 return convert(Array,hcat(q...)')
