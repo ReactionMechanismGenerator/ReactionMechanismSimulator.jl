@@ -22,6 +22,8 @@ struct EmptySpecies <: AbstractSpecies end
     henrylawconstant::N1 = EmptyHenryLawConstant()
     liquidvolumetricmasstransfercoefficient::N2 = EmptyLiquidVolumetricMassTransferCoefficient()
     comment::String = ""
+    isfragment::Bool = false
+    isfragmentintermediate::Bool = false
 end
 export Species
 
