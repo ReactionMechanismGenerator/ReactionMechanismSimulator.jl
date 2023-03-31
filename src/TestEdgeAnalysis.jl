@@ -37,7 +37,7 @@ using Sundials
                 productinds = [findfirst(x->spc.name==x,coreedgespcsnames) for spc in rxnout.products]
                 newrxn = ElementaryReaction(;index=index+1,reactants=reactants,reactantinds=reactantinds,products=products,
                     productinds=productinds,kinetics=rxnout.kinetics,electronchange=rxnout.electronchange,
-                    radicalchange=rxnout.radicalchange,reversible=rxnout.reversible,pairs=rxnout.pairs)
+                    radicalchange=rxnout.radicalchange,reversible=rxnout.reversible,forwardable=rxnout.forwardable,pairs=rxnout.pairs)
                 push!(coreedgerxns,newrxn)
             end
         end
