@@ -489,6 +489,53 @@ export getrates
     end
 end
 
+function addreactionratecontributions!(dydt::Q,fragmentbasedrxnarray::Array{Int64,2},rxnarray::Array{Int64,2},cs::W,kfs::Z,krevs::Y,V::Q1,massindex::Int64,Mws::Array{Float64,1},fragmentindexes::Q2) where {Q,Z,Y,T,W,W2,Q1,Q2}
+    numfragmentbasedreacprod, numrxns = size(fragmentbasedrxnarray)
+    half = Int(numfragmentbasedreacprod/2)
+    for i = 1:numrxns
+
+        fR = 0
+        if rxnarray[1,i] != 0
+            fR = kfs[i]*cs[rxnarray[1,i]]
+            for j = 2:4
+                if rxnarray[j,i] != 0
+                    @fastmath fR *= cs[rxnarray[j,i]]
+                end
+            end
+        end
+
+        rR = 0
+        if rxnarray[5,i] !=0
+            rR = krevs[i]*cs[rxnarray[5,i]]
+            for j = 6:8
+                if rxnarray[j,i] != 0
+                    @fastmath rR *= cs[rxnarray[j,i]]
+                end
+            end
+        end
+
+        @fastmath R = (fR - rR)*V
+
+        for j = 1:half
+            if fragmentbasedrxnarray[j,i] != 0
+                @fastmath dydt[fragmentbasedrxnarray[j,i]] -= R
+                if !(fragmentbasedrxnarray[j,i] in fragmentindexes)
+                    dydt[massindex] += R * Mws[fragmentbasedrxnarray[j,i]]
+                end
+            end
+        end
+
+        for j = half+1:numfragmentbasedreacprod
+            if fragmentbasedrxnarray[j,i] != 0
+                @fastmath dydt[fragmentbasedrxnarray[j,i]] += R
+                if !(fragmentbasedrxnarray[j,i] in fragmentindexes)
+                    dydt[massindex] -= R * Mws[fragmentbasedrxnarray[j,i]]
+                end
+            end
+        end
+    end
+end
+
 @inline function addreactionratecontributions!(dydt::Q,rarray::Array{W2,2},cs::W,kfs::Z,krevs::Y,V) where {Q,Z,Y,T,W,W2}
     @inbounds @simd for i = 1:size(rarray)[2]
         if @inbounds rarray[2,i] == 0
