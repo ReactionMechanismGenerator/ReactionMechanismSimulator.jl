@@ -461,11 +461,11 @@ based alternative algorithm is slower, but avoids this concern.
 """
 function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
     abstol::Float64=1e-6,reltol::Float64=1e-3,normalize=true,kwargs...) where {Q,W,W2}
-    @assert target in bsol.names || target in ["T","V","P"]
+    @assert target in bsol.names || target in ["T","V","P","mass"]
 
     pethane = 160
 
-    if target in ["T","V","P"]
+    if target in ["T","V","P","mass"]
         if haskey(bsol.domain.thermovariabledict, target)
             ind = bsol.domain.thermovariabledict[target]
         else
@@ -537,13 +537,13 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
     dgdprevdiff(out, y, p, t) = ReverseDiff.gradient!(out, p -> g(y, p, t), p)
     
     if length(bsol.domain.p)<= pethane
-        if target in ["T","V","P"] || !isempty(bsol.interfaces)
+        if target in ["T","V","P","mass"] || !isempty(bsol.interfaces)
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,g,nothing,(dgdu,dgdp);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
         else
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,sensg,nothing,(dsensgdu,dsensgdp);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
         end
     else
-        if target in ["T","V","P"] || !isempty(bsol.interfaces)
+        if target in ["T","V","P","mass"] || !isempty(bsol.interfaces)
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,g,nothing,(dgdurevdiff,dgdprevdiff);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
         else
             du0,dpadj = adjoint_sensitivities(bsol.sol,solver,sensg,nothing,(dsensgdurevdiff,dsensgdprevdiff);sensealg=sensalg,abstol=abstol,reltol=reltol,kwargs...)
@@ -551,9 +551,9 @@ function getadjointsensitivities(bsol::Q,target::String,solver::W;sensalg::W2=In
     end
     if normalize
         dpadj[length(bsol.domain.phase.species)+1:end] .*= bsol.domain.p[length(bsol.domain.phase.species)+1:end]
-        if !(target in ["T","V","P"]) && isempty(bsol.interfaces)
+        if !(target in ["T","V","P","mass"]) && isempty(bsol.interfaces)
             dpadj ./= bsol.sol(bsol.sol.t[end])[senstooriginspcind[ind]]
-        elseif !(target in ["T","V","P"]) && !isempty(bsol.interfaces)
+        elseif !(target in ["T","V","P","mass"]) && !isempty(bsol.interfaces)
             dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
         end
     end
@@ -562,8 +562,8 @@ end
 
 function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
     abstol::Float64=1e-6,reltol::Float64=1e-3,normalize=true,kwargs...) where {Q,W,W2,W3}
-    @assert target in bsol.names || target in ["T","V","P"]
-    if target in ["T","V","P"]
+    @assert target in bsol.names || target in ["T","V","P","mass"]
+    if target in ["T","V","P","mass"]
         if haskey(bsol.domain.thermovariabledict, target)
             ind = bsol.domain.thermovariabledict[target]
         else
@@ -596,7 +596,7 @@ function getadjointsensitivities(syssim::Q,bsol::W3,target::String,solver::W;sen
         for domain in domains
            dpadj[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]] .*= syssim.p[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]]
         end
-        if !(target in ["T","V","P"])
+        if !(target in ["T","V","P","mass"])
             dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
         end
     end
