@@ -4,7 +4,7 @@ using StaticArrays
 abstract type AbstractReaction end
 export AbstractReaction
 
-@with_kw struct ElementaryReaction{T<:AbstractRate,Q<:Integer,V1<:AbstractArray,V2<:AbstractArray,V3<:AbstractArray,V4<:AbstractArray,V5<:AbstractArray} <: AbstractReaction
+@with_kw struct ElementaryReaction{T<:AbstractRate,Q<:Integer,V1<:AbstractArray,V2<:AbstractArray,V3<:AbstractArray,V4<:AbstractArray,V5<:AbstractArray,V6<:AbstractArray,V7<:AbstractArray,V8<:AbstractArray,V9<:AbstractArray} <: AbstractReaction
     index::Q
     reactants::V1
     reactantinds::V2
@@ -15,6 +15,10 @@ export AbstractReaction
     radicalchange::Int64 = -100
     reversible::Bool = true
     pairs::V5 = [[""]]
+    fragmentbasedreactants::V6 = []
+    fragmentbasedproducts::V7 = []
+    fragmentbasedreactantinds::V8 = []
+    fragmentbasedproductinds::V9 = []
     comment::String = ""
 end
 export ElementaryReaction
