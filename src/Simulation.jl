@@ -107,6 +107,8 @@ function interofdomain(inter,domain)
         return domain==inter.domain1 || domain==inter.domain2
     elseif hasfield(typeof(inter),:domaingas)
         return domain==inter.domaingas || domain==inter.domainliq
+    elseif hasfield(typeof(inter),:domainfilm)
+        return domain==inter.domainfilm || domain==inter.domain2
     end
 end
 
