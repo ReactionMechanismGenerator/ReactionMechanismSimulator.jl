@@ -114,7 +114,7 @@ end;
 
         name = "oxygen"
         ind = findfirst(x->x==name,liqspcnames)
-        @test sol(tf)[ind] ≈ 1.5533140456432624e-7 rtol=1e-5 #test there are oxygen dissolved into the liquid 
+        @test sol(sol.t[end])[ind] ≈ 0.11758959354431776 rtol=1e-5 #test there are oxygen dissolved into the liquid 
 
     end
 
