@@ -560,6 +560,40 @@ end;
     @test molefractions(ssys.sims[1],"H2O",1e-3) ≈ 0.12732345278036702 rtol=1e-5
 end;
 
+@testset "Multi-domain Liquid-Film ConstantTV and FragmentBasedConstantTrhoDomain Simulation" begin
+    path = "../src/testing/minimal_fragment_based_film_growth_model.rms"
+    phaseDict = readinput(path);
+    liqspcs = phaseDict["liquid"]["Species"];
+    liqrxns = phaseDict["liquid"]["Reactions"];
+    filmspcs = phaseDict["film"]["Species"];
+    filmrxns = phaseDict["film"]["Reactions"];
+    interfacerxns = phaseDict[Set(["liquid","film"])]["Reactions"];
+    solvent = phaseDict["Solvents"][1];
+
+    liq = IdealDiluteSolution(liqspcs,liqrxns,solvent;name="liquid",diffusionlimited=true);
+    film = FragmentBasedIdealFilm(filmspcs,filmrxns;name="film",diffusionlimited=false);
+
+    initialconds = Dict(["T"=>298.0,"V"=>1.0,"1,3-BUTADIENE(L)"=>10000.0,"2-BUTENE(L)"=>1000.0,
+                        "CYCLOPENTADIENE(L)"=>100.0]);
+    domainliq,y0liq,pliq = ConstantTVDomain(phase=liq,initialconds=initialconds,constantspecies=["1,3-BUTADIENE(L)","2-BUTENE(L)","CYCLOPENTADIENE(L)"]);
+
+    initialconds = Dict(["T"=>298.0, "A"=>1.0, "rho"=>1.0, "mass"=>1.0,
+                         "AR"=>0.01, "KR"=>0.01, "AH"=>40000.0, "CDB"=>10000.0,
+                         ]);
+    domainfilm,y0film,pfilm = FragmentBasedConstantTrhoDomain(phase=film,initialconds=initialconds);
+
+    inter,pinter = FragmentBasedReactiveFilmGrowthInterfaceConstantT(domainfilm,domainliq,interfacerxns);
+
+    react,y0,p = Reactor((domainfilm,domainliq),(y0film,y0liq),(0.0,0.1),(inter,),(pfilm,pliq,pinter));
+    
+    sol = solve(react.ode,react.recommendedsolver,abstol=1e-20,reltol=1e-6);
+    
+    ssys = SystemSimulation(sol,(domainfilm,domainliq,),(inter,),p);
+    
+    @test concentrations(ssys, "CDB", 0.05) ≈ 10000.322038151966 rtol=1e-5
+    @test concentrations(ssys, "KR", 0.05) ≈ 1.008673416492296e-9 rtol=1e-5
+end
+
 @testset "Test Crash Analysis" begin
  #Define the phase (how species thermodynamic and kinetic properties calculated)
     phaseDict = readinput("../src/testing/superminimal_broken.rms")
