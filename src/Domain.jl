@@ -3304,7 +3304,7 @@ export getreactionindices
     senstooriginspcind = Array{Int64,1}(undef,length(sensspcinds))
     senstooriginrxnind = Array{Int64,1}(undef,length(sensrxninds))
     for (i,spcind) in enumerate(sensspcinds)
-        spc = domain.phase.species[spcind]
+        spc = getphasespecies(domain.phase)[spcind]
         sensspcnames[i] = spc.name
         @inbounds sensspcs[i] = Species(
             name=spc.name,

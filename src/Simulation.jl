@@ -20,7 +20,7 @@ struct Simulation{Q<:AbstractODESolution,W<:AbstractDomain,M,L<:AbstractArray,G<
 end
 
 function Simulation(sol::Q,domain::W,interfaces=[],p=nothing) where {Q<:AbstractODESolution,W<:AbstractDomain}
-    names = getfield.(domain.phase.species,:name)
+    names = getfield.(getphasespecies(domain.phase),:name)
     Ns = sum(hcat(sol.interp.u...)[domain.indexes[1]:domain.indexes[2],:],dims=1)
     if hasproperty(sol.interp,:du)
         Nderivs = sum(hcat(sol.interp.du...)[domain.indexes[1]:domain.indexes[2],:],dims=1)
@@ -32,7 +32,7 @@ function Simulation(sol::Q,domain::W,interfaces=[],p=nothing) where {Q<:Abstract
     if p === nothing
         p = domain.p
     end
-    return Simulation(sol,domain,interfaces,names,F,Ns,domain.phase.species,domain.phase.reactions,p)
+    return Simulation(sol,domain,interfaces,names,F,Ns,getphasespecies(domain.phase),domain.phase.reactions,p)
 end
 
 function Simulation(sol::Q,domain::W,reducedmodelmappings::ReducedModelMappings,interfaces=[],p=nothing) where {Q<:AbstractODESolution,W<:AbstractDomain} 
@@ -68,8 +68,8 @@ function Simulation(sol::Q,domain::W,reducedmodelmappings::ReducedModelMappings,
     t = sol.t
     sol = SciMLBase.build_solution(sol.prob, sol.alg, t, u, retcode = :Success)
 
-    species_range = 1:length(domain.phase.species)
-    names = getfield.(domain.phase.species,:name)
+    species_range = 1:length(getphasespecies(domain.phase))
+    names = getfield.(getphasespecies(domain.phase),:name)
     Ns = sum(hcat(sol.interp.u...)[species_range,:],dims=1)
     if hasproperty(sol.interp,:du)
         Nderivs = sum(hcat(sol.interp.du...)[species_range,:],dims=1)
@@ -81,7 +81,7 @@ function Simulation(sol::Q,domain::W,reducedmodelmappings::ReducedModelMappings,
     if p === nothing
         p = domain.p
     end
-    return Simulation(sol,domain,interfaces,names,F,Ns,domain.phase.species,domain.phase.reactions,p)
+    return Simulation(sol,domain,interfaces,names,F,Ns,getphasespecies(domain.phase),domain.phase.reactions,p)
 end
 
 export Simulation
@@ -119,7 +119,7 @@ function SystemSimulation(sol,domains,interfaces,p)
     species = Array{Species,1}()
     for sim in sims
         append!(names,sim.names)
-        append!(species,sim.domain.phase.species)
+        append!(species,getphasespecies(sim.domain.phase))
         append!(reactions,sim.domain.phase.reactions)
     end
     for inter in interfaces
@@ -140,7 +140,7 @@ export iterate
 Broadcast.broadcastable(p::T) where {T<:AbstractSimulation} = Ref(p)
 export broadcastable
 
-spcindex(bsol::Z,name::Q) where {Z<:Simulation,Q<:AbstractString} = findfirst(isequal(name),getfield.(bsol.domain.phase.species,:name))
+spcindex(bsol::Z,name::Q) where {Z<:Simulation,Q<:AbstractString} = findfirst(isequal(name),getfield.(getphasespecies(bsol.domain.phase),:name))
 export spcindex
 
 function molefractions(bsol::Q,name::W,t::E) where {Q<:AbstractSimulation, W<:String, E<:Real}
@@ -234,7 +234,7 @@ this outputs a sparse matrix of  num reactions xnum species containing the produ
 rate of that species associated with that reaction
 """
 function rops(bsol::Q,t::X) where {Q<:Simulation,X<:Real}
-    ropmat = spzeros(length(bsol.domain.phase.reactions),length(bsol.domain.phase.species))
+    ropmat = spzeros(length(bsol.domain.phase.reactions),length(getphasespecies(bsol.domain.phase)))
     cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
     V = getdomainsize(bsol,t)
     @simd for i in 1:length(bsol.domain.phase.reactions)
@@ -253,7 +253,7 @@ end
 function rops(ssys::SystemSimulation,t)
     domains = getfield.(ssys.sims,:domain)
     Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter,:reactions)])
-    Nspcs = sum([length(sim.domain.phase.species) for sim in ssys.sims])
+    Nspcs = sum([length(getphasespecies(sim.domain.phase)) for sim in ssys.sims])
     cstot = zeros(Nspcs)
     vns = Array{Any,1}(undef,length(domains))
     vcs = Array{Any,1}(undef,length(domains))
@@ -302,7 +302,7 @@ function rops(bsol::Y,name::X,t::Z) where {Y<:Simulation, X<:AbstractString, Z<:
     rop = spzeros(length(bsol.domain.phase.reactions))
     cs,kfs,krevs = calcthermo(bsol.domain,bsol.sol(t),t)[[2,9,10]]
     V = getdomainsize(bsol,t)
-    ind = findfirst(isequal(name),getfield.(bsol.domain.phase.species,:name))
+    ind = findfirst(isequal(name),getfield.(getphasespecies(bsol.domain.phase),:name))
     @assert !isa(ind,Nothing) "species $name not in species array"
     for (i,rxn) in enumerate(bsol.domain.phase.reactions)
         c = 0
@@ -320,7 +320,7 @@ function rops(ssys::SystemSimulation,name,t)
     domains = getfield.(ssys.sims,:domain)
     ind = findfirst(isequal(name),ssys.names)
     Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter,:reactions)])
-    Nspcs = sum([length(sim.domain.phase.species) for sim in ssys.sims])
+    Nspcs = sum([length(getphasespecies(sim.domain.phase)) for sim in ssys.sims])
     cstot = zeros(Nspcs)
     vns = Array{Any,1}(undef,length(domains))
     vcs = Array{Any,1}(undef,length(domains))
@@ -609,7 +609,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     @assert denominator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)+bsol.domain.indexes[1]-1
     inddeno = findfirst(isequal(denominator),bsol.names)+bsol.domain.parameterindexes[1]-1
-    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2 
+    Nvars = length(getphasespecies(bsol.domain.phase))+length(bsol.domain.indexes)-2 
     Nrxns = length(bsol.domain.phase.reactions)
     x,dp = extract_local_sensitivities(bsol.sol,t)
     s = dp[inddeno][indnum]
@@ -626,7 +626,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     @assert denominator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)+bsol.domain.indexes[1]-1
     inddeno = findfirst(isequal(denominator),bsol.names)+bsol.domain.parameterindexes[1]-1
-    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2 
+    Nvars = length(getphasespecies(bsol.domain.phase))+length(bsol.domain.indexes)-2 
     Nrxns = length(bsol.domain.phase.reactions)
     x,dp = extract_local_sensitivities(bsol.sol,t)
     svals = dp[inddeno][bsol.domain.indexes[1]:bsol.domain.indexes[2]]
@@ -645,7 +645,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     @assert numerator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)+bsol.domain.indexes[1]-1
     inddeno = denominator+bsol.domain.parameterindexes[1]-1
-    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2 
+    Nvars = length(getphasespecies(bsol.domain.phase))+length(bsol.domain.indexes)-2 
     Nrxns = length(bsol.domain.phase.reactions)
     x,dp = extract_local_sensitivities(bsol.sol,t)
     s = dp[inddeno+length(bsol.domain.phase.species)][indnum]
@@ -665,7 +665,7 @@ function getconcentrationsensitivity(bsol::Simulation{Q,W,L,G}, numerator::Strin
     @assert numerator in bsol.names
     indnum = findfirst(isequal(numerator),bsol.names)+bsol.domain.indexes[1]-1
     inddeno = denominator+bsol.domain.parameterindexes[1]-1
-    Nvars = length(bsol.domain.phase.species)+length(bsol.domain.indexes)-2 
+    Nvars = length(getphasespecies(bsol.domain.phase))+length(bsol.domain.indexes)-2 
     Nrxns = length(bsol.domain.phase.reactions)
     x,dp = extract_local_sensitivities(bsol.sol,t)
     svals = dp[inddeno+length(bsol.domain.phase.species)][bsol.domain.indexes[1]:bsol.domain.indexes[2]]
@@ -713,7 +713,7 @@ function rates(ssys::Q,t::X) where {Q<:SystemSimulation,X<:Real}
     rts = zeros(length(ssys.reactions))
     domains = getfield.(ssys.sims,:domain)
     Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([hasproperty(inter,:reactions) ? length(inter.reactions) : 0 for inter in ssys.interfaces])
-    Nspcs = sum([length(sim.domain.phase.species) for sim in ssys.sims])
+    Nspcs = sum([length(getphasespecies(sim.domain.phase)) for sim in ssys.sims])
     cstot = zeros(Nspcs)
     vns = Array{Any,1}(undef,length(domains))
     vcs = Array{Any,1}(undef,length(domains))

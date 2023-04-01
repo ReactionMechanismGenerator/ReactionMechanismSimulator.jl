@@ -100,7 +100,7 @@ function Reactor(domains::T,y0s::W1,tspan::W2,interfaces::Z=Tuple(),ps::X=SciMLB
     n = Nvars
     k = 1
     for (j,domain) in enumerate(domains)
-        Nspcs = length(domain.phase.species)
+        Nspcs = length(getphasespecies(domain.phase))
         Ntherm = length(domain.indexes) - 2
         for i = 1:8, j = 1:size(domain.rxnarray)[2]
             if domain.rxnarray[i,j] != 0
@@ -827,12 +827,12 @@ end
 export jacobianpforwarddiff!
 
 function jacobianpforwarddiff(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
-    J = zeros(length(y),length(domain.phase.species)+length(domain.phase.reactions))
+    J = zeros(length(y),length(getphasespecies(domain.phase))+length(domain.phase.reactions))
     jacobianpforwarddiff!(J,y,p,t,domain,interfaces,colorvec)
 end
 
 function jacobianpforwarddiff(y::U,p::W,t::Z,domains::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,V<:Tuple}
-    J = zeros(length(y),length(domains.phase.species)+length(domains.phase.reactions))
+    J = zeros(length(y),length(getphasespecies(domains.phase))+length(domains.phase.reactions))
     jacobianpforwarddiff!(J,y,p,t,domains,interfaces,colorvec)
 end
 
@@ -858,7 +858,7 @@ end
 export jacobiany
 
 function jacobianp(y::U,p::W,t::Z,domain::V,interfaces::Q3,colorvec::Q2=nothing) where {Q3,Q2,U<:AbstractArray,W,Z<:Real,V<:AbstractDomain}
-    J = zeros(length(y),length(domain.phase.species)+length(domain.phase.reactions))
+    J = zeros(length(y),length(getphasespecies(domain.phase))+length(domain.phase.reactions))
     jacobianp!(J,y,p,t,domain,interfaces,colorvec)
     return J
 end
