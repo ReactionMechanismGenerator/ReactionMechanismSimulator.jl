@@ -12,9 +12,9 @@ function plotmolefractions(bsol::Q, tf::V; t0::Z=1e-15,N::Z2=1000,tol::Z3=0.01,e
     maxes = maximum(xs,dims=2)
     spnames = []
     for i = 1:length(maxes)
-        if maxes[i] > tol && !(bsol.domain.phase.species[i].name in exclude)
+        if maxes[i] > tol && !(getphasespecies(bsol.domain.phase)[i].name in exclude)
             plot(ts,xs[i,:])
-            push!(spnames,bsol.domain.phase.species[i].name)
+            push!(spnames,getphasespecies(bsol.domain.phase)[i].name)
         end
     end
     legend(spnames)
@@ -32,9 +32,9 @@ function plotmolefractions(bsol::Q; tol::V=0.01, exclude::M=Array{String,1}()) w
     maxes = maximum(xs,dims=2)
     spnames = []
     for i = 1:length(maxes)
-        if maxes[i] > tol && !(bsol.domain.phase.species[i].name in exclude)
+        if maxes[i] > tol && !(getphasespecies(bsol.domain.phase)[i].name in exclude)
             plot(bsol.sol.t,xs[i,:])
-            push!(spnames,bsol.domain.phase.species[i].name)
+            push!(spnames,getphasespecies(bsol.domain.phase)[i].name)
         end
     end
     legend(spnames)
@@ -63,7 +63,7 @@ function plotradicalmolefraction(bsol;t=0.0,ts=[])
         ts = range(0.0,stop=t, length=100);
     end
     radmf = zeros(length(ts))
-    rads = [x.radicalelectrons for x in bsol.domain.phase.species]
+    rads = [x.radicalelectrons for x in getphasespecies(bsol.domain.phase)]
     for (i,t) in enumerate(ts)
         radmf[i] = dot(rads,molefractions(bsol,t))
     end
@@ -75,7 +75,7 @@ end
 export plotradicalmolefraction
 
 function plotmaxthermoforwardsensitivity(bsol, spcname; N=0, tol= 1e-2)
-    spnames = getfield.(bsol.domain.phase.species,:name)
+    spnames = getfield.(getphasespecies(bsol.domain.phase),:name)
     values = Array{Float64,1}()
     outnames = Array{String,1}()
     for spn in spnames
@@ -132,7 +132,7 @@ associated with each reaction
 N reactions are included all of which must have absolute value greater than abs(maximum prod or loss rate)*tol
 """
 function plotrops(bsol::Y,name::X,t::Z;N=0,tol=0.01) where {Y<:Simulation, X<:AbstractString, Z<:Real}
-    if !(name in getfield.(bsol.domain.phase.species,:name))
+    if !(name in getfield.(getphasespecies(bsol.domain.phase),:name))
         error("Species $name not in domain")
     end
     rop = rops(bsol,name,t)
@@ -195,7 +195,7 @@ reactions with maximum (over time) production value greater than max production*
 maximum (over time) loss value greater than maximum loss*tol are included
 """
 function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05) where {Y<:Simulation, X<:AbstractString}
-    if !(name in getfield.(bsol.domain.phase.species,:name))
+    if !(name in getfield.(getphasespecies(bsol.domain.phase),:name))
         error("Species $name not in domain")
     end
     if length(rxnrates) == 0 || length(ts) == 0
@@ -243,7 +243,7 @@ reactions with maximum (over time) production value greater than max production*
 maximum (over time) loss value greater than maximum loss*tol are included
 """
 function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05) where {Y<:Simulation, X<:AbstractString}
-    if !(name in getfield.(bsol.domain.phase.species,:name))
+    if !(name in getfield.(getphasespecies(bsol.domain.phase),:name))
         error("Species $name not in domain")
     end
     if length(rxnrates) == 0 || length(ts) == 0
@@ -291,7 +291,7 @@ reactions with maximum (over time) production value greater than max production*
 maximum (over time) loss value greater than maximum loss*tol are included
 """
 function plotrops(bsol::Y,name::X;rxnrates=Array{Float64,1}(),ts=Array{Float64,1}(),tol=0.05) where {Y<:Simulation, X<:AbstractString}
-    if !(name in getfield.(bsol.domain.phase.species,:name))
+    if !(name in getfield.(getphasespecies(bsol.domain.phase),:name))
         error("Species $name not in domain")
     end
     if length(rxnrates) == 0 || length(ts) == 0
@@ -431,7 +431,7 @@ function plotthermoadjointsensitivities(bsol::Y,name::X,dps::Z;N=0,tol=0.01) whe
     inds = inds[1:k]
     xs = Array{Float64,1}(1:length(inds))
     barh(xs,reverse(dpvals[inds]))
-    yticks(xs,reverse(getfield.(bsol.domain.phase.species[inds],:name)))
+    yticks(xs,reverse(getfield.(getphasespecies(bsol.domain.phase)[inds],:name)))
     if name in ["T","V"]
         xlabel("d$name/dG mol/kcal")
     else
@@ -445,7 +445,7 @@ function plotrateadjointsensitivities(bsol::Y,name::X,dps::Z;N=0,tol=0.01) where
     if !(name in ["T","V"] || name in bsol.names)
         error("Name $name not in domain")
     end
-    dpvals = dps[length(bsol.domain.phase.species)+1:end]
+    dpvals = dps[length(getphasespecies(bsol.domain.phase))+1:end]
     inds = reverse(sortperm(abs.(dpvals)))
     if N == 0
         N = length(inds)
@@ -492,7 +492,7 @@ end
 export plottimescales
 
 function plotrxntransitorysensitivities(bsol,name,t;dSdt=nothing,tau=nothing,tol=1e-3,N=0,rxntol=1e-6)
-    if !(name in getfield.(bsol.domain.phase.species,:name))
+    if !(name in getfield.(getphasespecies(bsol.domain.phase),:name))
         error("Species $name not in domain")
     elseif !isnothing(dSdt) && (sum(dim > 1 for dim in size(dSdt)) > 1 || maximum(size(dSdt)) != length(bsol.p))
         error("dSdt must be a vector of length number of parameters")
@@ -546,7 +546,7 @@ end
 export plotrxntransitorysensitivities
 
 function plotthermotransitorysensitivities(bsol,name,t;dSdt=nothing,tau=nothing,tol=1e-3,N=0)
-    if !(name in getfield.(bsol.domain.phase.species,:name))
+    if !(name in getfield.(getphasespecies(bsol.domain.phase),:name))
         error("Species $name not in domain")
     end
     ind = findfirst(isequal(name),bsol.names)
@@ -582,7 +582,7 @@ function plotthermotransitorysensitivities(bsol,name,t;dSdt=nothing,tau=nothing,
     inds = inds[1:k]
     xs = Array{Float64,1}(1:length(inds))
     barh(xs,reverse(dSdt[inds]))
-    yticks(xs,reverse(getfield.(bsol.domain.phase.species[inds],:name)))
+    yticks(xs,reverse(getfield.(getphasespecies(bsol.domain.phase)[inds],:name)))
     xlabel("Normalized Transitory Sensitivities for $name")
     return
 end

@@ -129,7 +129,7 @@ function analyzecrash(ssys::SystemSimulation;tol=1e6)
             end
         end
         rdindex += length(sim.domain.phase.reactions)
-        for (i,dy) in enumerate(dydt[sdindex:sdindex-1+length(sim.domain.phase.species)])
+        for (i,dy) in enumerate(dydt[sdindex:sdindex-1+length(getphasespecies(sim.domain.phase))])
             if i > length(sim.species)
                 continue
             end
@@ -140,7 +140,7 @@ function analyzecrash(ssys::SystemSimulation;tol=1e6)
                 push!(spcs,getdebugspecies(sim.species[i],T;dy=dy,ratio=ratio,tol=tol,index=i))
             end
         end
-        sdindex += length(sim.domain.phase.species)
+        sdindex += length(getphasespecies(sim.domain.phase))
     end
     return DebugMech(spcs,rxns)
 end

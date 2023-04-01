@@ -130,7 +130,7 @@ function follow(sim,rxnind,spcind,ropp,ropl,rts,forward;steptol=1e-2,branchtol=5
             return rpout
         else
             rpout = newrps[argmax([getsimilarity(sim.species[rpout.spcsinds[end]],
-                            sim.domain.phase.species[nrp.spcsinds[end]]) for nrp in newrps])]
+                            getphasespecies(sim.domain.phase)[nrp.spcsinds[end]]) for nrp in newrps])]
         end
     end
 end
@@ -361,7 +361,7 @@ function gettimescaleconnectivity(ssys::SystemSimulation,t)
     tsc = ones(length(ssys.species),length(ssys.species))*Inf
     domains = getfield.(ssys.sims,:domain)
     Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims])+sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter,:reactions)])
-    Nspcs = sum([length(sim.domain.phase.species) for sim in ssys.sims])
+    Nspcs = sum([length(getphasespecies(sim.domain.phase)) for sim in ssys.sims])
     cstot = zeros(Nspcs)
     vns = Array{Any,1}(undef,length(domains))
     vcs = Array{Any,1}(undef,length(domains))

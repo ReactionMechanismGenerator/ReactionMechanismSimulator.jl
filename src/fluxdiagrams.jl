@@ -133,7 +133,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     colorscheme="viridis",removeunconnectednodes=false)
     
     if hasproperty(bsol,:domain)
-        specieslist = bsol.domain.phase.species
+        specieslist = getphasespecies(bsol.domain.phase)
         reactionlist = bsol.domain.phase.reactions
     else 
         specieslist = bsol.species
