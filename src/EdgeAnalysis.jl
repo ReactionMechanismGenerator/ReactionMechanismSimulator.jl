@@ -330,6 +330,10 @@ function processfluxes(sim::SystemSimulation,
     corespeciesconcentrations = cs[corespcsinds]
     corespeciesconsumptionrates = zeros(length(corespeciesconcentrations))
     corespeciesproductionrates = zeros(length(corespeciesconcentrations))
+    # record the net consumption rates for core adicals, defined as sum_rxn max(L_rxn-P_rxn,0.0)
+    corespeciesnetconsumptionrates = zeros(length(corespeciesconcentrations))
+    # record the net termination rates for core radicals, defined as sum_rxn max(L_rxn-P_rxn,0.0) * min(radicalchange_rxn,0.0)
+    coreradicalnetterminationrates = zeros(length(corespeciesconcentrations))
 
     #process core species consumption and production rates
     index = 1
@@ -338,18 +342,28 @@ function processfluxes(sim::SystemSimulation,
             if @inbounds any(d.rxnarray[:,i].>length(corespeciesconcentrations))
                 continue
             end
+            net_forward_rate = max(frts[i+index]-rrts[i+index], 0.0)
             for j = 1:4
                 if @inbounds d.rxnarray[j,i] != 0
                     @inbounds corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
                     @inbounds corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
+                    corespeciesnetconsumptionrates[d.rxnarray[j,i]] += net_forward_rate
+                    if d.phase.species[d.rxnarray[j,i]].radicalelectrons == 1
+                        coreradicalnetterminationrates[d.rxnarray[j,i]] += net_forward_rate * abs(min(d.phase.reactions[i].radicalchange, 0.0))
+                    end
                 else
                     break
                 end
             end
+            net_reverse_rate = max(rrts[i+index]-frts[i+index], 0.0)
             for j = 5:8
                 if @inbounds d.rxnarray[j,i] != 0
                     @inbounds corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
                     @inbounds corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
+                    corespeciesnetconsumptionrates[d.rxnarray[j,i]] += net_reverse_rate
+                    if d.phase.species[d.rxnarray[j,i]].radicalelectrons == 1
+                        coreradicalnetterminationrates[d.rxnarray[j,i]] += net_reverse_rate * abs(min(-d.phase.reactions[i].radicalchange, 0.0))
+                    end
                 else
                     break
                 end
@@ -363,18 +377,28 @@ function processfluxes(sim::SystemSimulation,
                 if @inbounds any(d.rxnarray[:,i].>length(corespeciesconcentrations))
                     continue
                 end
+                net_forward_rate = max(frts[i+index]-rrts[i+index], 0.0)
                 for j = 1:4
                     if @inbounds d.rxnarray[j,i] != 0
                         @inbounds corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
                         @inbounds corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
+                        corespeciesnetconsumptionrates[d.rxnarray[j,i]] += net_forward_rate
+                        if d.phase.species[d.rxnarray[j,i]].radicalelectrons == 1
+                            coreradicalnetterminationrates[d.rxnarray[j,i]] += net_forward_rate * abs(min(d.phase.reactions[i].radicalchange, 0.0))    
+                        end
                     else
                         break
                     end
                 end
+                net_reverse_rate = max(rrts[i+index]-frts[i+index], 0.0)
                 for j = 5:8
                     if @inbounds d.rxnarray[j,i] != 0
                         @inbounds corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
                         @inbounds corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
+                        corespeciesnetconsumptionrates[d.rxnarray[j,i]] += net_reverse_rate
+                        if d.phase.species[d.rxnarray[j,i]].radicalelectrons == 1
+                            coreradicalnetterminationrates[d.rxnarray[j,i]] += net_reverse_rate * abs(min(-d.phase.reactions[i].radicalchange, 0.0))    
+                        end
                     else
                         break
                     end
@@ -384,7 +408,7 @@ function processfluxes(sim::SystemSimulation,
         end
     end
 
-    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,edgerxnradrateratios,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
+    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,edgerxnradrateratios,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates,corespeciesnetconsumptionrates,coreradicalnetterminationrates
 end
 
 """
@@ -416,6 +440,8 @@ function processfluxes(sim::Simulation,corespcsinds,corerxninds,edgespcsinds,edg
     @inbounds corespeciesconcentrations = cs[corespcsinds]
     corespeciesconsumptionrates = zeros(length(corespeciesconcentrations))
     corespeciesproductionrates = zeros(length(corespeciesconcentrations))
+    corespeciesnetconsumptionrates = zeros(length(corespeciesconcentrations))
+    coreradicalnetterminationrates = zeros(length(corespeciesconcentrations))
 
     #process core species consumption and production rates
     d = sim.domain
@@ -423,25 +449,35 @@ function processfluxes(sim::Simulation,corespcsinds,corerxninds,edgespcsinds,edg
         if @inbounds  any(d.rxnarray[:,i].>length(corespeciesconcentrations))
             continue
         end
+        net_forward_rate = max(frts[i]-rrts[i], 0.0)
         for j = 1:4
             if @inbounds  d.rxnarray[j,i] != 0
                 @inbounds corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i]
                 @inbounds corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i]
+                corespeciesnetconsumptionrates[d.rxnarray[j,i]] += net_forward_rate
+                if d.phase.species[d.rxnarray[j,i]].radicalelectrons == 1
+                    coreradicalnetterminationrates[d.rxnarray[j,i]] += net_forward_rate * abs(min(d.phase.reactions[i].radicalchange, 0.0))
+                end
             else
                 break
             end
         end
+        net_reverse_rate = max(rrts[i]-frts[i], 0.0)
         for j = 5:8
             if @inbounds  d.rxnarray[j,i] != 0
                 @inbounds corespeciesproductionrates[d.rxnarray[j,i]] += frts[i]
                 @inbounds corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i]
+                corespeciesnetconsumptionrates[d.rxnarray[j,i]] += net_reverse_rate
+                if d.phase.species[d.rxnarray[j,i]].radicalelectrons == 1
+                    coreradicalnetterminationrates[d.rxnarray[j,i]] += net_reverse_rate * abs(min(-d.phase.reactions[i].radicalchange, 0.0))
+                end
             else
                 break
             end
         end
     end
 
-    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,edgerxnradrateratios,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates
+    return dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,edgerxnradrateratios,corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,corespeciesproductionrates,corespeciesconsumptionrates,corespeciesnetconsumptionrates,coreradicalnetterminationrates
 end
 
 export processfluxes
