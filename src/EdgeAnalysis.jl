@@ -670,7 +670,8 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
     (dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,
     edgereactionrates,edgerxnradrateratios,corespeciesrateratios,edgespeciesrateratios,
     corereactionrates,corespeciesconcentrations,
-    corespeciesproductionrates,corespeciesconsumptionrates) = processfluxes(sim,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
+    corespeciesproductionrates,corespeciesconsumptionrates,
+    corespeciesnetconsumptionrates, coreradicalnetterminationrates) = processfluxes(sim,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
 
     for i = 1:length(edgespeciesrateratios)
         if @inbounds  edgespeciesrateratios[i] > maxedgespeciesrateratios[i]
