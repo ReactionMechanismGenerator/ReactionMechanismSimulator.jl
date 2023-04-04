@@ -27,8 +27,14 @@ struct Reactor{D,G1,G2,Q,F1,F2,F3} <: AbstractReactor
     precsjulia::F3 #function to calculate preconditioner for Julia solvers
 end
 
-function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=SciMLBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false,tau=1e-3) where {T<:AbstractDomain,T1<:Real,Z<:AbstractArray,X}
-    dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V} = dydtreactor!(dy,y,t,domain,interfaces,p=p)
+function Reactor(domain::T,y0::Array{T1,1},tspan::Tuple,interfaces::Z=[];p::X=SciMLBase.NullParameters(),forwardsensitivities=false,forwarddiff=false,modelingtoolkit=false,tau=1e-3,shiftvector=nothing) where {T<:AbstractDomain,T1<:Real,Z<:AbstractArray,X}
+    if shiftvector == nothing
+        shiftvector = zeros(length(y0))
+    end
+    function dydt(dy::X,y::T,p::V,t::Q) where {X,T,Q,V}
+        dydtreactor!(dy,y,t,domain,interfaces,p=p)
+        dy .-= shiftvector
+    end 
     jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobiany!(J,y,p,t,domain,interfaces,nothing)
     jacyforwarddiff!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J,y,p,t,domain,interfaces,nothing)
     jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q,V} = jacobianp!(J,y,p,t,domain,interfaces,nothing)
