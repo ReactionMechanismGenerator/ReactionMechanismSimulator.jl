@@ -1,27 +1,31 @@
-using Parameters
 import Base: length,show,print,println
 using StaticArrays
 abstract type AbstractReaction end
 export AbstractReaction
 
-@with_kw struct ElementaryReaction{T<:AbstractRate,Q<:Integer,V1<:AbstractArray,V2<:AbstractArray,V3<:AbstractArray,V4<:AbstractArray,V5<:AbstractArray,V6<:AbstractArray,V7<:AbstractArray,V8<:AbstractArray,V9<:AbstractArray} <: AbstractReaction
+struct ElementaryReaction{T<:AbstractRate,Q<:Integer,V1<:AbstractArray,V2<:AbstractArray,V3<:AbstractArray,V4<:AbstractArray,V5<:AbstractArray,V6<:AbstractArray,V7<:AbstractArray,V8<:AbstractArray,V9<:AbstractArray} <: AbstractReaction
     index::Q
     reactants::V1
     reactantinds::V2
     products::V3
     productinds::V4
     kinetics::T
-    electronchange::Int64 = 0
-    radicalchange::Int64 = -100
-    reversible::Bool = true
-    forwardable::Bool = true
-    pairs::V5 = [[""]]
-    fragmentbasedreactants::V6 = []
-    fragmentbasedproducts::V7 = []
-    fragmentbasedreactantinds::V8 = []
-    fragmentbasedproductinds::V9 = []
-    comment::String = ""
+    electronchange::Int64
+    radicalchange::Int64
+    reversible::Bool
+    forwardable::Bool
+    pairs::V5
+    fragmentbasedreactants::V6
+    fragmentbasedproducts::V7
+    fragmentbasedreactantinds::V8
+    fragmentbasedproductinds::V9
+    comment::String
 end
+
+function ElementaryReaction(; index::Q, reactants::V1, reactantinds::V2, products::V3, productinds::V4, kinetics::T, electronchange::Int64=0, radicalchange::Int64=-100, reversible::Bool=true, forwardable::Bool=true, pairs::V5=[[""]], fragmentbasedreactants::V6=[], fragmentbasedproducts::V7=[], fragmentbasedreactantinds::V8=[], fragmentbasedproductinds::V9=[], comment::String="") where {T<:AbstractRate,Q<:Integer,V1<:AbstractArray,V2<:AbstractArray,V3<:AbstractArray,V4<:AbstractArray,V5<:AbstractArray,V6<:AbstractArray,V7<:AbstractArray,V8<:AbstractArray,V9<:AbstractArray}
+    return ElementaryReaction(index, reactants, reactantinds, products, productinds, kinetics, electronchange, radicalchange, reversible, forwardable, pairs, fragmentbasedreactants, fragmentbasedproducts, fragmentbasedreactantinds, fragmentbasedproductinds, comment)
+end
+
 export ElementaryReaction
 
 getrxnstr(rxn::T) where {T<:AbstractReaction} = join([join(getfield.(rxn.reactants,:name),"+"),join(getfield.(rxn.products,:name),"+")],"<=>")
