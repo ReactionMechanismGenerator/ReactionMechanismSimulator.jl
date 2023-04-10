@@ -12,7 +12,7 @@ struct Species{T<:AbstractThermo,N<:AbstractDiffusivity,N1<:AbstractHenryLawCons
     smiles::String
     adjlist::String
     thermo::T
-    atomnums::Dict{String,Int64}
+    atomnums::Dict
     bondnum::Int64
     diffusion::N
     radius::Float64
@@ -26,7 +26,7 @@ struct Species{T<:AbstractThermo,N<:AbstractDiffusivity,N1<:AbstractHenryLawCons
 end
 
 function Species(; name::String, index::Integer, inchi::String="", smiles::String="", adjlist::String="", 
-                   thermo::T=nothing, atomnums::Dict{String,Int64}=Dict{String,Int64}(), bondnum::Int64=-1, diffusion::N=EmptyDiffusivity(),
+                   thermo::T=nothing, atomnums::Dict=Dict(), bondnum::Int64=-1, diffusion::N=EmptyDiffusivity(),
                    radius::Float64=0.0, radicalelectrons::Int64=-100, molecularweight::Float64=0.0,
                    henrylawconstant::N1=EmptyHenryLawConstant(), 
                    liquidvolumetricmasstransfercoefficient::N2=EmptyLiquidVolumetricMassTransferCoefficient(),
