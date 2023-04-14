@@ -689,6 +689,10 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
         return (false,true,0.0)
     end
 
+    if deadendradicaltolerance != 0.0 && !firsttime
+        radconstermratios = calcradconstermratios(sim,reactantinds,productinds,corespcsinds,corerxninds,edgerxninds,edgereactionrates,corespeciesnetconsumptionrates,coreradicalnetterminationrates)
+    end
+
     if branchfactor != 0.0 && !firsttime
         branchingnums = calcbranchingnumbers(sim,reactantinds,productinds,corespcsinds,corerxninds,edgerxninds,edgereactionrates,
             corespeciesrateratios,corespeciesconsumptionrates,branchfactor,branchingratiomax,branchingindex)
@@ -763,6 +767,38 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
             @inbounds push!(newobjectinds,tempnewobjectinds[q])
             @inbounds push!(newobjectvals,tempnewobjectvals[q])
             @inbounds push!(newobjecttype,tempnewobjecttype[q])
+        end
+
+        tempnewobjects = []
+        tempnewobjectinds = Array{Int64,1}()
+        tempnewobjectvals = Array{Float64,1}()
+        tempnewobjecttype = []
+    end
+
+    # dead-end radical species selection algorithm should be evaluated before branching algorithm as
+    # branching algorithm tends to pick up propagation reactions first, and if these propagation reactions are added
+    # into the core for many iterations in a row, it can create dead-end radicals
+    if deadendradicaltolerance != 0.0 && !firsttime
+        for (i,ind) in enumerate(edgerxninds)
+            drr = radconstermratios[i]
+            if drr > deadendradicaltolerance
+                obj = sim.reactions[ind]
+                if !(obj in newobjects || obj in invalidobjects)
+                    push!(tempnewobjects,obj)
+                    push!(tempnewobjectinds,ind)
+                    push!(tempnewobjectvals,drr)
+                    push!(tempnewobjecttype,"deadendradical")
+                end
+            end
+        end
+
+        sortedinds = reverse(sortperm(tempnewobjectvals))
+
+        for q in sortedinds
+            push!(newobjects,tempnewobjects[q])
+            push!(newobjectinds,tempnewobjectinds[q])
+            push!(newobjectvals,tempnewobjectvals[q])
+            push!(newobjecttype,tempnewobjecttype[q])
         end
 
         tempnewobjects = []
@@ -902,6 +938,9 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
                     @inbounds spcname = transitoryoutdict[ind]
                     @inbounds tol = transitorydict[spcname]
                     @info "at time $t sec, reaction $rstr at a normalized transitory sensitivity from $spcname of $sens exceeded the threshold of $tol for moving to model core"
+                elseif newobjecttype[i] == "deadendradical"
+                    tol = deadendradicaltolerance
+                    @info "at time $t sec, reaction $rstr at a net radical consumption/termination ratio of $val exceeded the threshold of $tol for moving to model core"
                 end
             end
         end
