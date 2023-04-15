@@ -322,6 +322,44 @@ struct VolumetricFlowRateOutlet{V,F1<:Function} <: AbstractBoundaryInterface
 end
 export VolumetricFlowRateOutlet
 
+struct VolumetricFlowRateInlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real,FF<:Function} <: AbstractBoundaryInterface
+    domain::S
+    cs::V
+    Vin::FF
+    T::U
+    P::X
+    Hpervolume::Q
+end
+
+"""
+VolumetricFlowRateInlet adds a volumetric flow rate inlet to a domain.
+conddict should provide the species composition in concentration, T, and P.
+Hin is the inlet enthalpy per mol (J/mol) and is optional, if not provided, it will be calculated from T and P.
+"""
+function VolumetricFlowRateInlet(domain::V,conddict::Dict{X1,X},Vin::FF) where {V,X1,X,FF<:Function}
+    T = 0.0
+    P = 0.0
+
+    cs = makespcsvector(domain.phase,conddict)
+
+    if haskey(conddict,"T")
+        T = conddict["T"]
+    end
+    if haskey(conddict,"P")
+        P = conddict["P"]
+    end
+
+    if haskey(conddict,"Hin")
+        Hpervolume = conddict["Hin"]/sum(cs) # convert to J/m3
+    else
+        @assert T != 0.0 && P != 0.0 "T and P need to be provided if Hin is not provided for Inlet"
+        Hpervolume = dot(getEnthalpy.(getfield.(domain.phase.species,:thermo),T),cs) # J/m3
+    end
+    return VolumetricFlowRateInlet(domain,cs,Vin,T,P,Hpervolume)
+end
+
+export VolumetricFlowRateInlet
+
 """
 VolumeMaintainingOutlet is designed for gas phase domain such that the flow rate of this outlet will adjust to maintain the volume of the 
     domain to be constant. This is particularly useful to simulate any vapor-liquid phase system where the gas phase outlet
