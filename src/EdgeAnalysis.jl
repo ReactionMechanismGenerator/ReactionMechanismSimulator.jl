@@ -536,6 +536,74 @@ end
 export calcbranchingnumbers
 
 """
+Calculate the ratio of net consumption/termination of core radicals contributed by each edge reaction compared to all core reactions
+"""
+function calcradconstermratios(sim,reactantinds,productinds,corespcsinds,corerxninds,edgerxninds,edgereactionrates,corespeciesnetconsumptionrates,coreradicalnetterminationrates)
+    radconstermratios = zeros(length(edgereactionrates))
+    for ind in 1:length(edgereactionrates)
+        chain_termination = false
+        chain_transfer = false
+        
+        index = edgerxninds[ind]
+        reactionrate = edgereactionrates[ind]
+
+        if reactionrate > 0
+            reactantside = reactantinds[:,index]
+            productside = productinds[:,index]
+        else
+            reactantside = productinds[:,index]
+            productside = reactantinds[:,index]
+        end
+
+        productrade = [sim.species[i].radicalelectrons for i in productside if i != 0]
+        reactantrade = [sim.species[i].radicalelectrons for i in reactantside if i != 0]
+
+        if length(productrade) == 1 && length(reactantrade) == 2
+            if productrade[1] == 0 && reactantrade[1] == 1 && reactantrade[2] == 1
+                chain_termination = true
+            end
+        elseif length(reactantrade) == length(productrade) && length(productrade) == 2
+            if (0 in reactantrade && 1 in reactantrade) && (0 in productrade && 1 in productrade)
+                chain_transfer = true
+            end
+        end
+
+        if !(chain_transfer || chain_termination)
+            continue
+        end
+
+        for spcindex in reactantside
+            if spcindex == 0
+                continue
+            elseif spcindex in corespcsinds
+                if sim.species[spcindex].radicalelectrons != 1
+                    continue
+                end
+
+                if chain_transfer
+                    consumption = corespeciesnetconsumptionrates[spcindex]
+                    consumption = max(consumption, 1e-40) # avoid divide by zeros
+                    radconstermratio = abs(reactionrate) / consumption
+                end
+
+                if chain_termination
+                    termination = coreradicalnetterminationrates[spcindex]
+                    termination = max(termination, 1e-40) # avoid divide by zeros
+                    radconstermratio = abs(reactionrate) / termination
+                end
+
+                if radconstermratio > radconstermratios[ind]
+                    radconstermratios[ind] = radconstermratio
+                end
+            end
+        end
+    end
+   return radconstermratios
+end
+
+export calcradconstermratios
+
+"""
 determine species pairings that are concentrated enough that they should be reacted
 """
 function updatefilterthresholds!(sim::Simulation,corespcsinds,corespeciesconcentrations,charrate,
