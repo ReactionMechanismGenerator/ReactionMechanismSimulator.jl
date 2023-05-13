@@ -381,7 +381,7 @@ function getrate(rarray,cs,kfs,krevs,V,i)
     return R
 end
 
-function rops!(ropmat,rarray,cs,kfs,krevs,V,start)
+function rops!(ropmat, rarray::Array{Int64,2}, cs, kfs, krevs, V, start)
     for i = 1:length(kfs)
         R = getrate(rarray,cs,kfs,krevs,V,i)
         
@@ -408,7 +408,7 @@ function rops!(ropmat,rarray,cs,kfs,krevs,V,start)
     end
 end
 
-function rops!(ropvec,rarray,cs,kfs,krevs,V,start,ind)
+function rops!(ropvec, rarray::Array{Int64,2}, cs, kfs, krevs, V, start, ind)
     for i = 1:length(kfs)
         c = count(isequal(ind),rarray[5:8,i])-count(isequal(ind),rarray[1:4,i])
         if c != 0.0
@@ -419,7 +419,7 @@ function rops!(ropvec,rarray,cs,kfs,krevs,V,start,ind)
 end
 
 
-function rops!(ropmat,rarray,fragmentbasedrxnarray,cs,kfs,krevs,V,start)
+function rops!(ropmat, rarray::Array{Int64,2}, fragmentbasedrxnarray::Array{Int64,2}, cs, kfs, krevs, V, start)
     numfragmentbasedreacprod, numrxns = size(fragmentbasedrxnarray)
     half = Int(numfragmentbasedreacprod/2)
     for i = 1:length(kfs)
@@ -439,7 +439,7 @@ function rops!(ropmat,rarray,fragmentbasedrxnarray,cs,kfs,krevs,V,start)
     end
 end
 
-function rops!(ropvec,rarray,fragmentbasedrxnarray,cs,kfs,krevs,V,start,ind)
+function rops!(ropvec, rarray::Array{Int64,2}, fragmentbasedrxnarray::Array{Int64,2}, cs, kfs, krevs, V, start, ind)
     numfragmentbasedreacprod, numrxns = size(fragmentbasedrxnarray)
     half = Int(numfragmentbasedreacprod/2)
     for i = 1:length(kfs)
