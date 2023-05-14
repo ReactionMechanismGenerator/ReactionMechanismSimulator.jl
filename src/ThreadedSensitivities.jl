@@ -22,6 +22,13 @@ function threadedsensitivities(react; odesolver=nothing,senssolver=nothing,
         senssolver = react.recommendedsolver
     end
 
+    if odekwargs isa Dict{Any,Any}
+        odekwargs = Dict([Symbol(k) => v for (k, v) in odekwargs])
+    end
+    if senskwargs isa Dict{Any,Any}
+        senskwargs = Dict([Symbol(k) => v for (k, v) in senskwargs])
+    end
+
     sol = solve(react.ode, odesolver; odekwargs...)
 
     reactsens = Reactor(react.domain,react.y0,react.tspan,react.interfaces; p=react.p,
@@ -53,14 +60,21 @@ returns a dictionary mapping the index of the parameter to the ODESolution objec
 corresponding to the associated sensitivities of every variable to that parameter
 """
 function threadedsensitivities(react, paramindices; odesolver=nothing, senssolver=nothing,
-    odekwargs::Dict{Symbol,T1}=Dict([:abstol => 1e-20, :reltol => 1e-6]),
-    senskwargs::Dict{Symbol,T2}=Dict([:abstol => 1e-6, :reltol => 1e-3])) where {T1,T2}
+    odekwargs=Dict([:abstol => 1e-20, :reltol => 1e-6]),
+    senskwargs=Dict([:abstol => 1e-6, :reltol => 1e-3]))
 
     if odesolver === nothing
         odesolver = react.recommendedsolver
     end
     if senssolver === nothing
         senssolver = react.recommendedsolver
+    end
+
+    if odekwargs isa Dict{Any,Any}
+        odekwargs = Dict([Symbol(k) => v for (k, v) in odekwargs])
+    end
+    if senskwargs isa Dict{Any,Any}
+        senskwargs = Dict([Symbol(k) => v for (k, v) in senskwargs])
     end
 
     sol = solve(react.ode, odesolver; odekwargs...)
@@ -80,17 +94,6 @@ function threadedsensitivities(react, paramindices; odesolver=nothing, senssolve
     end
 
     return solutiondictionary
-end
-
-function threadedsensitivities(react, paramindices; odesolver=nothing, senssolver=nothing,
-    odekwargs::Dict{Any,Any},
-    senskwargs::Dict{Any,Any})
-    # Convert to Dict{Symbol, T}
-    # Needed for pyrms compatability: Python string gets converted to String and runs into expected Symbol, got a value of type String error
-    odekwargs = Dict(Symbol(key) => value for (key, value) in odekwargs)
-    senskwargs = Dict(Symbol(key) => value for (key, value) in senskwargs)
-    return threadedsensitivities(react, paramindices; odesolver=odesolver, senssolver=senssolver,
-        odekwargs=odekwargs, senskwargs=senskwargs)
 end
 
 export threadedsensitivities
