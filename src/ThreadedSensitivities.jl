@@ -12,23 +12,30 @@ with odesolver, senssolver, odekwargs and senskwargs
 
 returns a solution object that can be used the same way as forward sensitivity output
 """
-function threadedsensitivities(react; odesolver=nothing,senssolver=nothing,
-        odekwargs=Dict([:abstol=>1e-20,:reltol=>1e-6]),senskwargs=Dict([:abstol=>1e-6,:reltol=>1e-3]))
+function threadedsensitivities(react; odesolver=nothing, senssolver=nothing,
+    odekwargs=Dict([:abstol => 1e-20, :reltol => 1e-6]), senskwargs=Dict([:abstol => 1e-6, :reltol => 1e-3]))
 
-    if odesolver===nothing
+    if odesolver === nothing
         odesolver = react.recommendedsolver
     end
-    if senssolver===nothing
+    if senssolver === nothing
         senssolver = react.recommendedsolver
+    end
+
+    if odekwargs isa Dict{Any,Any}
+        odekwargs = Dict([Symbol(k) => v for (k, v) in odekwargs])
+    end
+    if senskwargs isa Dict{Any,Any}
+        senskwargs = Dict([Symbol(k) => v for (k, v) in senskwargs])
     end
 
     sol = solve(react.ode, odesolver; odekwargs...)
 
-    reactsens = Reactor(react.domain,react.y0,react.tspan,react.interfaces; p=react.p,
-                forwardsensitivities=true,forwarddiff=react.forwarddiff,modelingtoolkit=react.modelingtoolkit,
-                tau=react.tau)
+    reactsens = Reactor(react.domain, react.y0, react.tspan, react.interfaces; p=react.p,
+        forwardsensitivities=true, forwarddiff=react.forwarddiff, modelingtoolkit=react.modelingtoolkit,
+        tau=react.tau)
 
-    salist = generatesensitivityodes(react,sol)
+    salist = generatesensitivityodes(react, sol)
 
     # Parallelize the SA calculations
     solutiondictionary = Dict()
@@ -37,7 +44,7 @@ function threadedsensitivities(react; odesolver=nothing,senssolver=nothing,
         s = solve(salist[i], senssolver; senskwargs...)
         solutiondictionary[i] = s
     end
-    bigsol = generatesenssolution(sol,solutiondictionary,reactsens.ode)
+    bigsol = generatesenssolution(sol, solutiondictionary, reactsens.ode)
     return bigsol
 end
 
@@ -53,14 +60,21 @@ returns a dictionary mapping the index of the parameter to the ODESolution objec
 corresponding to the associated sensitivities of every variable to that parameter
 """
 function threadedsensitivities(react, paramindices; odesolver=nothing, senssolver=nothing,
-    odekwargs::Dict{Symbol,T1}=Dict([:abstol => 1e-20, :reltol => 1e-6]),
-    senskwargs::Dict{Symbol,T2}=Dict([:abstol => 1e-6, :reltol => 1e-3])) where {T1,T2}
+    odekwargs=Dict([:abstol => 1e-20, :reltol => 1e-6]),
+    senskwargs=Dict([:abstol => 1e-6, :reltol => 1e-3]))
 
     if odesolver === nothing
         odesolver = react.recommendedsolver
     end
     if senssolver === nothing
         senssolver = react.recommendedsolver
+    end
+
+    if odekwargs isa Dict{Any,Any}
+        odekwargs = Dict([Symbol(k) => v for (k, v) in odekwargs])
+    end
+    if senskwargs isa Dict{Any,Any}
+        senskwargs = Dict([Symbol(k) => v for (k, v) in senskwargs])
     end
 
     sol = solve(react.ode, odesolver; odekwargs...)
@@ -82,31 +96,20 @@ function threadedsensitivities(react, paramindices; odesolver=nothing, senssolve
     return solutiondictionary
 end
 
-function threadedsensitivities(react, paramindices; odesolver=nothing, senssolver=nothing,
-    odekwargs::Dict{Any,Any},
-    senskwargs::Dict{Any,Any})
-    # Convert to Dict{Symbol, T}
-    # Needed for pyrms compatability: Python string gets converted to String and runs into expected Symbol, got a value of type String error
-    odekwargs = Dict(Symbol(key) => value for (key, value) in odekwargs)
-    senskwargs = Dict(Symbol(key) => value for (key, value) in senskwargs)
-    return threadedsensitivities(react, paramindices; odesolver=odesolver, senssolver=senssolver,
-        odekwargs=odekwargs, senskwargs=senskwargs)
-end
-
 export threadedsensitivities
 
 """
 generate individual sensitivity ODEs for each parameter
 """
-function generatesensitivityodes(react,sol)
+function generatesensitivityodes(react, sol)
     sa_list = []
     y0 = react.y0
     tspan = react.tspan
     p = react.p
     for i in 1:length(p)
         r = deepcopy(react)
-        jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobiany!(J,y,p,t,r.domain,r.interfaces,nothing)
-        jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J,y,p,t,r.domain,r.interfaces,nothing)
+        jacy!(J::Q2, y::T, p::V, t::Q) where {Q2,T,Q<:Real,V} = jacobiany!(J, y, p, t, r.domain, r.interfaces, nothing)
+        jacp!(J::Q2, y::T, p::V, t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J, y, p, t, r.domain, r.interfaces, nothing)
 
         function dsdt!(ds, s, local_params, t)
             jy = zeros(length(y0), length(y0))
@@ -115,13 +118,13 @@ function generatesensitivityodes(react,sol)
             jacy!(jy, y, p, t)
             jacp!(jp, y, p, t)
             @views @inbounds c = jp[:, i]
-            @inbounds ds .= jy*s .+ c
+            @inbounds ds .= jy * s .+ c
         end
 
         # Create list of ODEProblems for each batch of parameters
 
         odefcn = ODEFunction(dsdt!)
-        prob = ODEProblem(odefcn, zeros(length(y0)),tspan,0)
+        prob = ODEProblem(odefcn, zeros(length(y0)), tspan, 0)
         push!(sa_list, prob)
     end
     return sa_list
@@ -130,16 +133,16 @@ end
 """
 Combine ODE solutions into a sensitivity solution
 """
-function generatesenssolution(sol,sensdict,sensprob)
+function generatesenssolution(sol, sensdict, sensprob)
     ts = sol.t
     ordkeys = sort([x for x in keys(sensdict)])
     u = deepcopy(sol.u)
     for k in ordkeys
         for i in 1:length(u)
-            u[i] = vcat(u[i],sensdict[k](ts[i]))
+            u[i] = vcat(u[i], sensdict[k](ts[i]))
         end
     end
-    bigsol = build_solution(sensprob,sol.alg,ts,u;
-        interp=LinearInterpolation(ts,u),retcode=sol.retcode)
+    bigsol = build_solution(sensprob, sol.alg, ts, u;
+        interp=LinearInterpolation(ts, u), retcode=sol.retcode)
     return bigsol
 end
