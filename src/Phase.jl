@@ -35,6 +35,7 @@ include("Reaction.jl")
     reversibility::Array{Bool,1}
     forwardability::Array{Bool,1}
     diffusionlimited::Bool = false
+    molecularweights::Array{Float64, 1}
 end
 
 function IdealGas(species,reactions; name="",diffusionlimited=false)
@@ -50,10 +51,12 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
     electronchange = convert(Array{Float64,1},echangevec)
     reversibility = getfield.(rxns,:reversible)
     forwardability = getfield.(rxns,:forwardable)
+    molecularweights = getfield.(species,:molecularweight)
     return IdealGas(species=species,reactions=rxns,name=name,
         spcdict=Dict([sp.name=>i for (i,sp) in enumerate(species)]),stoichmatrix=M,Nrp=Nrp,rxnarray=rxnarray,veckinetics=vectuple, 
         veckineticsinds=posinds, vecthermo=therm, otherreactions=otherrxns, electronchange=electronchange, 
-        reversibility=reversibility,forwardability=forwardability,diffusionlimited=diffusionlimited,)
+        reversibility=reversibility,forwardability=forwardability,diffusionlimited=diffusionlimited,
+        molecularweights=molecularweights)
 end
 export IdealGas
 
