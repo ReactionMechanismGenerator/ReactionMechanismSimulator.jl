@@ -330,6 +330,10 @@ function readinputyml(fname::String)
                 end
             end
 
+            if "transport" in keys(d)
+                d["transport"]["m"] = d["molecularweight"]/Na
+            end     
+
             spc = fcndict2obj(d,ymlunitsdict)
             push!(spclist,spc)
             if haskey(spcdict,spc.name)
