@@ -5,7 +5,7 @@ export AbstractSpecies
 
 struct EmptySpecies <: AbstractSpecies end
 
-struct Species{T<:AbstractThermo,N<:AbstractDiffusivity,N1<:AbstractHenryLawConstant,N2<:AbstractLiquidVolumetricMassTransferCoefficient} <: AbstractSpecies
+struct Species{T<:AbstractThermo,N<:AbstractDiffusivity,N1<:AbstractHenryLawConstant,N2<:AbstractLiquidVolumetricMassTransferCoefficient,N3<:AbstractTransportModel} <: AbstractSpecies
     name::String
     index::Integer
     inchi::String
@@ -23,6 +23,7 @@ struct Species{T<:AbstractThermo,N<:AbstractDiffusivity,N1<:AbstractHenryLawCons
     comment::String
     isfragment::Bool
     isfragmentintermediate::Bool
+    transport::N3
 end
 
 function Species(; name::String, index::Integer, inchi::String="", smiles::String="", adjlist::String="", 
@@ -31,8 +32,9 @@ function Species(; name::String, index::Integer, inchi::String="", smiles::Strin
                    henrylawconstant::N1=EmptyHenryLawConstant(), 
                    liquidvolumetricmasstransfercoefficient::N2=EmptyLiquidVolumetricMassTransferCoefficient(),
                    comment::String="",isfragment::Bool=false,isfragmentintermediate::Bool=false,
-                   ) where {T<:AbstractThermo,N<:AbstractDiffusivity,N1<:AbstractHenryLawConstant,N2<:AbstractLiquidVolumetricMassTransferCoefficient}
-    return Species(name, index, inchi, smiles, adjlist, thermo, atomnums, bondnum, diffusion, radius, radicalelectrons, molecularweight, henrylawconstant, liquidvolumetricmasstransfercoefficient, comment, isfragment, isfragmentintermediate)
+                   transport::N3=EmptyTransportModel()
+                   ) where {T<:AbstractThermo,N<:AbstractDiffusivity,N1<:AbstractHenryLawConstant,N2<:AbstractLiquidVolumetricMassTransferCoefficient, N3 <: AbstractTransportModel}
+    return Species(name, index, inchi, smiles, adjlist, thermo, atomnums, bondnum, diffusion, radius, radicalelectrons, molecularweight, henrylawconstant, liquidvolumetricmasstransfercoefficient, comment, isfragment, isfragmentintermediate, transport)
 end
 export Species
 
