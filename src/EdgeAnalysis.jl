@@ -905,7 +905,6 @@ function identifyobjects!(sim,corespcsinds,corerxninds,edgespcsinds,
 
     if length(invalidobjects) + length(newobjects) > maxnumobjsperiter
         if invalidobjectsprintboolean
-            @info "Exceeded max number of objects...removing excess objects"
             invalidobjectsprintboolean = false
         end
         num = maxnumobjsperiter - length(invalidobjects)
