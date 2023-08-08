@@ -1,9 +1,10 @@
 name: rms_env
 channels:
   - defaults
+  - hwpang
   - rmg
 dependencies:
   - rdkit
-  - rmg
+  - hwpang::rmgmolecule
   - pydot
   - yaml
