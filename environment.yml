@@ -7,4 +7,3 @@ dependencies:
   - rdkit
   - hwpang::rmgmolecule
   - pydot
-  - yaml

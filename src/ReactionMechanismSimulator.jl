@@ -14,7 +14,6 @@ module ReactionMechanismSimulator
     const falloff = PyNULL()
     const chebyshev = PyNULL()
     const solvation = PyNULL()
-    const yaml = PyNULL()
     const os = PyNULL()
     function __init__()
         copy!(Chem,pyimport_conda("rdkit.Chem","rdkit","rmg"))
