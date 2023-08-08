@@ -3,7 +3,9 @@ channels:
   - defaults
   - hwpang
   - rmg
+  - conda-forge
 dependencies:
   - rdkit
   - hwpang::rmgmolecule
   - pydot
+  - matplotlib
