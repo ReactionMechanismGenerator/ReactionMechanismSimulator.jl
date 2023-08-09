@@ -7,7 +7,10 @@ module Calc
     include("Calculators/RateUncertainty.jl")
     include("Calculators/ThermoUncertainty.jl")
     include("Calculators/Thermo.jl")
+    include("Calculators/Potential.jl")
+    include("Calculators/Transport.jl")
     include("Calculators/Diffusion.jl")
+    include("Calculators/ThermalConductivity.jl")
     include("Calculators/Rate.jl")
     include("Calculators/Viscosity.jl")
     include("Calculators/Thermovec.jl")
@@ -17,7 +20,10 @@ end
 module Spc
     include("Calculators/ThermoUncertainty.jl")
     include("Calculators/Thermo.jl")
+    include("Calculators/Potential.jl")
+    include("Calculators/Transport.jl")
     include("Calculators/Diffusion.jl")
+    include("Calculators/ThermalConductivity.jl")
     include("Calculators/kLAkH.jl")
     include("Species.jl")
 end
@@ -25,6 +31,8 @@ module Rxn
     include("Calculators/RateUncertainty.jl")
     include("Calculators/ThermoUncertainty.jl")
     include("Calculators/Thermo.jl")
+    include("Calculators/Potential.jl")
+    include("Calculators/Transport.jl")
     include("Calculators/Diffusion.jl")
     include("Calculators/Rate.jl")
     include("Calculators/kLAkH.jl")
@@ -321,6 +329,10 @@ function readinputyml(fname::String)
                     @warn("failed to generate StokesDiffusivity model for species $spcname")
                 end
             end
+
+            if "transport" in keys(d)
+                d["transport"]["m"] = d["molecularweight"]/Na
+            end     
 
             spc = fcndict2obj(d,ymlunitsdict)
             push!(spclist,spc)

@@ -1,0 +1,663 @@
+Phases:
+- Species:
+  - name: Ar
+    radicalelectrons: 0
+    smiles: '[Ar]'
+    thermo:
+      polys:
+      - Tmax: 1000.0
+        Tmin: 200.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 4.37967
+        type: NASApolynomial
+      - Tmax: 6000.0
+        Tmin: 1000.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 4.37967
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 0.0
+      potential:
+        epsilon: 1.8845952811748727e-21
+        sigma: 3.3300000000000004e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: He
+    radicalelectrons: 0
+    smiles: '[He]'
+    thermo:
+      polys:
+      - Tmax: 1000.0
+        Tmin: 200.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 0.928724
+        type: NASApolynomial
+      - Tmax: 6000.0
+        Tmin: 1000.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 0.928724
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 0.0
+      potential:
+        epsilon: 1.4082633281870966e-22
+        sigma: 2.5760000000000007e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: Ne
+    radicalelectrons: 0
+    smiles: '[Ne]'
+    thermo:
+      polys:
+      - Tmax: 1000.0
+        Tmin: 200.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 3.35532
+        type: NASApolynomial
+      - Tmax: 6000.0
+        Tmin: 1000.0
+        coefs:
+        - 2.5
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - -745.375
+        - 3.35532
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 0.0
+      potential:
+        epsilon: 2.051646378123555e-21
+        sigma: 3.758e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: N2
+    radicalelectrons: 0
+    smiles: N#N
+    thermo:
+      polys:
+      - Tmax: 1000.0
+        Tmin: 200.0
+        coefs:
+        - 3.53101
+        - -0.000123661
+        - -5.02999e-07
+        - 2.43531e-09
+        - -1.40881e-12
+        - -1046.98
+        - 2.96747
+        type: NASApolynomial
+      - Tmax: 6000.0
+        Tmin: 1000.0
+        coefs:
+        - 2.95258
+        - 0.0013969
+        - -4.92632e-07
+        - 7.8601e-11
+        - -4.60755e-15
+        - -923.949
+        - 5.87189
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 1.7600000000000008e-30
+      potential:
+        epsilon: 1.3465524862708356e-21
+        sigma: 3.6210000000000007e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: H2
+    radicalelectrons: 0
+    smiles: '[H][H]'
+    thermo:
+      polys:
+      - Tmax: 1959.07
+        Tmin: 100.0
+        coefs:
+        - 3.43536393
+        - 0.000212711953
+        - -2.78628671e-07
+        - 3.40270013e-10
+        - -7.76039045e-14
+        - -1031.35983
+        - -3.90841661
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1959.07
+        coefs:
+        - 2.78818509
+        - 0.000587615921
+        - 1.5902213e-07
+        - -5.52762536e-11
+        - 4.3432812e-15
+        - -596.155632
+        - 0.112618494
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 7.900000000000003e-31
+      potential:
+        epsilon: 5.246488890790464e-22
+        sigma: 2.9199999999999997e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: O2
+    radicalelectrons: 0
+    smiles: '[O][O]'
+    thermo:
+      polys:
+      - Tmax: 1074.55
+        Tmin: 100.0
+        coefs:
+        - 3.53732243
+        - -0.00121571647
+        - 5.31620254e-06
+        - -4.89446434e-09
+        - 1.45846258e-12
+        - -1038.58849
+        - 4.68368183
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1074.55
+        coefs:
+        - 3.15382081
+        - 0.00167804371
+        - -7.69974236e-07
+        - 1.51275462e-10
+        - -1.08782414e-14
+        - -1040.81728
+        - 6.16755832
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 1.600000000000001e-30
+      potential:
+        epsilon: 1.4828229409723015e-21
+        sigma: 3.458000000000001e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: HO2
+    radicalelectrons: 1
+    smiles: '[O]O'
+    thermo:
+      polys:
+      - Tmax: 932.15
+        Tmin: 100.0
+        coefs:
+        - 4.04594488
+        - -0.00173464779
+        - 1.03766518e-05
+        - -1.02202522e-08
+        - 3.34908581e-12
+        - -986.754245
+        - 4.63581294
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 932.15
+        coefs:
+        - 3.21023857
+        - 0.00367941991
+        - -1.27701572e-06
+        - 2.18045259e-10
+        - -1.46337935e-14
+        - -910.368497
+        - 8.1829188
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 0.0
+      potential:
+        epsilon: 1.4828229409723015e-21
+        sigma: 3.458000000000001e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: OH
+    radicalelectrons: 1
+    smiles: '[OH]'
+    thermo:
+      polys:
+      - Tmax: 1145.76
+        Tmin: 100.0
+        coefs:
+        - 3.51456841
+        - 2.92732126e-05
+        - -5.32149895e-07
+        - 1.01947438e-09
+        - -3.85939087e-13
+        - 3414.25418
+        - 2.10434749
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1145.76
+        coefs:
+        - 3.0719371
+        - 0.000604020067
+        - -1.39807196e-08
+        - -2.13440522e-11
+        - 2.4806113e-15
+        - 3579.38798
+        - 4.57801549
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 0.0
+      potential:
+        epsilon: 1.1045239770085187e-21
+        sigma: 2.7500000000000003e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: H
+    radicalelectrons: 1
+    smiles: '[H]'
+    thermo:
+      polys:
+      - Tmax: 4879.8
+        Tmin: 100.0
+        coefs:
+        - 2.5
+        - -3.01680531e-12
+        - 3.74582141e-15
+        - -1.50856878e-18
+        - 1.86626471e-22
+        - 25474.2178
+        - -0.444972899
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 4879.8
+        coefs:
+        - 4.28461071
+        - -0.00145494649
+        - 4.44804306e-07
+        - -6.04359642e-11
+        - 3.07921551e-15
+        - 23723.0923
+        - -11.8931307
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 0.0
+      potential:
+        epsilon: 2.001945556980982e-21
+        sigma: 2.0500000000000002e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: H2O
+    radicalelectrons: 0
+    smiles: O
+    thermo:
+      polys:
+      - Tmax: 1130.24
+        Tmin: 100.0
+        coefs:
+        - 4.05763557
+        - -0.000787932878
+        - 2.90876518e-06
+        - -1.47517698e-09
+        - 2.12838441e-13
+        - -30281.5866
+        - -0.311363105
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 1130.24
+        coefs:
+        - 2.84325231
+        - 0.00275108244
+        - -7.81029811e-07
+        - 1.07243254e-10
+        - -5.79389106e-15
+        - -29958.6136
+        - 5.91040933
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 6.1509219154539245e-30
+      polarizability: 0.0
+      potential:
+        epsilon: 7.90286938760371e-21
+        sigma: 2.6050000000000003e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: H2O2
+    radicalelectrons: 0
+    smiles: OO
+    thermo:
+      polys:
+      - Tmax: 908.87
+        Tmin: 100.0
+        coefs:
+        - 3.73136061
+        - 0.00335067714
+        - 9.35045149e-06
+        - -1.52101308e-08
+        - 6.41593098e-12
+        - -17721.1709
+        - 5.4590992
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 908.87
+        coefs:
+        - 5.41578065
+        - 0.00261009268
+        - -4.39898683e-07
+        - 4.91103613e-11
+        - -3.35202076e-15
+        - -18302.9497
+        - -4.02244574
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 0.0
+      potential:
+        epsilon: 1.4828229409723015e-21
+        sigma: 3.458000000000001e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  - name: O(T)
+    radicalelectrons: 2
+    smiles: '[O]'
+    thermo:
+      polys:
+      - Tmax: 4879.8
+        Tmin: 100.0
+        coefs:
+        - 2.5
+        - -3.01680531e-12
+        - 3.74582141e-15
+        - -1.50856878e-18
+        - 1.86626471e-22
+        - 29230.2441
+        - 4.09104286
+        type: NASApolynomial
+      - Tmax: 5000.0
+        Tmin: 4879.8
+        coefs:
+        - 4.28461071
+        - -0.00145494649
+        - 4.44804306e-07
+        - -6.04359642e-11
+        - 3.07921551e-15
+        - 27479.1187
+        - -7.35711496
+        type: NASApolynomial
+      type: NASA
+    transport:
+      dipolemoment: 0.0
+      polarizability: 0.0
+      potential:
+        epsilon: 1.1045239770085187e-21
+        sigma: 2.7500000000000003e-10
+        type: LennardJonesPotential
+      type: TransportModel
+    type: Species
+  name: phase
+Reactions:
+- kinetics:
+    A: 54500.00000000001
+    Ea: 6276.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - H2
+  radicalchange: -2
+  reactants:
+  - H
+  - H
+  type: ElementaryReaction
+- kinetics:
+    A: 290000000.00000006
+    Ea: 236981.76
+    n: 0.0
+    type: Arrhenius
+  products:
+  - HO2
+  - H
+  radicalchange: 2
+  reactants:
+  - H2
+  - O2
+  type: ElementaryReaction
+- kinetics:
+    A: 87900.00000000001
+    Ea: 1882.8
+    n: 1.0
+    type: Arrhenius
+  products:
+  - HO2
+  radicalchange: 0
+  reactants:
+  - O2
+  - H
+  type: ElementaryReaction
+- kinetics:
+    A: 1.2350200000000002
+    Ea: 25463.824
+    n: 1.634
+    type: Arrhenius
+  products:
+  - H2
+  - HO2
+  radicalchange: 0
+  reactants:
+  - H
+  - H2O2
+  type: ElementaryReaction
+- kinetics:
+    A: 5005182.000000001
+    Ea: 7096.063999999999
+    n: 0.282
+    type: Arrhenius
+  products:
+  - H2O2
+  radicalchange: -2
+  reactants:
+  - HO2
+  - H
+  type: ElementaryReaction
+- kinetics:
+    A: 17500.000000000004
+    Ea: -13702.6
+    n: 0.0
+    type: Arrhenius
+  products:
+  - O2
+  - H2O2
+  radicalchange: -2
+  reactants:
+  - HO2
+  - HO2
+  type: ElementaryReaction
+- kinetics:
+    A: 7850000.000000001
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - H2O2
+  radicalchange: -2
+  reactants:
+  - OH
+  - OH
+  type: ElementaryReaction
+- kinetics:
+    A: 1820.0000000000002
+    Ea: 83972.88
+    n: 1.21
+    type: Arrhenius
+  products:
+  - H
+  - H2O
+  radicalchange: 0
+  reactants:
+  - H2
+  - OH
+  type: ElementaryReaction
+- kinetics:
+    A: 162000000.00000003
+    Ea: 627.6
+    n: 0.0
+    type: Arrhenius
+  products:
+  - H2O
+  radicalchange: -2
+  reactants:
+  - OH
+  - H
+  type: ElementaryReaction
+- kinetics:
+    A: 9300000.000000002
+    Ea: 310118.08
+    n: 0.0
+    type: Arrhenius
+  products:
+  - HO2
+  - OH
+  radicalchange: 2
+  reactants:
+  - O2
+  - H2O
+  type: ElementaryReaction
+- kinetics:
+    A: 0.4994995000000001
+    Ea: 26463.8
+    n: 1.927
+    type: Arrhenius
+  products:
+  - HO2
+  - H2O
+  radicalchange: 0
+  reactants:
+  - OH
+  - H2O2
+  type: ElementaryReaction
+- kinetics:
+    A: 43.58386000000001
+    Ea: 5167.240000000001
+    n: 1.88
+    type: Arrhenius
+  products:
+  - HO2
+  radicalchange: -2
+  reactants:
+  - OH
+  - O(T)
+  type: ElementaryReaction
+- kinetics:
+    A: 10000000.000000002
+    Ea: 0.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - OH
+  radicalchange: -2
+  reactants:
+  - H
+  - O(T)
+  type: ElementaryReaction
+- kinetics:
+    A: 3680.3920000000007
+    Ea: 24681.416
+    n: 0.678
+    type: Arrhenius
+  products:
+  - O2
+  - OH
+  radicalchange: -2
+  reactants:
+  - HO2
+  - O(T)
+  type: ElementaryReaction
+- kinetics:
+    A: 340.00000000000006
+    Ea: 96022.8
+    n: 1.5
+    type: Arrhenius
+  products:
+  - OH
+  - H
+  radicalchange: 0
+  reactants:
+  - H2
+  - O(T)
+  type: ElementaryReaction
+- kinetics:
+    A: 17400000.000000004
+    Ea: 19874.0
+    n: 0.0
+    type: Arrhenius
+  products:
+  - HO2
+  - OH
+  radicalchange: 0
+  reactants:
+  - H2O2
+  - O(T)
+  type: ElementaryReaction
+- kinetics:
+    A: 5260.000000000001
+    Ea: 74600.71999999999
+    n: 1.2
+    type: Arrhenius
+  products:
+  - OH
+  - OH
+  radicalchange: 0
+  reactants:
+  - H2O
+  - O(T)
+  type: ElementaryReaction
+Units: {}
