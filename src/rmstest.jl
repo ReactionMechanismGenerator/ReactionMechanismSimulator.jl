@@ -3,7 +3,7 @@ const Chem = PyNULL()
 const molecule = PyNULL()
 const pydot = PyNULL()
 copy!(Chem,pyimport_conda("rdkit.Chem","rdkit","rmg"))
-copy!(molecule,pyimport_conda("rmgpy.molecule","rmgpy","rmg"))
+copy!(molecule, pyimport_conda("molecule.molecule", "rmgmolecule", "hwpang"))
 copy!(pydot,pyimport_conda("pydot","pydot","rmg"))
 
 

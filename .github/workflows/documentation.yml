@@ -9,6 +9,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -23,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
             julia -e 'ENV["PYTHON"]=ENV["CONDA"] * "/envs/rms_env/bin/python"; using Pkg; Pkg.add("PyCall"); Pkg.build("PyCall")'
-            julia --project=docs/ -e 'using Pkg; Pkg.add(PackageSpec(name="StochasticDiffEq",version="6.36.0")); Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate();'
+            julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate();'
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token

@@ -1,9 +1,11 @@
 name: rms_env
 channels:
   - defaults
+  - hwpang
   - rmg
+  - conda-forge
 dependencies:
   - rdkit
-  - rmg
+  - hwpang::rmgmolecule
   - pydot
-  - yaml
+  - matplotlib
