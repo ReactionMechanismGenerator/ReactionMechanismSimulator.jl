@@ -3,7 +3,4 @@ channels:
   - defaults
   - rmg
 dependencies:
-  - rdkit
   - rmg
-  - pydot
-  - yaml
