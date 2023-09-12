@@ -2,8 +2,8 @@ name: rms_env
 channels:
   - defaults
   - rmg
+  - jacksonburns
 dependencies:
-  - rdkit
-  - rmg
+  - rmgmolecule
   - pydot
-  - yaml
+  - matplotlib
