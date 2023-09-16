@@ -9,7 +9,11 @@ if PyCall.pyversion.major != 3 || PyCall.pyversion.minor != 7
     end
     Conda.add("nomkl")
     Conda.add("numpy")
-    Conda.add_channel("hwpang")
-    Conda.add("rmgmolecule")
+    try 
+        pyimport("rmgpy")
+    catch e
+        Conda.add_channel("hwpang")
+        Conda.add("rmgmolecule")
+    end
     Pkg.build("PyCall")
 end
