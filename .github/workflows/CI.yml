@@ -2,10 +2,10 @@ name: CI
 on:
   pull_request:
     branches:
-      - main
+      - for_rmg
   push:
     branches:
-      - main
+      - for_rmg
 jobs:
   test:
     runs-on: ubuntu-latest
