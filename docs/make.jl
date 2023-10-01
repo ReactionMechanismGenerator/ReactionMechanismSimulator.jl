@@ -9,6 +9,7 @@ makedocs(
         "Input.md",
         "Simulating.md",
         "Analysis.md",
+        "AutomaticMechanismAnalysis.md"
     ]
 )
 
