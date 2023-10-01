@@ -10,7 +10,8 @@ makedocs(
         "Simulating.md",
         "Analysis.md",
         "AutomaticMechanismAnalysis.md"
-    ]
+    ],
+    warnonly=true,
 )
 
 deploydocs(
