@@ -4,6 +4,7 @@ module ReactionMechanismSimulator
     const Chem = PyNULL()
     const Desc = PyNULL()
     const molecule = PyNULL()
+    const fragment = PyNULL()
     const pydot = PyNULL()
     const chemkin =PyNULL()
     const species = PyNULL()
@@ -29,6 +30,7 @@ module ReactionMechanismSimulator
             copy!(falloff,pyimport("rmgpy.kinetics.falloff"))
             copy!(chebyshev,pyimport("rmgpy.kinetics.chebyshev"))
             copy!(solvation,pyimport("rmgpy.data.solvation"))
+            copy!(fragment,pyimport("rmgpy.molecule.fragment"))
         catch e
             copy!(molecule,pyimport_conda("molecule.molecule","rmgmolecule","hwpang"))
             copy!(chemkin,pyimport_conda("molecule.chemkin","rmgmolecule","hwpang"))
@@ -40,6 +42,7 @@ module ReactionMechanismSimulator
             copy!(falloff,pyimport_conda("molecule.kinetics.falloff","rmgmolecule","hwpang"))
             copy!(chebyshev,pyimport_conda("molecule.kinetics.chebyshev","rmgmolecule","hwpang"))
             copy!(solvation,pyimport_conda("molecule.data.solvation","rmgmolecule","hwpang"))
+            copy!(fragment,pyimport_conda("molecule.molecule.fragment","rmgmolecule","hwpang"))
         end
         copy!(pydot,pyimport_conda("pydot","pydot"))
         copy!(os,pyimport_conda("os","os"))
