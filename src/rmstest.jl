@@ -1,12 +1,15 @@
 using PyCall
 const Chem = PyNULL()
 const molecule = PyNULL()
+const fragment = PyNULL()
 const pydot = PyNULL()
 copy!(Chem,pyimport_conda("rdkit.Chem","rdkit","rmg"))
 try
     copy!(molecule, pyimport("rmgpy.molecule"))
+    copy!(fragment, pyimport("rmgpy.molecule.fragment"))
 catch e
     copy!(molecule, pyimport_conda("molecule.molecule", "rmgmolecule", "hwpang"))
+    copy!(fragment, pyimport_conda("molecule.molecule.fragment", "rmgmolecule", "hwpang"))
 end
 copy!(pydot,pyimport_conda("pydot","pydot","rmg"))
 
