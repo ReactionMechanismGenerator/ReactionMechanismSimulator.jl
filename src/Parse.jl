@@ -305,20 +305,25 @@ function readinputyml(fname::String)
                 if "adjlist" in keys(d)
                     try
                         d["atomnums"],d["bondnum"],d["molecularweight"] = getatomdictadjlist(d["adjlist"])
-                    catch
-                         @warn("failed to generate molecular information from smiles for species $spcname")
+                    catch e
+                        showerror(stdout, e)
+                        display(stacktrace(catch_backtrace()))
                         @warn("failed to generate molecular information from adjlist for species $spcname")
                     end
                 elseif "smiles" in keys(d)
                     try
                         d["atomnums"],d["bondnum"],d["molecularweight"] = getatomdictsmiles(d["smiles"])
-                    catch
+                    catch e
+                        showerror(stdout, e)
+                        display(stacktrace(catch_backtrace()))
                         @warn("failed to generate molecular information from smiles for species $spcname")
                     end
                 elseif "inchi" in keys(d)
                     try
                         d["atomnums"],d["bondnum"],d["molecularweight"] = getatomdictinchi(d["inchi"])
-                    catch
+                    catch e
+                        showerror(stdout, e)
+                        display(stacktrace(catch_backtrace()))
                         @warn("failed to generate molecular information from inchi for species $spcname")
                     end
                 end
