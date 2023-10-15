@@ -165,7 +165,22 @@ getatomdictsmiles(smiles) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(s
 export getatomdictsmiles
 getatomdictinchi(inchi) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromInchi(inchi)))
 export getatomdictinchi
-getatomdictadjlist(adjlist) = getatomdictfromrmg(molecule.Molecule().from_adjacency_list(adjlist))
+function getatomdictadjlist(adjlist)
+    _ , cutting_label_list = fragment.Fragment().detect_cutting_label(adjlist)
+    if isempty(cutting_label_list)
+        mol = molecule.Molecule().from_adjacency_list(adjlist)
+    else
+        mol = fragment.Fragment().from_adjacency_list(adjlist)
+    end
+    if pybuiltin(:isinstance)(mol, molecule.Molecule)
+        getatomdictfromrmg(mol)
+    elseif pybuiltin(:isinstance)(mol, fragment.Fragment)
+        mol.assign_representative_molecule()
+        getatomdictfromrmg(mol.mol_repr)
+    else
+        @error("Unrecognizable molecule type $mol")
+    end
+end
 export getatomdictadjlist
 
 function getspeciesradius(atomdict,nbonds::Int64)
