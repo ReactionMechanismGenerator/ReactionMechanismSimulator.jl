@@ -42,11 +42,20 @@ function drawspc(spc::Species,path::String=".")
         end
     end
     if spc.adjlist != ""
-        mol = molecule.Molecule().from_adjacency_list(spc.adjlist)
+        _ , cutting_label_list = fragment.Fragment().detect_cutting_label(spc.adjlist)
+        if isempty(cutting_label_list)
+            mol = molecule.Molecule().from_adjacency_list(spc.adjlist)
+        else
+            mol = fragment.Fragment().from_adjacency_list(spc.adjlist)
+        end
     elseif spc.inchi != ""
         mol = molecule.Molecule().from_inchi(spc.inchi)
     elseif spc.smiles != ""
-        mol = molecule.Molecule().from_smiles(spc.smiles)
+        if occursin(r"R", spc.smiles) || occursin(r"L", spc.smiles)
+            mol = fragment.Fragment().from_smiles_like_string(spc.smiles)
+        else
+            mol = molecule.Molecule().from_smiles(spc.smiles)
+        end
     else
         throw(error("no smiles or inchi for molecule $name"))
     end
