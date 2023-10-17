@@ -161,7 +161,16 @@ function getatomdictfromrmg(mol)
     molecularweight = mol.get_molecular_weight()
     return atmD,nbonds,molecularweight
 end
-getatomdictsmiles(smiles) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
+function getatomdictsmiles(smiles)
+    if occursin(r"R", smiles) || occursin(r"L", smiles)
+        mol = fragment.Fragment().from_smiles_like_string(smiles)
+        mol.assign_representative_molecule()
+        getatomdictfromrmg(mol.mol_repr)
+    else
+        getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
+    end
+end
+
 export getatomdictsmiles
 getatomdictinchi(inchi) = getatomdictfromrdkit(Chem.AddHs(Chem.MolFromInchi(inchi)))
 export getatomdictinchi
