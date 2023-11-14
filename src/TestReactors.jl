@@ -1,6 +1,8 @@
 using Test
 using SciMLBase
 using Sundials
+using CSV
+using DataFrames
 
 @testset "Test Reactors" begin
 
@@ -193,6 +195,8 @@ domain,y0,p = ConstantTPDomain(phase=ig,initialconds=initialconds) #Define the d
 react = Reactor(domain,y0,(0.0,150.11094);p=p) #Create the reactor object
 sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
 sim = Simulation(sol,domain);
+save(sim, "test.csv")
+@test isfile("test.csv")
 
 spcnames = getfield.(ig.species,:name)
 h2ind = findfirst(isequal("H2"),spcnames)

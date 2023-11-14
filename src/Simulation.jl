@@ -764,3 +764,28 @@ function rates(ssys::Q; ts::X=Array{Float64,1}()) where {Q<:SystemSimulation,X<:
 end
 
 export rates
+
+"""
+Save the simulation profile to a .csv file
+"""
+function save(sim::T, save_name::String) where {T<:Simulation}
+    df = DataFrame(sim.sol)
+    rename!(df, names(df)[sim.domain.indexes[1]:sim.domain.indexes[2]] .=> sim.names)
+    for (thermovariable, index) in sim.domain.thermovariabledict
+        rename!(df, names(df)[index] => thermovariable)
+    end
+    CSV.write(save_name, df)
+end
+
+function save(syss::T, save_name::String) where {T<:SystemSimulation}
+    df = DataFrame(syss.sol)
+    for sim in syss.sims
+        rename!(df, names(df)[sim.domain.indexes[1]:sim.domain.indexes[2]] .=> sim.names .* "($(sim.domain.phase.name))")
+        for (thermovariable, index) in sim.domain.thermovariabledict
+            rename!(df, names(df)[index] => thermovariable)
+        end
+    end
+    CSV.write(save_name, df)
+end
+export save
+
