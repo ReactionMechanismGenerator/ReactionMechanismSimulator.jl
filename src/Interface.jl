@@ -392,8 +392,13 @@ function VaporLiquidMassTransferInternalInterfaceConstantT(domaingas,domainliq,i
     T = domainliq.T
     phase = domainliq.phase
     ignoremasstransferspcinds = getinterfaceignoremasstransferspcinds(domaingas,domainliq,ignoremasstransferspcnames)
-    kLAs = [kLA(T=T(0)) for kLA in getfield.(phase.species,:liquidvolumetricmasstransfercoefficient)]
-    kHs = [kH(T=T(0)) for kH in getfield.(phase.species,:henrylawconstant)]
+    if T isa Function 
+	kLAs = [kLA(T=T(0)) for kLA in getfield.(phase.species,:liquidvolumetricmasstransfercoefficient)]
+	kHs = [kH(T=T(0)) for kH in getfield.(phase.species,:henrylawconstant)]
+    else 
+	kLAs = [kLA(T=T) for kLA in getfield.(phase.species,:liquidvolumetricmasstransfercoefficient)]
+	kHs = [kH(T=T) for kH in getfield.(phase.species,:henrylawconstant)]
+    end
     return VaporLiquidMassTransferInternalInterfaceConstantT(domaingas,domainliq,ignoremasstransferspcnames,ignoremasstransferspcinds,kLAs,kHs,[1,length(domainliq.phase.species)],[0,0],ones(length(domainliq.phase.species))),ones(length(domainliq.phase.species))
 end
 export VaporLiquidMassTransferInternalInterfaceConstantT
