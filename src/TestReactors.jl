@@ -1,6 +1,8 @@
 using Test
 using SciMLBase
 using Sundials
+using CSV
+using DataFrames
 
 @testset "Test Reactors" begin
 
