@@ -1,3 +1,6 @@
+import Logging
+Logging.disable_logging(Logging.Warn)
+
 using PyCall
 const Chem = PyNULL()
 const molecule = PyNULL()
