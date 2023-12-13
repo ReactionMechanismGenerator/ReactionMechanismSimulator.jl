@@ -1,3 +1,6 @@
+import Logging
+Logging.disable_logging(Logging.Warn)
+
 module ReactionMechanismSimulator
     using PyCall
     push!(PyVector(pyimport("sys")["path"]), "")

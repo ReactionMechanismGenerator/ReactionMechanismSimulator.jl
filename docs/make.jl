@@ -1,3 +1,6 @@
+import Logging
+Logging.disable_logging(Logging.Warn)
+
 using Documenter, ReactionMechanismSimulator
 
 makedocs(

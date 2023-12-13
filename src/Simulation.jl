@@ -1,8 +1,8 @@
 using SciMLBase
-import SciMLBase: AbstractODESolution, HermiteInterpolation, AbstractDiffEqInterpolation
+import SciMLBase: AbstractODESolution, HermiteInterpolation
 using DiffEqSensitivity
 using ForwardDiff
-using OrdinaryDiffEq.PreallocationTools
+using PreallocationTools
 
 abstract type AbstractSimulation end
 export AbstractSimulation
