@@ -218,4 +218,11 @@ Reactions:
   radicalchange: 0
   reactants: [H2O2A]
   type: ElementaryReaction
+- kinetics: {A: 6.0e12, lmbd_o: 100000.0, lmbd_i_coefs: [ 2.63844404e+03  9.64948798e+00  7.41268237e-03 -6.10277107e-06], beta: 1.2e10 ,n: 1.0, d: 0.0, type: Marcus}
+  products: [HOOA]
+  radicalchange: 0
+  electronchange: -1
+  reversible: false
+  reactants: [O2A, H+]
+  type: ElementaryReaction
 Units: {}
