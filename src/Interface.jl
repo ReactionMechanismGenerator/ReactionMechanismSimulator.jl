@@ -38,7 +38,7 @@ function ReactiveInternalInterface(domain1,domain2,reactions,A)
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
-        productinds=rxn.productinds,kinetics=rxn.kinetics,radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+        productinds=rxn.productinds,kinetics=rxn.kinetics,electronchange=rxn.electronchange,radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
     rxnarray = getinterfacereactioninds(domain1,domain2,rxns)
     M,Nrp1,Nrp2 = getstoichmatrix(domain1,domain2,reactions)
     reversibility = Array{Bool,1}(getfield.(rxns,:reversible))
@@ -50,8 +50,10 @@ end
 export ReactiveInternalInterface
 
 function getkfskrevs(ri::ReactiveInternalInterface,T1,T2,phi1,phi2,Gs1,Gs2,cstot::Array{Q,1}) where {Q}
-    kfs = getkfs(ri,T1,0.0,0.0,Array{Q,1}(),ri.A,phi1)
-    Kc = getKc.(ri.reactions,ri.domain1.phase,ri.domain2.phase,Ref(Gs1),Ref(Gs2),T1,phi1)
+    Gpart = ArrayPartition(Gs1,Gs2)
+    dGrxn = -ri.stoichmatrix*Gpart
+    kfs = getkfs(ri,T1,0.0,0.0,Array{Q,1}(),ri.A,phi1,dGrxns,0.0)
+    Kc = getKc.(ri.reactions,ri.domain1.phase,ri.domain2.phase,Ref(Gs1),Ref(Gs2),dGrxns,T1,phi1)
     krevs = kfs./Kc
     return kfs,krevs
 end
@@ -90,10 +92,12 @@ function ReactiveInternalInterfaceConstantTPhi(domain1,domain2,reactions,T,A,phi
     @assert domain1.T == domain2.T 
     reactions = upgradekinetics(reactions,domain1,domain2)
     rxnarray = getinterfacereactioninds(domain1,domain2,reactions)
-    kfs = getkf.(reactions,nothing,T,0.0,0.0,Ref([]),A,phi)
-    Kc = getKc.(reactions,domain1.phase,domain2.phase,Ref(domain1.Gs),Ref(domain2.Gs),T,phi)
-    krevs = kfs./Kc
     M,Nrp1,Nrp2 = getstoichmatrix(domain1,domain2,reactions)
+    Gpart = ArrayPartition(domain1.Gs,domain2.Gs)
+    dGrxns = -M*Gpart
+    kfs = getkf.(reactions,nothing,T,0.0,0.0,Ref([]),A,phi,dGrxns,0.0)
+    Kc = getKcs(domain1.phase,domain2.phase,T,Nrp1,Nrp2,dGrxns)
+    krevs = kfs./Kc
     reversibility = Array{Bool,1}(getfield.(reactions,:reversible))
     forwardability = Array{Bool,1}(getfield.(reactions,:forwardable))
     if isa(reactions,Vector{Any})
@@ -209,7 +213,7 @@ function upgradekinetics(rxns,domain1,domain2)
             @assert length(spc) == 1
             kin = stickingcoefficient2arrhenius(rxn.kinetics,surfdomain.phase.sitedensity,length(rxn.reactants)-1,spc[1].molecularweight)
             newrxns[i] = ElementaryReaction(index=rxn.index,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
-                productinds=rxn.productinds,kinetics=kin,radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs)
+                productinds=rxn.productinds,kinetics=kin,electronchange=rxn.electronchange,radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs)
         else
             newrxns[i] = rxn
         end

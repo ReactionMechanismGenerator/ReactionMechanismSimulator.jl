@@ -4,6 +4,7 @@ using LinearAlgebra
 using Tracker
 using ReverseDiff
 using RecursiveArrayTools
+using Logging
 
 @inline function calcgibbs(ph::U,T::W) where {U<:IdealPhase,W<:Real}
     return getGibbs.(getfield.(ph.species,:thermo),T)
@@ -50,15 +51,15 @@ end
 
 export makespcsvector
 
-@inline function getkf(rxn::ElementaryReaction,ph,T,P,C,ns,V,phi)
+@inline function getkf(rxn::ElementaryReaction,ph,T,P,C,ns,V,phi,dGrxn,d)
     if isdefined(rxn.kinetics,:efficiencies) && length(rxn.kinetics.efficiencies) > 0
         @views @inbounds @fastmath C += sum([ns[i]*val for (i,val) in rxn.kinetics.efficiencies])/V
     end
-    return rxn.kinetics(T=T,P=P,C=C,phi=phi)
+    return rxn.kinetics(T=T,P=P,C=C,phi=phi,dGrxn=dGrxn,d=d)
 end
 export getkf
 
-@inline function getkfs(ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4,phi) where {U,W1,W2,W3,W4<:Real,Q<:AbstractArray}
+@inline function getkfs(ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4,phi,dGrxns,d) where {U,W1,W2,W3,W4<:Real,Q<:AbstractArray}
     kfs = similar(ns,length(ph.reactions))
     i = 1
     oldind = 1
@@ -70,7 +71,7 @@ export getkf
         i += 1
     end
     @simd for i in ind+1:length(ph.reactions)
-        @inbounds kfs[i] = getkf(ph.reactions[i],ph,T,P,C,ns,V,phi)
+        @inbounds kfs[i] = getkf(ph.reactions[i],ph,T,P,C,ns,V,phi,dGrxns[i],d)
     end
     return kfs
 end
@@ -84,13 +85,13 @@ for 2 spc calculates using the Smolchowski equation
 for >2 spc calculates using the Generalized Smolchowski equation
 Equations from Flegg 2016
 """
-@inline function getDiffusiveRate(spcs::Q,diffs::Array{W,1}) where {Q<:AbstractArray,W<:Real}
+@inline function getDiffusiveRate(spcs::Q,spcsinds::Q2,diffs::Array{W,1}) where {Q<:AbstractArray,W<:Real,Q2<:AbstractArray}
     if length(spcs) == 1
         return Inf
     elseif length(spcs) == 2
-        @fastmath @inbounds kf = 4.0*Base.pi*(diffs[spcs[1].index]+diffs[spcs[2].index])*(spcs[1].radius+spcs[2].radius)*Na
+        @fastmath @inbounds kf = 4.0*Base.pi*(diffs[spcsinds[1]]+diffs[spcsinds[2]])*(spcs[1].radius+spcs[2].radius)*Na
     else
-        @views @inbounds diffusivity = diffs[getfield.(spcs,:index)]
+        @views @inbounds diffusivity = diffs[spcsinds]
         N = length(spcs)
         @fastmath a = (3.0*length(spcs)-5.0)/2.0
         @fastmath Dinv = 1.0./diffusivity
@@ -103,76 +104,26 @@ Equations from Flegg 2016
 end
 export getDiffusiveRate
 
-@inline function getKc(rxn::ElementaryReaction,ph::U,T::Z,Gs::Q,phi::V=0.0) where {U<:AbstractPhase,V,Q,Z<:Real}
+@inline function getKc(rxn::ElementaryReaction,ph::U,T::Z,dGrxn::Q,phi::V=0.0) where {U<:AbstractPhase,V,Q,Z<:Real}
     Nreact = length(rxn.reactantinds)
     Nprod = length(rxn.productinds)
-    dGrxn = 0.0
-    if Nreact == 1
-        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]
-    elseif Nreact == 2
-        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]+Gs[rxn.reactantinds[2]]
-    elseif Nreact == 3
-        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]+Gs[rxn.reactantinds[2]]+Gs[rxn.reactantinds[3]]
-    elseif Nreact == 4
-        @fastmath @inbounds dGrxn -= Gs[rxn.reactantinds[1]]+Gs[rxn.reactantinds[2]]+Gs[rxn.reactantinds[3]]+Gs[rxn.reactantinds[4]]
-    end
-    if Nprod == 1
-        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]
-    elseif Nprod == 2
-        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]+Gs[rxn.productinds[2]]
-    elseif Nprod == 3
-        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]+Gs[rxn.productinds[2]]+Gs[rxn.productinds[3]]
-    elseif Nprod == 4
-        @fastmath @inbounds dGrxn += Gs[rxn.productinds[1]]+Gs[rxn.productinds[2]]+Gs[rxn.productinds[3]]+Gs[rxn.productinds[4]]
-    end
-    return @inbounds @fastmath exp(-(dGrxn+rxn.electronchange*phi)/(R*T))*(getC0(ph,T))^(Nprod-Nreact)
+    return @inbounds @fastmath exp((dGrxn+rxn.electronchange*(phi*F))/(-R*T))*(getC0(ph,T))^(Nprod-Nreact)
 end
 
-@inline function getKc(rxn::ElementaryReaction,phase1,phase2,Gs1,Gs2,T,phi=0.0) #for constant k interfaces
-    dGrxn = 0.0
-    dN1 = 0
-    dN2 = 0
-    for r in rxn.reactants
-        isfirst = true
-        ind = findfirst(isequal(r),phase1.species)
-        if ind === nothing
-            isfirst = false
-            ind = findfirst(isequal(r),phase2.species)
-            dGrxn -= Gs2[ind]
-            dN2 -= 1
-        else 
-            dGrxn -= Gs1[ind]
-            dN1 -= 1
-        end
-    end
-    for r in rxn.products
-        isfirst = true
-        ind = findfirst(isequal(r),phase1.species)
-        if ind === nothing
-            isfirst = false
-            ind = findfirst(isequal(r),phase2.species)
-            dGrxn += Gs2[ind]
-            dN2 += 1
-        else 
-            dGrxn += Gs1[ind]
-            dN1 += 1
-        end
-    end
-    return @inbounds @fastmath exp(-(dGrxn+rxn.electronchange*phi)/(R*T))*getC0(phase1,T)^dN1*getC0(phase2,T)^dN2
-end
-export getKc
-
-@inline function getKcs(ph::U,T::Z,Gs::Q) where {U<:AbstractPhase,Q,Z<:Real}
-    return @fastmath @inbounds exp.(ph.stoichmatrix*(Gs./(R*T)) .+ ph.Nrp.*log(getC0(ph,T)));
+@inline function getKcs(ph::U,T::Z,dGrxns::Q) where {U<:AbstractPhase,Q,Z<:Real}
+    return @fastmath @inbounds exp.(dGrxns./(-R*T) .+ ph.Nrp.*log(getC0(ph,T)));
 end
 
-@inline function getKcs(ph::U,T::Z,Gs::Q,phi::V) where {U<:AbstractPhase,Q,Z<:Real,V<:Real}
-    return @fastmath @inbounds exp.(ph.stoichmatrix*(Gs./(R*T)).+ph.electronchange.*(phi/(R*T)) .+ ph.Nrp.*log(getC0(ph,T)));
+@inline function getKcs(ph::U,T::Z,dGrxns::Q,phi::V) where {U<:AbstractPhase,Q,Z<:Real,V<:Real}
+    return @fastmath @inbounds exp.(dGrxns./(-R*T) .+ ph.Nrp.*log(getC0(ph,T)));
 end
 
-@inline function getKcs(ph,T,Gs1,Gs2)
-    Gpart = ArrayPartition(Gs1,Gs2)
-    return @fastmath @inbounds exp.(ph.stoichmatrix*(Gpart./(R*T)) .+ ph.Nrp1.*log(getC0(ph.domain1.phase,T)) .+ ph.Nrp2.*log(getC0(ph.domain2.phase,T)));
+@inline function getKcs(ph,T,Gs1,Gs2,dGrxns)
+    return @fastmath @inbounds exp.(dGrxns./(-R*T) .+ ph.Nrp1.*log(getC0(ph.domain1.phase,T)) .+ ph.Nrp2.*log(getC0(ph.domain2.phase,T)));
+end
+
+@inline function getKcs(ph1,ph2,T,Nrp1,Nrp2,dGrxns)
+    return @fastmath @inbounds exp.(dGrxns./(-R*T) .+ Nrp1.*log(getC0(ph1,T)) .+ Nrp2.*log(getC0(ph2,T)));
 end
 
 export getKcs
@@ -181,30 +132,30 @@ export getKcs
 Calculates the forward and reverse rate coefficients for a given reaction, phase and state
 Maintains diffusion limitations if the phase has diffusionlimited=true
 """
-@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W8;kf::W6=-1.0,f::W7=-1.0) where {U<:AbstractPhase,W8,W6,W7,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
-    if signbit(kf) 
+@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,dGrxn::Q2,diffs::Q3,V::W5,phi::W8,d;kf::W6=-1.0,f::W7=-1.0) where {U<:AbstractPhase,W8,W6,W7,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
+    if signbit(kf)
         if signbit(f)
-            kf = getkf(rxn,ph,T,P,C,ns,V,phi)
+            kf = getkf(rxn,ph,T,P,C,ns,V,phi,dGrxn,d)
         else
-            kf = getkf(rxn,ph,T,P,C,ns,V,phi)*f
+            kf = getkf(rxn,ph,T,P,C,ns,V,phi,dGrxn,d)*f
         end
     end
-    Kc = getKc(rxn,ph,T,Gs,phi)
+    Kc = getKc(rxn,ph,T,dGrxn,phi)
     @fastmath krev = kf/Kc
     if ph.diffusionlimited
         if length(rxn.reactants) == 1
             if length(rxn.products) > 1
-                krevdiff = getDiffusiveRate(rxn.products,diffs)
+                krevdiff = getDiffusiveRate(rxn.products,rxn.productinds,diffs)
                 @fastmath krev = krev*krevdiff/(krev+krevdiff)
                 @fastmath kf = Kc*krev
             end
         elseif length(rxn.products) == 1
-            kfdiff = getDiffusiveRate(rxn.reactants,diffs)
+            kfdiff = getDiffusiveRate(rxn.reactants,rxn.reactantinds,diffs)
             @fastmath kf = kf*kfdiff/(kf+kfdiff)
             @fastmath krev = kf/Kc
         elseif length(rxn.products) == length(rxn.reactants)
-            kfdiff = getDiffusiveRate(rxn.reactants,diffs)
-            krevdiff = getDiffusiveRate(rxn.products,diffs)
+            kfdiff = getDiffusiveRate(rxn.reactants,rxn.reactantinds,diffs)
+            krevdiff = getDiffusiveRate(rxn.products,rxn.productinds,diffs)
             @fastmath kff = kf*kfdiff/(kf+kfdiff)
             @fastmath krevr = krev*krevdiff/(krev+krevdiff)
             @fastmath kfr = Kc*krevr
@@ -223,32 +174,33 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
 end
 export getkfkrev
 
-@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7;kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2,Q3<:AbstractArray}
+@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7,d;kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2,Q3<:AbstractArray}
+    dGrxns = -(phase.stoichmatrix*Gs).+phase.electronchange.*(phi*F)
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V,phi)
+        kfs = getkfs(phase,T,P,C,ns,V,phi,dGrxns,d)
         if phi == 0.0
-            krev = @fastmath kfs./getKcs(phase,T,Gs)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns)
         else 
-            krev = @fastmath kfs./getKcs(phase,T,Gs,phi)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns,phi)
         end
     elseif !phase.diffusionlimited && !(kfs === nothing)
         if phi == 0.0
-            krev = @fastmath kfs./getKcs(phase,T,Gs)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns)
         else 
-            krev = @fastmath kfs./getKcs(phase,T,Gs,phi)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns,phi)
         end
     elseif phase.diffusionlimited && !(kfs === nothing)
         len = length(phase.reactions)
         krev = zeros(typeof(N),len)
         @simd for i = 1:len
-           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;kf=kfs[i])
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,dGrxns[i],diffs,V,phi,d;kf=kfs[i])
         end
     else
         len = length(phase.reactions)
         kfs = zeros(typeof(N),len)
         krev = zeros(typeof(N),len)
         @simd for i = 1:len
-           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi)
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,dGrxns[i],diffs,V,phi,d)
         end
     end
     kfs .*= phase.forwardability
@@ -256,65 +208,67 @@ export getkfkrev
     return kfs,krev
 end
 
-@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7;kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q3<:AbstractArray} #autodiff p
+@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7,d;kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q3<:AbstractArray} #autodiff p
+    dGrxns = -(phase.stoichmatrix*Gs).+phase.electronchange.*(phi*F)
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V,phi)
+        kfs = getkfs(phase,T,P,C,ns,V,phi,dGrxns,d)
         if phi == 0.0
-            krev = @fastmath kfs./getKcs(phase,T,Gs)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns)
         else 
-            krev = @fastmath kfs./getKcs(phase,T,Gs,phi)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns,phi)
         end
     elseif !phase.diffusionlimited && !(kfs === nothing)
         if phi == 0.0
-            krev = @fastmath kfs./getKcs(phase,T,Gs)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns)
         else 
-            krev = @fastmath kfs./getKcs(phase,T,Gs,phi)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns,phi)
         end
     elseif phase.diffusionlimited && !(kfs === nothing)
         len = length(phase.reactions)
         krev = similar(kfs)
         kfsdiff = similar(kfs)
         @simd for i = 1:len
-           @fastmath @inbounds kfsdiff[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;kf=kfs[i])
+           @fastmath @inbounds kfsdiff[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,dGrxns[i],diffs,V,phi,d;kf=kfs[i])
         end
         return kfsdiff, krev
     else
         len = length(phase.reactions)
-        kfs = zeros(typeof(Gs[1]),len)
+        kfs = zeros(typeof(Gs[1]),len)ss
         krev = zeros(typeof(Gs[1]),len)
         @simd for i = 1:len
-           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi)
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,dGrxns[i],diffs,V,phi,d)
         end
     end
     return kfs,krev
 end
 
-@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Array{Q2,1},diffs::Q3,V::W5,phi::W7;kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2<:ForwardDiff.Dual,Q3<:AbstractArray} #autodiff p
+@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Array{Q2,1},diffs::Q3,V::W5,phi::W7,d;kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2<:ForwardDiff.Dual,Q3<:AbstractArray} #autodiff p
+    dGrxns = -(phase.stoichmatrix*Gs).+phase.electronchange.*(phi*F)
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V,phi)
+        kfs = getkfs(phase,T,P,C,ns,V,phi,dGrxns,d)
         if phi == 0.0
-            krev = @fastmath kfs./getKcs(phase,T,Gs)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns)
         else 
-            krev = @fastmath kfs./getKcs(phase,T,Gs,phi)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns,phi)
         end
     elseif !phase.diffusionlimited && !(kfs === nothing)
         if phi == 0.0
-            krev = @fastmath kfs./getKcs(phase,T,Gs)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns)
         else 
-            krev = @fastmath kfs./getKcs(phase,T,Gs,phi)
+            krev = @fastmath kfs./getKcs(phase,T,dGrxns,phi)
         end
     elseif phase.diffusionlimited && !(kfs === nothing)
         len = length(phase.reactions)
         krev = similar(kfs)
         @simd for i = 1:len
-           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;kf=kfs[i])
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,dGrxns[i],diffs,V,phi,d;kf=kfs[i])
         end
     else
         len = length(phase.reactions)
         kfs = zeros(typeof(Gs[1]),len)
         krev = zeros(typeof(Gs[1]),len)
         @simd for i = 1:len
-           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi)
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,dGrxns[i],diffs,V,phi,d)
         end
     end
     kfs .*= phase.forwardability
