@@ -209,7 +209,7 @@ function upgradekinetics(rxns, domain1, domain2)
             @assert length(spc) == 1
             kin = stickingcoefficient2arrhenius(rxn.kinetics, surfdomain.phase.sitedensity, length(rxn.reactants) - 1, spc[1].molecularweight)
             newrxns[i] = ElementaryReaction(index=rxn.index, reactants=rxn.reactants, reactantinds=rxn.reactantinds, products=rxn.products,
-                productinds=rxn.productinds, kinetics=kin, radicalchange=rxn.radicalchange, reversible=rxn.reversible, forwardable=rxn.forwardable, pairs=rxn.pairs)
+                productinds=rxn.productinds, kinetics=kin, electronchange=rxn.electronchange, radicalchange=rxn.radicalchange, reversible=rxn.reversible, forwardable=rxn.forwardable, pairs=rxn.pairs)
         else
             newrxns[i] = rxn
         end
