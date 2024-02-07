@@ -459,8 +459,8 @@ By default uses the InterpolatingAdjoint algorithm with vector Jacobian products
 this assumes no changes in code branching during simulation, if that were to become no longer true, the Tracker 
 based alternative algorithm is slower, but avoids this concern. 
 """
-function getadjointsensitivities(bsol::Q, target::String, solver::W; sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
-    abstol::Float64=1e-6, reltol::Float64=1e-3, normalize=true, kwargs...) where {Q,W,W2}
+function getadjointsensitivities(bsol::Simulation, target::String, solver; sensalg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
+    abstol::Float64=1e-6, reltol::Float64=1e-3, normalize=true, kwargs...)
     @assert target in bsol.names || target in ["T", "V", "P", "mass"]
 
     pethane = 160
