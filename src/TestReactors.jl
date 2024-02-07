@@ -220,7 +220,7 @@ jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
 @test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
 
 #sensitivities
-dps = getadjointsensitivities(sim,"H2",CVODE_BDF(linear_solver=:GMRES);sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)),abstol=1e-16,reltol=1e-6)
+dps = getadjointsensitivities(sim,"H2",CVODE_BDF(linear_solver=:GMRES);sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)),abstol=1e-12,reltol=1e-6)
 react2 = Reactor(domain,y0,(0.0,150.11094);p=p,forwardsensitivities=true)
 sol2 = solve(react2.ode,CVODE_BDF(linear_solver=:GMRES),abstol=1e-21,reltol=1e-7); #solve the ode associated with the reactor
 sim2 = Simulation(sol2,domain)
@@ -272,7 +272,7 @@ end;
    @test all((abs.(jpa.-jp) .> 1e-4.*abs.(jp).+1e-16).==false)
    
    #sensitivities
-   dps = getadjointsensitivities(sim,"H2",CVODE_BDF(linear_solver=:GMRES);sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)),abstol=1e-16,reltol=1e-6)
+   dps = getadjointsensitivities(sim,"H2",CVODE_BDF(linear_solver=:GMRES);sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)),abstol=1e-12,reltol=1e-6)
    react2 = Reactor(domain,y0,(0.0,150.11094),interfaces;p=p,forwardsensitivities=true)
    sol2 = solve(react2.ode,CVODE_BDF(linear_solver=:GMRES),abstol=1e-21,reltol=1e-7); #solve the ode associated with the reactor
    sim2 = Simulation(sol2,domain,interfaces)
@@ -316,7 +316,7 @@ jp=jacobianpforwarddiff(y,p,t,domain,[],nothing);
 react = Reactor(domain,y0,(0.0,0.02),p=p) #Create the reactor object
 sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12); #solve the ode associated with the reactor
 sim = Simulation(sol,domain)
-dps = getadjointsensitivities(sim,"H2",CVODE_BDF();sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol=1e-16,reltol=1e-6)
+dps = getadjointsensitivities(sim,"H2",CVODE_BDF();sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol=1e-12,reltol=1e-6)
 react2 = Reactor(domain,y0,(0.0,0.02);p=p,forwardsensitivities=true)
 sol2 = solve(react2.ode,CVODE_BDF(),abstol=1e-16,reltol=1e-6); #solve the ode associated with the reactor
 sim2 = Simulation(sol2,domain)
@@ -488,8 +488,8 @@ end;
     @test sol(t)[1:length(spcs)] ≈ solV(t)[1:end-2] rtol=1e-5
     @test sol(t)[length(spcs)+1:end-4] ≈ solV(t)[1:end-2] rtol=1e-5
     
-    dpsV = getadjointsensitivities(simV,"H2",CVODE_BDF();sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol=1e-16,reltol=1e-6)
-    dps = getadjointsensitivities(sysim,sysim.sims[1],"H2",CVODE_BDF();sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol=1e-16,reltol=1e-6)
+    dpsV = getadjointsensitivities(simV,"H2",CVODE_BDF();sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol=1e-12,reltol=1e-6)
+    dps = getadjointsensitivities(sysim,sysim.sims[1],"H2",CVODE_BDF();sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),abstol=1e-12,reltol=1e-6)
     @test dpsV ≈ dps rtol=1e-4
 end;
 
