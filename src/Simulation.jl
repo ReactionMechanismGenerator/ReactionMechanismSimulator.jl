@@ -3,6 +3,7 @@ import SciMLBase: AbstractODESolution, HermiteInterpolation, AbstractDiffEqInter
 using SciMLSensitivity
 using ForwardDiff
 using PreallocationTools
+using LinearAlgebra
 
 abstract type AbstractSimulation end
 export AbstractSimulation
@@ -561,7 +562,7 @@ function getadjointsensitivities(bsol::Simulation, target::String, solver; sensa
             dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
         end
     end
-    return dpadj
+    return dpadj::LinearAlgebra.Adjoint{Float64, Vector{Float64}}
 end
 
 function getadjointsensitivities(syssim::Q, bsol::W3, target::String, solver::W; sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
@@ -605,7 +606,7 @@ function getadjointsensitivities(syssim::Q, bsol::W3, target::String, solver::W;
             dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
         end
     end
-    return dpadj
+    return dpadj::LinearAlgebra.Adjoint{Float64, Vector{Float64}}
 end
 export getadjointsensitivities
 
