@@ -1,8 +1,9 @@
 using SciMLBase
-import SciMLBase: AbstractODESolution, HermiteInterpolation
-using DiffEqSensitivity
+import SciMLBase: AbstractODESolution, HermiteInterpolation, AbstractDiffEqInterpolation
+using SciMLSensitivity
 using ForwardDiff
 using PreallocationTools
+using LinearAlgebra
 
 abstract type AbstractSimulation end
 export AbstractSimulation
@@ -459,8 +460,8 @@ By default uses the InterpolatingAdjoint algorithm with vector Jacobian products
 this assumes no changes in code branching during simulation, if that were to become no longer true, the Tracker 
 based alternative algorithm is slower, but avoids this concern. 
 """
-function getadjointsensitivities(bsol::Q, target::String, solver::W; sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
-    abstol::Float64=1e-6, reltol::Float64=1e-3, normalize=true, kwargs...) where {Q,W,W2}
+function getadjointsensitivities(bsol::Simulation, target::String, solver; sensalg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
+    abstol::Float64=1e-6, reltol::Float64=1e-3, normalize=true, kwargs...)
     @assert target in bsol.names || target in ["T", "V", "P", "mass"]
 
     pethane = 160
@@ -538,15 +539,19 @@ function getadjointsensitivities(bsol::Q, target::String, solver::W; sensalg::W2
 
     if length(bsol.domain.p) <= pethane
         if target in ["T", "V", "P", "mass"] || !isempty(bsol.interfaces)
-            du0, dpadj = adjoint_sensitivities(bsol.sol, solver, g, nothing, (dgdu, dgdp); sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
+            du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=g, dgdu_continuous=dgdu, 
+                    dgdp_continuous=dgdp, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
         else
-            du0, dpadj = adjoint_sensitivities(bsol.sol, solver, sensg, nothing, (dsensgdu, dsensgdp); sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
+            du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=sensg, dgdu_continuous=dsensgdu, 
+                    dgdp_continuous=dsensgdp, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
         end
     else
         if target in ["T", "V", "P", "mass"] || !isempty(bsol.interfaces)
-            du0, dpadj = adjoint_sensitivities(bsol.sol, solver, g, nothing, (dgdurevdiff, dgdprevdiff); sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
+            du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=g, dgdu_continuous=gdurevdiff, 
+                    dgdp_continuous=dgdprevdiff, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
         else
-            du0, dpadj = adjoint_sensitivities(bsol.sol, solver, sensg, nothing, (dsensgdurevdiff, dsensgdprevdiff); sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
+            du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=sensg, dgdu_continuous=dsensgdurevdiff,
+                     dgdp_continuous=dsensgdprevdiff, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
         end
     end
     if normalize
@@ -557,7 +562,7 @@ function getadjointsensitivities(bsol::Q, target::String, solver::W; sensalg::W2
             dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
         end
     end
-    return dpadj
+    return dpadj::LinearAlgebra.Adjoint{Float64, Vector{Float64}}
 end
 
 function getadjointsensitivities(syssim::Q, bsol::W3, target::String, solver::W; sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
@@ -591,7 +596,8 @@ function getadjointsensitivities(syssim::Q, bsol::W3, target::String, solver::W;
     end
     dgdu(out, y, p, t) = ForwardDiff.gradient!(out, y -> g(y, p, t), y)
     dgdp(out, y, p, t) = ForwardDiff.gradient!(out, p -> g(y, p, t), p)
-    du0, dpadj = adjoint_sensitivities(syssim.sol, solver, g, nothing, (dgdu, dgdp); sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
+    du0, dpadj = adjoint_sensitivities(syssim.sol, solver; g=g, dgdu_continuous=dgdu, dgdp_continuous=dgdp,
+             sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
     if normalize
         for domain in domains
             dpadj[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]] .*= syssim.p[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]]
@@ -600,7 +606,7 @@ function getadjointsensitivities(syssim::Q, bsol::W3, target::String, solver::W;
             dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
         end
     end
-    return dpadj
+    return dpadj::LinearAlgebra.Adjoint{Float64, Vector{Float64}}
 end
 export getadjointsensitivities
 
