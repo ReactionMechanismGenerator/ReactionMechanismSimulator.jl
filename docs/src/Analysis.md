@@ -80,6 +80,13 @@ Transitory sensitivity values can be computed using several different algorithms
 Please let us know on our Github issues page if we're missing any important
 property calculators.  
 
+## Crash Analysis
+
+When thermodynamics and kinetics are poorly assigned mechanisms can become too stiff to simulate causing the solver to crash. In these
+ cases it is very important to be able to efficiently identify potential offending thermochemistry and/or kinetics. Our crash analysis tool analyzes 
+ the reaction and species fluxes to identify NaN quantities and quantities that are unusually large. A crash report can be generated from the associated `Simulation` or `SystemSimulation` object with `printcrashanalysis(analyzecrash(sim;tol=tol))`. In general, the correct `tol` depends on how much faster the offending chemistry is than the real chemistry. Rather than use the default tolerance one should adjust `tol` to achieve a reasonable amount of possible offending thermochemistry and kinetics, adjusting up to reduce the amount identified while decreasing `tol` will cause
+the amount identified to increase. 
+
 ## Plotting
 
 ### Plotting Mole Fractions
