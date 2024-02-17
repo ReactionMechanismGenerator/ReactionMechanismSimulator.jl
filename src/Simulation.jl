@@ -273,7 +273,7 @@ function rops(ssys::SystemSimulation, t)
     vCvave = Array{Any,1}(undef, length(domains))
     vphi = Array{Any,1}(undef, length(domains))
     ropmat = spzeros(Nrxns, Nspcs)
-    start = 1
+    start = 0
     for (k, sim) in enumerate(ssys.sims)
         vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vphi[k] = calcthermo(sim.domain, ssys.sol(t), t)
         cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
