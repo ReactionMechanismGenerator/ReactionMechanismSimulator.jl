@@ -694,7 +694,7 @@ end
     end
     for (i, inter) in enumerate(interfaces)
         if isa(inter, FragmentBasedReactiveFilmGrowthInterfaceConstantT)
-            evaluate(inter, dydt, domains[inter.domaininds[1]], vV[inter.domaininds[1]], cstot)
+            evaluate(inter, dydt, vV[inter.domaininds[1]], cstot)
         elseif isa(inter, AbstractReactiveInternalInterface)
             evaluate(inter, dydt, domains, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], cstot, p)
         elseif isa(inter, VaporLiquidMassTransferInternalInterfaceConstantT)
