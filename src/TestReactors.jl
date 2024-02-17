@@ -198,6 +198,9 @@ using DataFrames
         save(sim, "test.csv")
         @test isfile("test.csv")
 
+        ropmat = rops(sim, "H2", 20.44002454)
+        @test ropmat[1] ≈ -5.304207075533127e-13 rtol = 1e-4
+
         spcnames = getfield.(ig.species, :name)
         h2ind = findfirst(isequal("H2"), spcnames)
         o2ind = findfirst(isequal("O2"), spcnames)
