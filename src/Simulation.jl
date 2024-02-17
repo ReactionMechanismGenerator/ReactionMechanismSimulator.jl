@@ -294,6 +294,59 @@ function rops(ssys::SystemSimulation, t)
     return ropmat
 end
 
+function massrops(ssys::SystemSimulation, t)
+    domains = getfield.(ssys.sims, :domain)
+    @assert any([domain isa FragmentBasedConstantTrhoDomain for domain in domains]) "massrops only works for FragmentBasedConstantTrhoDomain"
+
+    Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims]) + sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter, :reactions)])
+    Nspcs = sum([length(getphasespecies(sim.domain.phase)) for sim in ssys.sims])
+    cstot = zeros(Nspcs)
+    vns = Array{Any,1}(undef, length(domains))
+    vcs = Array{Any,1}(undef, length(domains))
+    vT = Array{Any,1}(undef, length(domains))
+    vP = Array{Any,1}(undef, length(domains))
+    vV = Array{Any,1}(undef, length(domains))
+    vC = Array{Any,1}(undef, length(domains))
+    vN = Array{Any,1}(undef, length(domains))
+    vmu = Array{Any,1}(undef, length(domains))
+    vkfs = Array{Any,1}(undef, length(domains))
+    vkrevs = Array{Any,1}(undef, length(domains))
+    vHs = Array{Any,1}(undef, length(domains))
+    vUs = Array{Any,1}(undef, length(domains))
+    vGs = Array{Any,1}(undef, length(domains))
+    vdiffs = Array{Any,1}(undef, length(domains))
+    vCvave = Array{Any,1}(undef, length(domains))
+    vphi = Array{Any,1}(undef, length(domains))
+    if any([domain isa FragmentBasedConstantTrhoDomain for domain in domains])
+        ropmat = spzeros(Nrxns, Nspcs + 1)
+    else
+        ropmat = spzeros(Nrxns, Nspcs)
+    end
+    massropvec = spzeros(Nrxns, 1)
+    ropmat = spzeros(Nrxns, Nspcs)
+    start = 0
+    for (k, sim) in enumerate(ssys.sims)
+        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vphi[k] = calcthermo(sim.domain, ssys.sol(t), t)
+        cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
+        rops!(ropmat, sim.domain.rxnarray, cstot, vkfs[k], vkrevs[k], vV[k], start)
+        start += length(vkfs[k])
+    end
+    for inter in ssys.interfaces
+        if inter isa FragmentBasedReactiveFilmGrowthInterfaceConstantT
+            kfs, krevs = getkfskrevs(inter)
+            rops!(ropmat, massropvec, inter.rxnarray, inter.fragmentbasedrxnarray, cstot, kfs, krevs, vV[inter.domaininds[1]], inter.Mws, inter.domainfilm.indexes[1]:inter.domainfilm.indexes[2], start)
+            start += length(kfs)
+        elseif hasproperty(inter, :reactions)
+            kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], cstot)
+            rops!(ropmat, inter.rxnarray, cstot, kfs, krevs, inter.A, start)
+            start += length(kfs)
+        end
+    end
+    return ropmat, massropvec
+end
+
+export massrops
+
 """
 calculates the rates of production/loss at a given time point for a single species
 this outputs a sparse vector of length num reactions containing the production/loss
