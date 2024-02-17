@@ -163,6 +163,11 @@ function normalizefulltransitorysensitivities!(dSdt,ssys::SystemSimulation,t)
         @views ns = y[sim.domain.indexes[1]:sim.domain.indexes[2]]
         @views dSdt[sim.domain.indexes[1]:sim.domain.indexes[2],:] ./= ns
     end
+    for (i,inter) in enumerate(ssys.interfaces)
+        if isa(inter, AbstractReactiveInternalInterface)
+            @views dSdt[:,inter.parameterindexes[1]:inter.parameterindexes[2]] .*= ssys.p[inter.parameterindexes[1]:inter.parameterindexes[2]]'
+        end
+    end
     return dSdt
 end
 
@@ -203,6 +208,11 @@ function normalizeadjointtransitorysensitivities!(dSdt,ssys::SystemSimulation,t,
         @views dSdt[sim.domain.parameterindexes[1]+length(sim.species):sim.domain.parameterindexes[2]] .*= ssys.p[sim.domain.parameterindexes[1]+length(sim.species):sim.domain.parameterindexes[2]]
         if ind >= sim.domain.indexes[1] && ind <= sim.domain.indexes[2]
             dSdt ./= y[ind]
+        end
+    end
+    for (i,inter) in enumerate(ssys.interfaces)
+        if isa(inter, AbstractReactiveInternalInterface)
+            @views dSdt[inter.parameterindexes[1]:inter.parameterindexes[2]] .*= ssys.p[inter.parameterindexes[1]:inter.parameterindexes[2]]
         end
     end
     return dSdt
