@@ -532,6 +532,10 @@ end
 function evaluate(ri::FragmentBasedReactiveFilmGrowthInterfaceConstantT, dydt, Vfilm, cstot)
     kfs, krevs = getkfskrevs(ri)
     addreactionratecontributions!(dydt, ri.fragmentbasedrxnarray, ri.rxnarray, cstot, kfs, krevs, Vfilm, ri.domainfilm.indexes[3], ri.Mws, ri.domainfilm.indexes[1]:domainfilm.indexes[2])
+    if hasproperty(ri.domain2, :epsilon)
+        epsilon = ri.domain2.epsilon
+        dydt[ri.domain2.thermovariabledict["V"]] = dydt[ri.domainfilm.indexes[3]] / ri.domainfilm.rho / (1 - epsilon) * epsilon
+    end
 end
 
 export evaluate
