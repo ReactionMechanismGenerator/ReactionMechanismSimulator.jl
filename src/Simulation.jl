@@ -473,7 +473,7 @@ function rops!(ropvec, rarray::Array{Int64,2}, cs, kfs, krevs, V, start, ind)
 end
 
 
-function rops!(ropmat, rarray::Array{Int64,2}, fragmentbasedrxnarray::Array{Int64,2}, cs, kfs, krevs, V, start)
+function rops!(ropmat, massropvec, rarray::Array{Int64,2}, fragmentbasedrxnarray::Array{Int64,2}, cs, kfs, krevs, V, Mws, fragmentindexes, start)
     numfragmentbasedreacprod, numrxns = size(fragmentbasedrxnarray)
     half = Int(numfragmentbasedreacprod / 2)
     for i = 1:length(kfs)
@@ -481,13 +481,23 @@ function rops!(ropmat, rarray::Array{Int64,2}, fragmentbasedrxnarray::Array{Int6
 
         for j = 1:half
             if fragmentbasedrxnarray[j, i] != 0
-                @fastmath ropmat[fragmentbasedrxnarray[j, i]] -= R
+                @fastmath ropmat[i+start, fragmentbasedrxnarray[j, i]] -= R
+                if !(fragmentbasedrxnarray[j, i] in fragmentindexes)
+                    if !(massropvec == nothing)
+                        @fastmath @inbounds massropvec[i+start] -= R * Mws[fragmentbasedrxnarray[j, i]]
+                    end
+                end
             end
         end
 
         for j = half+1:numfragmentbasedreacprod
             if fragmentbasedrxnarray[j, i] != 0
-                @fastmath ropmat[fragmentbasedrxnarray[j, i]] += R
+                @fastmath ropmat[i+start, fragmentbasedrxnarray[j, i]] += R
+                if !(fragmentbasedrxnarray[j, i] in fragmentindexes)
+                    if !(massropvec == nothing)
+                        @fastmath @inbounds massropvec[i+start] += R * Mws[fragmentbasedrxnarray[j, i]]
+                    end
+                end
             end
         end
     end
