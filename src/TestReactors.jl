@@ -463,8 +463,6 @@ using DataFrames
         @test all((abs.(jpa .- jp) .> 1e-4 .* abs.(jp) .+ 1e-16) .== false)
     end
 
-
-
     @testset "Multi-domain ConstantV sensitivity analysis" begin
         phaseDict = readinput("../src/testing/superminimal.rms")
         spcs = phaseDict["phase"]["Species"]
