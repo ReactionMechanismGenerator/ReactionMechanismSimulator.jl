@@ -9,6 +9,7 @@ makedocs(
     modules = [ReactionMechanismSimulator],
     pages = [
         "Home" => "index.md",
+        "Installation.md",
         "Input.md",
         "Simulating.md",
         "Analysis.md",
