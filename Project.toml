@@ -1,7 +1,7 @@
 name = "ReactionMechanismSimulator"
 uuid = "c2d78dd2-25c4-5b79-bebc-be6c69dd440f"
 authors = ["Matt Johnson <mjohnson541@gmail.com>", "Hao-Wei Pang <hao4wei3pang2@gmail.com>"]
-version = "0.4.0"
+version = "1.0.0"
 
 [deps]
 Calculus = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
