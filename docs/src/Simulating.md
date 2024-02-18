@@ -109,6 +109,36 @@ sol = solve(react.ode,CVODE_BDF(),abstol=1e-20,reltol=1e-12;forwardsensitivities
 
 In general CVODE_BDF tends to work well on these problems.  
 
+## Saving a Solution Object
+
+The user may wish to save useful objects from above:
+
+```
+bsol = Simulation(sol, domain)
+```
+
+Saving the data to a Julia data structure ([JLD2](https://github.com/JuliaIO/JLD2.jl)) seems to work well. Once the `JLD2` package has been downloaded, data can be saved using the following commands:
+
+```
+using JLD2, FileIO
+save("<file_name>.jld2", "bsol_saved", bsol)
+```
+
+The data can be read back into Julia as a dictionary, and the desired data can be accessed using its corresponding key:
+
+```
+d = load("<file_name>.jld2")
+bsol_loaded = d["bsol_saved"]
+```
+
+Since the data is saved in HDF5 format, it can also be read into Python as follows:
+
+```
+import h5py
+f = h5py.File("<file_name", "r")
+```
+
+
 ## Threaded Sensitivity Analysis
 Instead of solving all of the sensitivity equations at once as is done in raw Forward sensitivity analysis we can
 first solve the equations without sensitivity analysis alone. With an interpolatable solution to the original equations the sensitivities associated with each parameter are decoupled from the sensitivities of every other parameter and can be solved independently. Solving these groups of equations sequentially is often significantly faster than solving the equations together. However, by parallelizing the solution of these equations using multithreading it is possible to achieve dramatic speed ups. This approach is not always competitive with adjoint sensitivities as the adjoint approach requires solution of a much smaller system of equations, however, in practice this approach is often more robust especially for large systems.
