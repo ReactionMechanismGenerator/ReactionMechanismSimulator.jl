@@ -273,7 +273,7 @@ function rops(ssys::SystemSimulation, t)
     vCvave = Array{Any,1}(undef, length(domains))
     vphi = Array{Any,1}(undef, length(domains))
     ropmat = spzeros(Nrxns, Nspcs)
-    start = 1
+    start = 0
     for (k, sim) in enumerate(ssys.sims)
         vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vphi[k] = calcthermo(sim.domain, ssys.sol(t), t)
         cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
@@ -283,7 +283,7 @@ function rops(ssys::SystemSimulation, t)
     for inter in ssys.interfaces
         if inter isa FragmentBasedReactiveFilmGrowthInterfaceConstantT
             kfs, krevs = getkfskrevs(inter)
-            rops!(ropmat, inter.rxnarray, inter.fragmentbasedrxnarray, cstot, kfs, krevs, vV[inter.domaininds[1]], start)
+            rops!(ropmat, nothing, inter.rxnarray, inter.fragmentbasedrxnarray, cstot, kfs, krevs, vV[inter.domaininds[1]], inter.Mws, inter.domainfilm.indexes[1]:inter.domainfilm.indexes[2], start)
             start += length(kfs)
         elseif hasproperty(inter, :reactions)
             kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], cstot)
@@ -293,6 +293,59 @@ function rops(ssys::SystemSimulation, t)
     end
     return ropmat
 end
+
+function massrops(ssys::SystemSimulation, t)
+    domains = getfield.(ssys.sims, :domain)
+    @assert any([domain isa FragmentBasedConstantTrhoDomain for domain in domains]) "massrops only works for FragmentBasedConstantTrhoDomain"
+
+    Nrxns = sum([length(sim.domain.phase.reactions) for sim in ssys.sims]) + sum([length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter, :reactions)])
+    Nspcs = sum([length(getphasespecies(sim.domain.phase)) for sim in ssys.sims])
+    cstot = zeros(Nspcs)
+    vns = Array{Any,1}(undef, length(domains))
+    vcs = Array{Any,1}(undef, length(domains))
+    vT = Array{Any,1}(undef, length(domains))
+    vP = Array{Any,1}(undef, length(domains))
+    vV = Array{Any,1}(undef, length(domains))
+    vC = Array{Any,1}(undef, length(domains))
+    vN = Array{Any,1}(undef, length(domains))
+    vmu = Array{Any,1}(undef, length(domains))
+    vkfs = Array{Any,1}(undef, length(domains))
+    vkrevs = Array{Any,1}(undef, length(domains))
+    vHs = Array{Any,1}(undef, length(domains))
+    vUs = Array{Any,1}(undef, length(domains))
+    vGs = Array{Any,1}(undef, length(domains))
+    vdiffs = Array{Any,1}(undef, length(domains))
+    vCvave = Array{Any,1}(undef, length(domains))
+    vphi = Array{Any,1}(undef, length(domains))
+    if any([domain isa FragmentBasedConstantTrhoDomain for domain in domains])
+        ropmat = spzeros(Nrxns, Nspcs + 1)
+    else
+        ropmat = spzeros(Nrxns, Nspcs)
+    end
+    massropvec = spzeros(Nrxns, 1)
+    ropmat = spzeros(Nrxns, Nspcs)
+    start = 0
+    for (k, sim) in enumerate(ssys.sims)
+        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vphi[k] = calcthermo(sim.domain, ssys.sol(t), t)
+        cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
+        rops!(ropmat, sim.domain.rxnarray, cstot, vkfs[k], vkrevs[k], vV[k], start)
+        start += length(vkfs[k])
+    end
+    for inter in ssys.interfaces
+        if inter isa FragmentBasedReactiveFilmGrowthInterfaceConstantT
+            kfs, krevs = getkfskrevs(inter)
+            rops!(ropmat, massropvec, inter.rxnarray, inter.fragmentbasedrxnarray, cstot, kfs, krevs, vV[inter.domaininds[1]], inter.Mws, inter.domainfilm.indexes[1]:inter.domainfilm.indexes[2], start)
+            start += length(kfs)
+        elseif hasproperty(inter, :reactions)
+            kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], cstot)
+            rops!(ropmat, inter.rxnarray, cstot, kfs, krevs, inter.A, start)
+            start += length(kfs)
+        end
+    end
+    return ropmat, massropvec
+end
+
+export massrops
 
 """
 calculates the rates of production/loss at a given time point for a single species
@@ -420,7 +473,7 @@ function rops!(ropvec, rarray::Array{Int64,2}, cs, kfs, krevs, V, start, ind)
 end
 
 
-function rops!(ropmat, rarray::Array{Int64,2}, fragmentbasedrxnarray::Array{Int64,2}, cs, kfs, krevs, V, start)
+function rops!(ropmat, massropvec, rarray::Array{Int64,2}, fragmentbasedrxnarray::Array{Int64,2}, cs, kfs, krevs, V, Mws, fragmentindexes, start)
     numfragmentbasedreacprod, numrxns = size(fragmentbasedrxnarray)
     half = Int(numfragmentbasedreacprod / 2)
     for i = 1:length(kfs)
@@ -428,13 +481,23 @@ function rops!(ropmat, rarray::Array{Int64,2}, fragmentbasedrxnarray::Array{Int6
 
         for j = 1:half
             if fragmentbasedrxnarray[j, i] != 0
-                @fastmath ropmat[fragmentbasedrxnarray[j, i]] -= R
+                @fastmath ropmat[i+start, fragmentbasedrxnarray[j, i]] -= R
+                if !(fragmentbasedrxnarray[j, i] in fragmentindexes)
+                    if !(massropvec == nothing)
+                        @fastmath @inbounds massropvec[i+start] -= R * Mws[fragmentbasedrxnarray[j, i]]
+                    end
+                end
             end
         end
 
         for j = half+1:numfragmentbasedreacprod
             if fragmentbasedrxnarray[j, i] != 0
-                @fastmath ropmat[fragmentbasedrxnarray[j, i]] += R
+                @fastmath ropmat[i+start, fragmentbasedrxnarray[j, i]] += R
+                if !(fragmentbasedrxnarray[j, i] in fragmentindexes)
+                    if !(massropvec == nothing)
+                        @fastmath @inbounds massropvec[i+start] += R * Mws[fragmentbasedrxnarray[j, i]]
+                    end
+                end
             end
         end
     end
@@ -539,19 +602,19 @@ function getadjointsensitivities(bsol::Simulation, target::String, solver; sensa
 
     if length(bsol.domain.p) <= pethane
         if target in ["T", "V", "P", "mass"] || !isempty(bsol.interfaces)
-            du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=g, dgdu_continuous=dgdu, 
-                    dgdp_continuous=dgdp, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
+            du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=g, dgdu_continuous=dgdu,
+                dgdp_continuous=dgdp, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
         else
-            du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=sensg, dgdu_continuous=dsensgdu, 
-                    dgdp_continuous=dsensgdp, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
+            du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=sensg, dgdu_continuous=dsensgdu,
+                dgdp_continuous=dsensgdp, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
         end
     else
         if target in ["T", "V", "P", "mass"] || !isempty(bsol.interfaces)
-            du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=g, dgdu_continuous=gdurevdiff, 
-                    dgdp_continuous=dgdprevdiff, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
+            du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=g, dgdu_continuous=gdurevdiff,
+                dgdp_continuous=dgdprevdiff, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
         else
             du0, dpadj = adjoint_sensitivities(bsol.sol, solver; g=sensg, dgdu_continuous=dsensgdurevdiff,
-                     dgdp_continuous=dsensgdprevdiff, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
+                dgdp_continuous=dsensgdprevdiff, sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
         end
     end
     if normalize
@@ -562,7 +625,7 @@ function getadjointsensitivities(bsol::Simulation, target::String, solver; sensa
             dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
         end
     end
-    return dpadj::LinearAlgebra.Adjoint{Float64, Vector{Float64}}
+    return dpadj::LinearAlgebra.Adjoint{Float64,Vector{Float64}}
 end
 
 function getadjointsensitivities(syssim::Q, bsol::W3, target::String, solver::W; sensalg::W2=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false)),
@@ -597,7 +660,7 @@ function getadjointsensitivities(syssim::Q, bsol::W3, target::String, solver::W;
     dgdu(out, y, p, t) = ForwardDiff.gradient!(out, y -> g(y, p, t), y)
     dgdp(out, y, p, t) = ForwardDiff.gradient!(out, p -> g(y, p, t), p)
     du0, dpadj = adjoint_sensitivities(syssim.sol, solver; g=g, dgdu_continuous=dgdu, dgdp_continuous=dgdp,
-             sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
+        sensealg=sensalg, abstol=abstol, reltol=reltol, kwargs...)
     if normalize
         for domain in domains
             dpadj[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]] .*= syssim.p[domain.parameterindexes[1]+length(domain.phase.species):domain.parameterindexes[2]]
@@ -606,7 +669,7 @@ function getadjointsensitivities(syssim::Q, bsol::W3, target::String, solver::W;
             dpadj ./= bsol.sol(bsol.sol.t[end])[ind]
         end
     end
-    return dpadj::LinearAlgebra.Adjoint{Float64, Vector{Float64}}
+    return dpadj::LinearAlgebra.Adjoint{Float64,Vector{Float64}}
 end
 export getadjointsensitivities
 
