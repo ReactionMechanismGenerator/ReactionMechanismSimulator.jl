@@ -47,4 +47,4 @@ Pkg.build("ReactionMechanismSimulator")
 using ReactionMechanismSimulator
 ```
 
-Detailed instructions and documentation are currently available in the <a href="https://github.com/ReactionMechanismGenerator/ReactionMechanismSimulator.jl/wiki">wiki</a>.
+Detailed instructions and documentation are currently available <a href="https://reactionmechanismgenerator.github.io/ReactionMechanismSimulator.jl">here</a>.
