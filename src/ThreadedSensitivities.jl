@@ -35,16 +35,46 @@ function threadedsensitivities(react; odesolver=nothing, senssolver=nothing,
         forwardsensitivities=true, forwarddiff=react.forwarddiff, modelingtoolkit=react.modelingtoolkit,
         tau=react.tau)
 
-    salist = generatesensitivityodes(react, sol)
 
     # Parallelize the SA calculations
     solutiondictionary = Dict()
 
+    nthreads = Threads.nthreads()
+    if nthreads > 1  #each thread needs its own Reactor
+        reacts =  [deepcopy(react) for i in 1:nthreads]
+    else
+        reacts = [react]
+    end
+
     @threads for i in 1:length(react.p)
-        s = solve(salist[i], senssolver; senskwargs...)
+        if nthreads > 1
+            id = Threads.threadid()
+            r = reacts[id]
+        else
+            r = react
+        end
+        jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobiany!(J,y,p,t,r.domain,r.interfaces,nothing)
+        jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J,y,p,t,r.domain,r.interfaces,nothing)
+        
+        function dsdt!(ds, s, local_params, t)
+            jy = zeros(length(r.y0), length(r.y0))
+            jp = zeros(length(r.y0), length(r.p))
+            y = sol(t)
+            jacy!(jy, y, r.p, t)
+            jacp!(jp, y, r.p, t)
+            @views @inbounds c = jp[:, i]
+            @inbounds ds .= jy * s .+ c
+        end
+
+        # Create list of ODEProblems for each batch of parameters
+
+        odefcn = ODEFunction(dsdt!)
+        prob = ODEProblem(odefcn, zeros(length(r.y0)),r.tspan,0)
+        s = solve(prob, senssolver; senskwargs...)
         solutiondictionary[i] = s
     end
-    bigsol = generatesenssolution(sol, solutiondictionary, reactsens.ode)
+
+    bigsol = generatesenssolution(sol,solutiondictionary,reactsens.ode)
     return bigsol
 end
 
@@ -83,40 +113,31 @@ function threadedsensitivities(react, paramindices; odesolver=nothing, senssolve
         forwardsensitivities=true, forwarddiff=react.forwarddiff, modelingtoolkit=react.modelingtoolkit,
         tau=react.tau)
 
-    salist = generatesensitivityodes(react, sol)
 
     # Parallelize the SA calculations
     solutiondictionary = Dict()
-
-    @threads for i in paramindices
-        s = solve(salist[i], senssolver; senskwargs...)
-        solutiondictionary[i] = s
+    nthreads = Threads.nthreads()
+    if nthreads > 1  #each thread needs its own Reactor
+        reacts =  [deepcopy(react) for i in 1:nthreads]
+    else
+        reacts = [react]
     end
-
-    return solutiondictionary
-end
-
-export threadedsensitivities
-
-"""
-generate individual sensitivity ODEs for each parameter
-"""
-function generatesensitivityodes(react, sol)
-    sa_list = []
-    y0 = react.y0
-    tspan = react.tspan
-    p = react.p
-    for i in 1:length(p)
-        r = deepcopy(react)
-        jacy!(J::Q2, y::T, p::V, t::Q) where {Q2,T,Q<:Real,V} = jacobiany!(J, y, p, t, r.domain, r.interfaces, nothing)
-        jacp!(J::Q2, y::T, p::V, t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J, y, p, t, r.domain, r.interfaces, nothing)
-
+    @threads for i in paramindices
+        if nthreads > 1
+            id = Threads.threadid()
+            r = reacts[id]
+        else
+            r = react
+        end
+        jacy!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobiany!(J,y,p,t,r.domain,r.interfaces,nothing)
+        jacp!(J::Q2,y::T,p::V,t::Q) where {Q2,T,Q<:Real,V} = jacobianp!(J,y,p,t,r.domain,r.interfaces,nothing)
+        
         function dsdt!(ds, s, local_params, t)
-            jy = zeros(length(y0), length(y0))
-            jp = zeros(length(y0), length(p))
+            jy = zeros(length(r.y0), length(r.y0))
+            jp = zeros(length(r.y0), length(r.p))
             y = sol(t)
-            jacy!(jy, y, p, t)
-            jacp!(jp, y, p, t)
+            jacy!(jy, y, r.p, t)
+            jacp!(jp, y, r.p, t)
             @views @inbounds c = jp[:, i]
             @inbounds ds .= jy * s .+ c
         end
@@ -124,11 +145,15 @@ function generatesensitivityodes(react, sol)
         # Create list of ODEProblems for each batch of parameters
 
         odefcn = ODEFunction(dsdt!)
-        prob = ODEProblem(odefcn, zeros(length(y0)), tspan, 0)
-        push!(sa_list, prob)
+        prob = ODEProblem(odefcn, zeros(length(r.y0)),r.tspan,0)
+        s = solve(prob, senssolver; senskwargs...)
+        solutiondictionary[i] = s
     end
-    return sa_list
+
+    return solutiondictionary
 end
+
+export threadedsensitivities
 
 """
 Combine ODE solutions into a sensitivity solution
