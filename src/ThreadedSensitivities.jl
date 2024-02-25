@@ -161,13 +161,8 @@ Combine ODE solutions into a sensitivity solution
 function generatesenssolution(sol, sensdict, sensprob)
     ts = sol.t
     ordkeys = sort([x for x in keys(sensdict)])
-    u = deepcopy(sol.u)
-    for k in ordkeys
-        for i in 1:length(u)
-            u[i] = vcat(u[i], sensdict[k](ts[i]))
-        end
-    end
     bigsol = build_solution(sensprob, sol.alg, ts, u;
         interp=LinearInterpolation(ts, u), retcode=sol.retcode)
+    u = [vcat(sol.u[i],(sensdict[k](ts[i]) for k in ordkeys)...) for i in 1:length(sol.u)]
     return bigsol
 end
