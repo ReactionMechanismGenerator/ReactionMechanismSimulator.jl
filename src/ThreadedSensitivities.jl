@@ -37,7 +37,7 @@ function threadedsensitivities(react; odesolver=nothing, senssolver=nothing,
 
 
     # Parallelize the SA calculations
-    solutiondictionary = Dict()
+    solutions =  Array{ODESolution}(undef,length(react.p))
 
     nthreads = Threads.nthreads()
     if nthreads > 1  #each thread needs its own Reactor
@@ -71,10 +71,10 @@ function threadedsensitivities(react; odesolver=nothing, senssolver=nothing,
         odefcn = ODEFunction(dsdt!)
         prob = ODEProblem(odefcn, zeros(length(r.y0)),r.tspan,0)
         s = solve(prob, senssolver; senskwargs...)
-        solutiondictionary[i] = s
+        solutions[i] = s
     end
 
-    bigsol = generatesenssolution(sol,solutiondictionary,reactsens.ode)
+    bigsol = generatesenssolution(sol,solutions,reactsens.ode)
     return bigsol
 end
 
@@ -115,14 +115,15 @@ function threadedsensitivities(react, paramindices; odesolver=nothing, senssolve
 
 
     # Parallelize the SA calculations
-    solutiondictionary = Dict()
+    solutions =  Array{ODESolution}(undef,length(paramindices))
     nthreads = Threads.nthreads()
     if nthreads > 1  #each thread needs its own Reactor
         reacts =  [deepcopy(react) for i in 1:nthreads]
     else
         reacts = [react]
     end
-    @threads for i in paramindices
+    @threads for n in 1:length(paramindices)
+        i = paramindices[n]
         if nthreads > 1
             id = Threads.threadid()
             r = reacts[id]
@@ -147,9 +148,9 @@ function threadedsensitivities(react, paramindices; odesolver=nothing, senssolve
         odefcn = ODEFunction(dsdt!)
         prob = ODEProblem(odefcn, zeros(length(r.y0)),r.tspan,0)
         s = solve(prob, senssolver; senskwargs...)
-        solutiondictionary[i] = s
+        solutions[n] = s
     end
-
+    solutiondictionary = [i=>solutions[n] for (n,i) in enumerate(paramindices)]
     return solutiondictionary
 end
 
@@ -158,11 +159,10 @@ export threadedsensitivities
 """
 Combine ODE solutions into a sensitivity solution
 """
-function generatesenssolution(sol, sensdict, sensprob)
+function generatesenssolution(sol, senssolns, sensprob)
     ts = sol.t
-    ordkeys = sort([x for x in keys(sensdict)])
+    u = [vcat(sol.u[i],(senssolns[k](ts[i]) for k in 1:length(senssolns))...) for i in 1:length(sol.u)]
     bigsol = build_solution(sensprob, sol.alg, ts, u;
         interp=LinearInterpolation(ts, u), retcode=sol.retcode)
-    u = [vcat(sol.u[i],(sensdict[k](ts[i]) for k in ordkeys)...) for i in 1:length(sol.u)]
     return bigsol
 end
