@@ -10,6 +10,7 @@ if !("rmg" in packages) && !("rmgmolecule" in packages) && (PyCall.pyversion.maj
     end
     Conda.add("nomkl")
     Conda.add("numpy")
+    Conda.add_channel("mjohnson541")
     Conda.add_channel("hwpang")
     Conda.add("rmgmolecule")
     Pkg.build("PyCall")
