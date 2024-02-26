@@ -13,7 +13,7 @@ if PyCall.pyversion.major != 3 || PyCall.pyversion.minor != 7
     end
     Conda.add("nomkl")
     Conda.add("numpy")
-    if (not Conda.exists("rmg")) && (not Conda.exists("rmgmolecule"))
+    if (!Conda.exists("rmg")) && (!Conda.exists("rmgmolecule")) #if rmg and rmgmolecule not present install molecule
         Conda.add_channel("hwpang")
         Conda.add("rmgmolecule")
     end
