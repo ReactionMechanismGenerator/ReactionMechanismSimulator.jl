@@ -4,6 +4,7 @@ using LinearAlgebra
 using Tracker
 using ReverseDiff
 using RecursiveArrayTools
+using ModelingToolkit
 
 @inline function calcgibbs(ph::U,T::W) where {U<:IdealPhase,W<:Real}
     return getGibbs.(getfield.(ph.species,:thermo),T)
@@ -181,14 +182,49 @@ export getKcs
 Calculates the forward and reverse rate coefficients for a given reaction, phase and state
 Maintains diffusion limitations if the phase has diffusionlimited=true
 """
-@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W8;kf::W6=-1.0,f::W7=-1.0) where {U<:AbstractPhase,W8,W6,W7,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
+@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Vector{Q1},Gs::Q2,diffs,V::W5,phi::W8;kf::W6=-1.0,f=-1.0) where {U<:AbstractPhase,W8,W6,W5,W4,W1,W2,W3,Q1<:Real,Q2}
     if signbit(kf) 
-        if signbit(f)
-            kf = getkf(rxn,ph,T,P,C,ns,V,phi)
-        else
+        if isa(f,Num) || !signbit(f)
             kf = getkf(rxn,ph,T,P,C,ns,V,phi)*f
+        else
+            kf = getkf(rxn,ph,T,P,C,ns,V,phi)
         end
     end
+    Kc = getKc(rxn,ph,T,Gs,phi)
+    @fastmath krev = kf/Kc
+    if ph.diffusionlimited
+        if length(rxn.reactants) == 1
+            if length(rxn.products) > 1
+                krevdiff = getDiffusiveRate(rxn.products,diffs)
+                @fastmath krev = krev*krevdiff/(krev+krevdiff)
+                @fastmath kf = Kc*krev
+            end
+        elseif length(rxn.products) == 1
+            kfdiff = getDiffusiveRate(rxn.reactants,diffs)
+            @fastmath kf = kf*kfdiff/(kf+kfdiff)
+            @fastmath krev = kf/Kc
+        elseif length(rxn.products) == length(rxn.reactants)
+            kfdiff = getDiffusiveRate(rxn.reactants,diffs)
+            krevdiff = getDiffusiveRate(rxn.products,diffs)
+            @fastmath kff = kf*kfdiff/(kf+kfdiff)
+            @fastmath krevr = krev*krevdiff/(krev+krevdiff)
+            @fastmath kfr = Kc*krevr
+            if kff > kfr
+                kf = kfr
+                krev = krevr
+            else
+                kf = kff
+                @fastmath krev = kf/Kc
+            end
+        end
+    end
+    kf *= rxn.forwardable
+    krev *= rxn.reversible
+    return (kf,krev)
+end
+
+@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Vector{Q1},Gs::Q2,diffs,V::W5,phi::W8;kf::W6=-1.0,f=-1.0) where {U<:AbstractPhase,W8,W6,W5,W4,W1,W2,W3,Q1<:Num,Q2}
+    kf = getkf(rxn,ph,T,P,C,ns,V,phi)*f
     Kc = getKc(rxn,ph,T,Gs,phi)
     @fastmath krev = kf/Kc
     if ph.diffusionlimited
