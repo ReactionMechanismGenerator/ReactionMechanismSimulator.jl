@@ -39,7 +39,7 @@ end
 
 const unitsdict = Dict()
 const elementdict = Dict([1=>"H",3=>"Li",6=>"C",8=>"O",7=>"N",17=>"Cl",16=>"S",18=>"Ar",10=>"Ne",2=>"He",
-        15=>"P",9=>"F",35=>"Br",53=>"I",289=>"Fl",0=>"X"])
+        15=>"P",9=>"F",35=>"Br",53=>"I",289=>"Fl",0=>"X",5=>"B"])
 
 const allowedfcnlist = vcat(names(Calc),names(Spc),names(Rxn),names(Solv))
 
@@ -53,6 +53,7 @@ const mcgowanvolumes = Dict(["H"=> upreferred(8.71u"mL/mol").val,
          "Ne"=> upreferred(8.51u"mL/mol").val,"Si"=> upreferred(26.83u"mL/mol").val, "P"=> upreferred(24.87u"mL/mol").val,
         "S"=> upreferred(22.91u"mL/mol").val, "Cl"=> upreferred(20.95u"mL/mol").val,
          "Ar"=> upreferred(18.99u"mL/mol").val,"Br"=> upreferred(26.21u"mL/mol").val,
+         "B"=> upreferred(18.31u"mL/mol").val
          ])
 
 function parseentry(q,units=nothing)
