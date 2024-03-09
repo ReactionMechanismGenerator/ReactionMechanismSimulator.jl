@@ -54,6 +54,12 @@ function Reactor(domain::T, y0::Array{T1,1}, tspan::Tuple, interfaces::Z=[]; p::
     prectmp = ilu(W, τ=tau)
     preccache = Ref(prectmp)
 
+    if sparsity > 0.8
+        jac_prototype = J
+    else
+        jac_prototype = nothing
+    end
+
     if (forwardsensitivities || !forwarddiff) && domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTAPhiDomain}
         if !forwardsensitivities
             odefcn = ODEFunction(dydt; jac=jacy!, paramjac=jacp!)
@@ -61,7 +67,7 @@ function Reactor(domain::T, y0::Array{T1,1}, tspan::Tuple, interfaces::Z=[]; p::
             odefcn = ODEFunction(dydt; paramjac=jacp!)
         end
     else
-        odefcn = ODEFunction(dydt; jac=jacyforwarddiff!, paramjac=jacpforwarddiff!, jac_prototype=float.(J)) #jac_prototype is not needed/used for Sundials solvers but maybe needed for Julia solvers
+        odefcn = ODEFunction(dydt; jac=jacyforwarddiff!, paramjac=jacpforwarddiff!, jac_prototype=jac_prototype) #jac_prototype is not needed/used for Sundials solvers but maybe needed for Julia solvers
     end
     if forwardsensitivities
         ode = ODEForwardSensitivityProblem(odefcn, y0, tspan, p)
@@ -78,9 +84,9 @@ function Reactor(domain::T, y0::Array{T1,1}, tspan::Tuple, interfaces::Z=[]; p::
         sys = modelingtoolkitize(ode)
         jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
         if (forwardsensitivities || !forwarddiff) && domain isa Union{ConstantTPDomain,ConstantVDomain,ConstantPDomain,ParametrizedTPDomain,ParametrizedVDomain,ParametrizedPDomain,ConstantTVDomain,ParametrizedTConstantVDomain,ConstantTAPhiDomain}
-            odefcn = ODEFunction(dydt; jac=jac, paramjac=jacp!)
+            odefcn = ODEFunction(dydt; jac=jac, paramjac=jacp!, jac_prototype=jac_prototype)
         else
-            odefcn = ODEFunction(dydt; jac=jac, paramjac=jacpforwarddiff!)
+            odefcn = ODEFunction(dydt; jac=jac, paramjac=jacpforwarddiff!, jac_prototype=jac_prototype)
         end
         if forwardsensitivities
             ode = ODEForwardSensitivityProblem(odefcn, y0, tspan, p)
@@ -90,7 +96,7 @@ function Reactor(domain::T, y0::Array{T1,1}, tspan::Tuple, interfaces::Z=[]; p::
     end
     return Reactor(domain, interfaces, y0, tspan, p, ode, recsolver, forwardsensitivities, forwarddiff, modelingtoolkit, tau, precsundials, psetupsundials, precsjulia)
 end
-function Reactor(domains::T, y0s::W1, tspan::W2, interfaces::Z=Tuple(), ps::X=SciMLBase.NullParameters(); forwardsensitivities=false, modelingtoolkit=false, tau=1e-3) where {T<:Tuple,W1<:Tuple,Z,X,W2}
+function Reactor(domains::T, y0s::W1, tspan::W2, interfaces::Z=Tuple(), ps::X=SciMLBase.NullParameters(); forwardsensitivities=false, forwarddiff=false, modelingtoolkit=false, tau=1e-3) where {T<:Tuple,W1<:Tuple,Z,X,W2}
     #adjust indexing
     y0 = zeros(sum(length(y) for y in y0s))
     Nvars = 0
@@ -217,18 +223,24 @@ function Reactor(domains::T, y0s::W1, tspan::W2, interfaces::Z=Tuple(), ps::X=Sc
     prectmp = ilu(W, τ=tau)
     preccache = Ref(prectmp)
 
+    if sparsity > 0.8
+        jac_prototype = J
+    else
+        jac_prototype = nothing
+    end
+
     if forwardsensitivities
-        odefcn = ODEFunction(dydt; paramjac=jacp!)
+        odefcn = ODEFunction(dydt; paramjac=jacp!, jac_prototype=jac_prototype)
         ode = ODEForwardSensitivityProblem(odefcn, y0, tspan, p)
         recsolver = Sundials.CVODE_BDF(linear_solver=:GMRES)
         if modelingtoolkit
             sys = modelingtoolkitize(ode)
             jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
-            odefcn = ODEFunction(dydt; jac=jac, paramjac=jacp!)
+            odefcn = ODEFunction(dydt; jac=jac, paramjac=jacp!, jac_prototype=jac_prototype)
             ode = ODEForwardSensitivityProblem(odefcn, y0, tspan, p)
         end
     else
-        odefcn = ODEFunction(dydt; jac=jacy!, paramjac=jacp!, jac_prototype=float.(J))
+        odefcn = ODEFunction(dydt; jac=jacy!, paramjac=jacp!, jac_prototype=jac_prototype)
         ode = ODEProblem(odefcn, y0, tspan, p)
         if sparsity > 0.8 #empirical threshold to use preconditioner
             recsolver = Sundials.CVODE_BDF(linear_solver=:GMRES, prec=precsundials, psetup=psetupsundials, prec_side=1)
@@ -238,7 +250,7 @@ function Reactor(domains::T, y0s::W1, tspan::W2, interfaces::Z=Tuple(), ps::X=Sc
         if modelingtoolkit
             sys = modelingtoolkitize(ode)
             jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
-            odefcn = ODEFunction(dydt; jac=jac, paramjac=jacp!)
+            odefcn = ODEFunction(dydt; jac=jac, paramjac=jacp!, jac_prototype=jac_prototype)
             ode = ODEProblem(odefcn, y0, tspan, p)
         end
     end
@@ -256,7 +268,6 @@ function Reactor(domain::T, y0unlumped::Array{W1,1}, tspan::Tuple, reducedmodelm
     dydt(dy::X, y::T, p::V, t::Q) where {X,T,Q,V} = dydtreactor!(dy, y, t, domain, interfaces, reducedmodelmappings, reducedmodelcache, p=p)
     jacy!(J::Q2, y::T, p::V, t::Q) where {Q2,T,Q,V} = jacobianyforwarddiff!(J, y, p, t, domain, interfaces, reducedmodelmappings, reducedmodelcache)
     jacp!(J::Q2, y::T, p::V, t::Q) where {Q2,T,Q,V} = jacobianpforwarddiff!(J, y, p, t, domain, interfaces, reducedmodelmappings, reducedmodelcache)
-
     #y0 in Y space
     y0 = zeros(length(reducedmodelmappings.reducedindexes) + length(reducedmodelmappings.lumpedgroupmapping) + length(domain.thermovariabledict))
     @inbounds @views y0[1:end-length(domain.thermovariabledict)-length(reducedmodelmappings.lumpedgroupmapping)] .= y0unlumped[reducedmodelmappings.reducedindexes]
@@ -294,7 +305,13 @@ function Reactor(domain::T, y0unlumped::Array{W1,1}, tspan::Tuple, reducedmodelm
     prectmp = ilu(W, τ=tau)
     preccache = Ref(prectmp)
 
-    odefcn = ODEFunction(dydt; jac=jacy!, paramjac=jacp!, jac_prototype=float.(J)) #jac_prototype is not needed/used for Sundials solvers but maybe needed for Julia solvers
+    if sparsity > 0.8
+        jac_prototype = J
+    else
+        jac_prototype = nothing
+    end
+
+    odefcn = ODEFunction(dydt; jac=jacy!, paramjac=jacp!, jac_prototype=jac_prototype) #jac_prototype is not needed/used for Sundials solvers but maybe needed for Julia solvers
 
     if forwardsensitivities
         ode = ODEForwardSensitivityProblem(odefcn, y0, tspan, p)
@@ -310,7 +327,7 @@ function Reactor(domain::T, y0unlumped::Array{W1,1}, tspan::Tuple, reducedmodelm
     if modelingtoolkit
         sys = modelingtoolkitize(ode)
         jac = eval(ModelingToolkit.generate_jacobian(sys)[2])
-        odefcn = ODEFunction(dydt; jac=jac, paramjac=jacp!)
+        odefcn = ODEFunction(dydt; jac=jac, paramjac=jacp!, jac_prototype=jac_prototype)
         if forwardsensitivities
             ode = ODEForwardSensitivityProblem(odefcn, y0, tspan, p)
         else
