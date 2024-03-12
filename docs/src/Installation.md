@@ -2,7 +2,7 @@
 RMS is written in Juila language. So before stepping any further, Julia needs to be installed. The download links can be found at [download Julia](https://julialang.org/downloads/). More instructions can be found from the [instruction page](https://julialang.org/downloads/platform/).
 
 ## Standard Installation
-With julia RMS can be installed with:  
+With julia RMS can be installed with:
 
 ```
 using Pkg
@@ -37,9 +37,8 @@ The above instructions will automatically handle Julia-Python linking. However, 
 
 ```
 import Pkg
-Pkg.add("PyCall")                              
-ENV["CONDA_JL_HOME"] = PATH_TO_YOUR_ENV        
-Pkg.build("Conda")                             
-ENV["PYTHON"] = PATH_TO_PYTHON                 
+ENV["CONDA_JL_HOME"] = PATH_TO_YOUR_ENV
+ENV["PYTHON"] = PATH_TO_PYTHON
+Pkg.add("PyCall")
 Pkg.build("PyCall")                            
 ```
