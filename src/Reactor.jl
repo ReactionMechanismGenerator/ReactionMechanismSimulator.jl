@@ -96,7 +96,7 @@ function Reactor(domain::T, y0::Array{T1,1}, tspan::Tuple, interfaces::Z=[]; p::
     end
     return Reactor(domain, interfaces, y0, tspan, p, ode, recsolver, forwardsensitivities, forwarddiff, modelingtoolkit, tau, precsundials, psetupsundials, precsjulia)
 end
-function Reactor(domains::T, y0s::W1, tspan::W2, interfaces::Z=Tuple(), ps::X=SciMLBase.NullParameters(); forwardsensitivities=false, forwarddiff=false, modelingtoolkit=false, tau=1e-3) where {T<:Tuple,W1<:Tuple,Z,X,W2}
+function Reactor(domains::T, y0s::W1, tspan::W2, interfaces::Z=Tuple(), ps::X=SciMLBase.NullParameters(); forwardsensitivities=false, modelingtoolkit=false, tau=1e-3) where {T<:Tuple,W1<:Tuple,Z,X,W2}
     #adjust indexing
     y0 = zeros(sum(length(y) for y in y0s))
     Nvars = 0
