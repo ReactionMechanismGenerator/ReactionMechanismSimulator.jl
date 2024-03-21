@@ -1,11 +1,11 @@
 import Logging
 Logging.disable_logging(Logging.Warn)
 
-using PyCall
-const Chem = PyNULL()
-const molecule = PyNULL()
-const fragment = PyNULL()
-const pydot = PyNULL()
+using PythonCall
+const Chem = PythonCall.pynew()
+const molecule = PythonCall.pynew()
+const fragment = PythonCall.pynew()
+const pydot = PythonCall.pynew()
 copy!(Chem,pyimport_conda("rdkit.Chem","rdkit","rmg"))
 try
     copy!(molecule, pyimport("rmgpy.molecule"))

@@ -1,6 +1,6 @@
 using Unitful
 using YAML
-using PyCall
+using PythonCall
 using StaticArrays
 
 module Calc
