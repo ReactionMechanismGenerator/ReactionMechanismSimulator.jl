@@ -46,8 +46,6 @@ function __init__()
         PythonCall.pycopy!(fragment, pyimport("molecule.molecule.fragment"))
     end
     PythonCall.pycopy!(pydot, pyimport("pydot"))
-    PythonCall.pycopy!(os, pyimport("os"))
-    pydot[] = pyimport("pydot")
 end
 include("Constants.jl")
 include("Tools.jl")
