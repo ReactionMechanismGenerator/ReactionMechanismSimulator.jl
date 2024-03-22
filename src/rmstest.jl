@@ -6,15 +6,15 @@ const Chem = PythonCall.pynew()
 const molecule = PythonCall.pynew()
 const fragment = PythonCall.pynew()
 const pydot = PythonCall.pynew()
-pycopy!(Chem, pyimport("rdkit.Chem"))
+PythonCall.pycopy!(Chem, pyimport("rdkit.Chem"))
 try
-    pycopy!(molecule, pyimport("rmgpy.molecule"))
-    pycopy!(fragment, pyimport("rmgpy.molecule.fragment"))
+    PythonCall.pycopy!(molecule, pyimport("rmgpy.molecule"))
+    PythonCall.pycopy!(fragment, pyimport("rmgpy.molecule.fragment"))
 catch e
-    pycopy!(molecule, pyimport("molecule.molecule"))
-    pycopy!(fragment, pyimport("molecule.molecule.fragment"))
+    PythonCall.pycopy!(molecule, pyimport("molecule.molecule"))
+    PythonCall.pycopy!(fragment, pyimport("molecule.molecule.fragment"))
 end
-pycopy!(pydot, pyimport("pydot"))
+PythonCall.pycopy!(pydot, pyimport("pydot"))
 
 include("Constants.jl")
 include("Tools.jl")
