@@ -3,7 +3,3 @@ rdkit = ""
 matplotlib = ""
 pydot = ""
 python = ">=3.7"
-
-    [deps.rmgmolecule]
-    channel = "mjohnson541"
-    version = ">=0.3.0"
