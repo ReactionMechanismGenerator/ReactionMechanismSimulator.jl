@@ -2,6 +2,11 @@ module ReactionMechanismSimulator
 using PythonCall
 using CondaPkg
 packages = keys(CondaPkg.current_packages())
+if !("rmg" in packages)
+    ENV["JULIA_CONDAPKG_ENV"] = abspath("rms_env")
+    const Pkg = Base.require(Base.PkgId(Base.UUID("44cfe95a-1eb2-52ea-b672-e2afdf69b78f"), "Pkg"))
+    Pkg.build("PythonCall")
+end
 const Chem = PythonCall.pynew()
 const Desc = PythonCall.pynew()
 const molecule = PythonCall.pynew()
