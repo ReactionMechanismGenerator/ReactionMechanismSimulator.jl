@@ -1,21 +1,20 @@
 import Logging
 Logging.disable_logging(Logging.Warn)
 
-using PyCall
-const Chem = PyNULL()
-const molecule = PyNULL()
-const fragment = PyNULL()
-const pydot = PyNULL()
-copy!(Chem,pyimport_conda("rdkit.Chem","rdkit","rmg"))
+using PythonCall
+const Chem = PythonCall.pynew()
+const molecule = PythonCall.pynew()
+const fragment = PythonCall.pynew()
+const pydot = PythonCall.pynew()
+PythonCall.pycopy!(Chem, pyimport("rdkit.Chem"))
 try
-    copy!(molecule, pyimport("rmgpy.molecule"))
-    copy!(fragment, pyimport("rmgpy.molecule.fragment"))
+    PythonCall.pycopy!(molecule, pyimport("rmgpy.molecule"))
+    PythonCall.pycopy!(fragment, pyimport("rmgpy.molecule.fragment"))
 catch e
-    copy!(molecule, pyimport_conda("molecule.molecule", "rmgmolecule", "hwpang"))
-    copy!(fragment, pyimport_conda("molecule.molecule.fragment", "rmgmolecule", "hwpang"))
+    PythonCall.pycopy!(molecule, pyimport("molecule.molecule"))
+    PythonCall.pycopy!(fragment, pyimport("molecule.molecule.fragment"))
 end
-copy!(pydot,pyimport_conda("pydot","pydot","rmg"))
-
+PythonCall.pycopy!(pydot, pyimport("pydot"))
 
 include("Constants.jl")
 include("Tools.jl")
