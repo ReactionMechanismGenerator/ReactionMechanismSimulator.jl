@@ -1,8 +1,10 @@
 module ReactionMechanismSimulator
-import Logging
-Logging.disable_logging(Logging.Warn)
 using PythonCall
-pyimport("sys").path.append("")
+using CondaPkg
+packages = keys(CondaPkg.current_packages())
+if !("rmg" in packages)
+    ENV["JULIA_CONDAPKG_ENV"] = abspath("rms_env")
+end
 const Chem = PythonCall.pynew()
 const Desc = PythonCall.pynew()
 const molecule = PythonCall.pynew()

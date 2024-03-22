@@ -1,5 +1,0 @@
-[deps]
-rdkit = ""
-matplotlib = ""
-pydot = ""
-python = ">=3.7"

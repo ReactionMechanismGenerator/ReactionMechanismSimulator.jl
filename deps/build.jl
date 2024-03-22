@@ -2,6 +2,7 @@ using CondaPkg
 using PythonCall
 packages = keys(CondaPkg.current_packages())
 if !("rmg" in packages) && !("rmgmolecule" in packages)
+    ENV["JULIA_CONDAPKG_ENV"] = abspath("../rms_env")
     CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541")
 end
 if !(v"3.7" <= PythonCall.C.python_version() && PythonCall.C.python_version() <= v"3.9")
