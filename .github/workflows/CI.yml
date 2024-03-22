@@ -27,7 +27,7 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - name: Build
         run: |
-            julia -e 'using Pkg; Pkg.develop(Pkg.PackageSpec(path="../ReactionMechanismSimulator.jl/")); Pkg.build("ReactionMechanismSimulator");'
+            julia -e 'ENV["JULIA_CONDAPKG_ENV"] = abspath("rms_env"); using Pkg; Pkg.develop(Pkg.PackageSpec(path="../ReactionMechanismSimulator.jl/")); Pkg.build("ReactionMechanismSimulator");'
       - name: Run tests
         run: |
             julia -e 'using Pkg; Pkg.test("ReactionMechanismSimulator"; coverage=true)'
