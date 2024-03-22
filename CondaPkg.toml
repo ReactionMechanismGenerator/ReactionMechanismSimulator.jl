@@ -1,0 +1,9 @@
+[deps]
+rdkit = ""
+matplotlib = ""
+pydot = ""
+python = "3.9"
+
+    [deps.rmgmolecule]
+    channel = "mjohnson541"
+    version = ">=0.3.0"
