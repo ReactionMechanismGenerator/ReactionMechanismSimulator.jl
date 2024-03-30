@@ -51,7 +51,7 @@ export ReactiveInternalInterface
 
 function getkfskrevs(ri::ReactiveInternalInterface,T1,T2,phi1,phi2,Gs1,Gs2,cstot::Array{Q,1}) where {Q}
     Gpart = ArrayPartition(Gs1,Gs2)
-    dGrxn = -ri.stoichmatrix*Gpart
+    dGrxns = -ri.stoichmatrix*Gpart
     kfs = getkfs(ri,T1,0.0,0.0,Array{Q,1}(),ri.A,phi1,dGrxns,0.0)
     Kc = getKc.(ri.reactions,ri.domain1.phase,ri.domain2.phase,Ref(Gs1),Ref(Gs2),dGrxns,T1,phi1)
     krevs = kfs./Kc
