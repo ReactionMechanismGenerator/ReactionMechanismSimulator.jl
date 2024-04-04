@@ -102,6 +102,94 @@ function ConstantTPDomain(; phase::E2, initialconds::Dict{X,X2}, constantspecies
 end
 export ConstantTPDomain
 
+
+mutable struct ConstantTVGasDomain{N<:AbstractPhase,S<:Integer,W<:Real, W2<:Real, I<:Integer, Q<:AbstractArray} <: AbstractConstantKDomain
+    phase::N
+    indexes::Q #assumed to be in ascending order
+    parameterindexes::Q
+    constantspeciesinds::Array{S,1}
+    T::W
+    V::W
+    kfs::Array{W,1}
+    krevs::Array{W,1}
+    efficiencyinds::Array{I,1}
+    Gs::Array{W,1}
+    rxnarray::Array{Int64,2}
+    mu::W
+    diffusivity::Array{W,1}
+    jacobian::Array{W,2}
+    sensitivity::Bool
+    alternativepformat::Bool
+    jacuptodate::MArray{Tuple{1},Bool,1,1}
+    t::MArray{Tuple{1},W2,1,1}
+    p::Array{W,1}
+    thermovariabledict::Dict{String,Int64}
+end
+
+function ConstantTVGasDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies::Array{X3,1}=Array{String,1}(),
+    sparse::Bool=false,sensitivity::Bool=false) where {E<:Real,E2<:AbstractPhase,Q<:AbstractInterface,W<:Real,X,X2,X3}
+    #set conditions and initialconditions
+    T = 0.0
+    V = 0.0
+    y0 = zeros(length(phase.species)+1)
+    spnames = [x.name for x in phase.species]
+    for (key,val) in initialconds
+        if key == "T"
+            T = val
+        elseif key == "V"
+            V = val
+        else
+            ind = findfirst(isequal(key),spnames)
+            @assert typeof(ind)<: Integer  "$key not found in species list: $spnames"
+            y0[ind] = val
+        end
+    end
+
+
+    @assert T != 0.0
+    @assert V != 0.0
+    ns = y0[1:end-1]
+    N = sum(ns)
+
+    if length(constantspecies) > 0
+        spcnames = getfield.(phase.species,:name)
+        constspcinds = [findfirst(isequal(k),spcnames) for k in constantspecies]
+    else
+        constspcinds = Array{Int64,1}()
+    end
+    efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics)<:AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
+    Gs = calcgibbs(phase,T)
+    if :solvent in fieldnames(typeof(phase)) && typeof(phase.solvent) != EmptySolvent
+        mu = phase.solvent.mu(T)
+    else
+        mu = 0.0
+    end
+    if phase.diffusionlimited
+        diffs = [x(T=T,mu=mu,P=P) for x in getfield.(phase.species,:diffusion)]
+    else
+        diffs = Array{typeof(T),1}()
+    end
+    P = N*R*T/V
+    C = P/(R*T)
+
+    y0[end] = P
+    kfs,krevs = getkfkrevs(phase,T,V,C,N,ns,Gs,diffs,P,0.0)
+    kfsp = deepcopy(kfs)
+    for ind in efficiencyinds
+        kfsp[ind] = 1.0
+    end
+    p = vcat(deepcopy(Gs),kfsp)
+    if sparse
+        jacobian=spzeros(typeof(T),length(phase.species),length(phase.species))
+    else
+        jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
+    end
+    rxnarray = getreactionindices(phase)
+    return ConstantTPDomain(phase,[1,length(phase.species),length(phase.species)+1],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+        T,V,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,false,MVector(false),MVector(0.0),p, Dict("P"=>length(phase.species)+1)), y0, p
+end
+export ConstantTPDomain
+
 struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
@@ -820,6 +908,7 @@ end
 
 export FragmentBasedConstantTrhoDomain
 
+<<<<<<< HEAD
 mutable struct ConstantTLiqFilmDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractConstantKDomain
     phase::N
     indexes::Q #assumed to be in ascending order
@@ -843,6 +932,172 @@ mutable struct ConstantTLiqFilmDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Re
     t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
+=======
+
+@inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W3=SciMLBase.NullParameters()) where {W3<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q} #no parameter input
+    ns = y[d.indexes[1]:d.indexes[2]]
+    P = y[d.indexes[3]]
+    N = P*d.V/(R*d.T)
+    cs = ns./d.V
+    C = N/d.V
+    for ind in d.efficiencyinds #efficiency related rates may have changed
+        d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,0.0)
+    end
+    return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q<:Float64} #uses parameter input
+    ns = y[d.indexes[1]:d.indexes[2]]
+    P = y[d.indexes[3]]
+    N = P*d.V/(R*d.T)
+    cs = ns./d.V
+    C = N/d.V
+    if !d.alternativepformat
+        @views kfps = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
+        @views nothermochg= d.Gs == p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+    else
+        kfps = d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
+        nothermochg= d.Gs == d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+    end
+    @views nokfchg = count(d.kfs .!= kfps) <= length(d.efficiencyinds) && all(kfps[d.efficiencyinds] .== 1.0)
+    if nothermochg && nokfchg
+        for ind in d.efficiencyinds #efficiency related rates may have changed
+            d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,0.0;f=kfps[ind])
+        end
+        return ns,cs,d.T,d.P,V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+    elseif nothermochg
+        d.kfs = kfps
+        for ind in d.efficiencyinds #efficiency related rates may have changed
+            d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,0.0;f=kfps[ind])
+        end
+        return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+    else #need to handle thermo changes
+        d.kfs .= kfps
+        if !d.alternativepformat
+            d.Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+        else
+            d.Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+        end
+        krevs = getkfkrevs(d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,0.0;kfs=d.kfs)[2]
+        for ind in d.efficiencyinds #efficiency related rates may have changed
+            d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,0.0;f=kfps[ind])
+        end
+        return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+    end
+end
+
+@inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::Array{W3,1},t::Q,p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,W3<:ForwardDiff.Dual,Q} #Autodiff y
+    ns = y[d.indexes[1]:d.indexes[2]]
+    P = y[d.indexes[3]]
+    N = P*d.V/(R*d.T)
+    cs = ns./d.V
+    C = N/d.V
+    if !d.alternativepformat
+        kfs = convert(typeof(y),p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
+        Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+    else
+        kfs = convert(typeof(y),d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
+        Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+    end
+    krevs = convert(typeof(y),getkfkrevs(d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0;kfs=kfs)[2])
+    for ind in d.efficiencyinds #efficiency related rates may have changed
+        kfs[ind],krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0;f=kfs[ind])
+    end
+    return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J,Q} #Autodiff p
+    ns = y[d.indexes[1]:d.indexes[2]]
+    P = y[d.indexes[3]]
+    N = P*d.V/(R*d.T)
+    cs = ns./d.V
+    C = N/d.V
+    if !d.alternativepformat
+        kfs = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
+        Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+    else
+        kfs = d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
+        Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+    end
+    krevs = getkfkrevs(d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0;kfs=kfs)[2]
+    for ind in d.efficiencyinds #efficiency related rates may have changed
+        kfs[ind],krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0;f=kfs[ind])
+    end
+    return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Autodiff p
+    ns = y[d.indexes[1]:d.indexes[2]]
+    P = y[d.indexes[3]]
+    N = P*d.V/(R*d.T)
+    cs = ns./d.V
+    C = N/d.V
+    kfs = similar(y,length(d.phase.reactions))
+    krevs = similar(y,length(d.phase.reactions))
+    if !d.alternativepformat
+        kfs .= p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
+        Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+    else
+        kfs .= d.p[length(d.phase.species)+1:end].*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
+        Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+    end
+    krevs .= getkfkrevs(d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0;kfs=kfs)[2]
+    for ind in d.efficiencyinds #efficiency related rates may have changed
+        kfs[ind],krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0;f=kfs[ind])
+    end
+    return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J,Q} #Tracker/reversediff
+    ns = y[d.indexes[1]:d.indexes[2]]
+    P = y[d.indexes[3]]
+    N = P*d.V/(R*d.T)
+    cs = ns./d.V
+    C = N/d.V
+    if !d.alternativepformat
+        Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+        kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0)[1]*p[d.parameterindexes[1]-1+length(d.phase.species)+ind] : p[d.parameterindexes[1]-1+length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
+    else
+        Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+        kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0)[1]*d.p[length(d.phase.species)+ind]*p[d.parameterindexes[1]-1+length(d.phase.species)+ind] : p[d.parameterindexes[1]-1+length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
+    end
+    krevs = getkfkrevs(d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0;kfs=kfs)[2]
+    return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+end
+
+@inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Tracker/reversediff
+    ns = y[d.indexes[1]:d.indexes[2]]
+    P = y[d.indexes[3]]
+    N = P*d.V/(R*d.T)
+    cs = ns./d.V
+    C = N/d.V
+    if !d.alternativepformat
+        Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+        kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0)[1]*p[d.parameterindexes[1]-1+length(d.phase.species)+ind] : p[d.parameterindexes[1]-1+length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
+    else
+        Gs = d.p[1:length(d.phase.species)].+p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
+        kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0)[1]*d.p[length(d.phase.species)+ind]*p[d.parameterindexes[1]-1+length(d.phase.species)+ind] : p[d.parameterindexes[1]-1+length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
+    end
+    krevs = getkfkrevs(d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0;kfs=kfs)[2]
+    return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+end
+
+
+
+
+
+
+@inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W3=SciMLBase.NullParameters()) where {W3<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q} #no parameter input
+    ns = y[d.indexes[1]:d.indexes[2]]
+    V = y[d.indexes[3]]
+    N = d.P*V/(R*d.T)
+    cs = ns./V
+    C = N/V
+    for ind in d.efficiencyinds #efficiency related rates may have changed
+        d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,d.P,C,N,ns,d.Gs,d.diffusivity,V,0.0)
+    end
+    return ns,cs,d.T,d.P,V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+>>>>>>> 02018d3 (add ConstantTVGasDomain)
 end
 
 function ConstantTLiqFilmDomain(; phase::Z, initialconds::Dict{X,E}, constantspecies::Array{X2,1}=Array{String,1}(),
@@ -985,7 +1240,13 @@ end
     return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
 end
 
+<<<<<<< HEAD
 @inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J,Q} #Autodiff p
+=======
+
+
+@inline function calcthermo(d::ConstantTPDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J,Q} #Autodiff p
+>>>>>>> 02018d3 (add ConstantTVGasDomain)
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P * V / (R * d.T)
