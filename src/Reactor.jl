@@ -1395,54 +1395,6 @@ end
     end
 end
 
-
-@inline function _jacobianynswrtP!(jac::S, Pind::Int64, rxnarray::Array{Int64,2}, rxnind::Int64, cs::Array{Float64,1}, kf::Float64, krev::Float64) where {S<:AbstractArray}
-    k = kf
-    if rxnarray[2, rxnind] == 0
-        nothing
-    elseif rxnarray[3, rxnind] == 0
-        @inbounds @fastmath deriv = -k * cs[rxnarray[1, rxnind]] * cs[rxnarray[2, rxnind]]
-        @inbounds jac[rxnarray[1, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[2, rxnind], Pind] -= deriv
-        _spreadreactantpartials!(jac, deriv, rxnarray, rxnind, Pind)
-    elseif rxnarray[4, rxnind] == 0
-        @inbounds @fastmath deriv = -2.0 * k * cs[rxnarray[1, rxnind]] * cs[rxnarray[2, rxnind]] * cs[rxnarray[3, rxnind]]
-        @inbounds jac[rxnarray[1, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[2, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[3, rxnind], Pind] -= deriv
-        _spreadreactantpartials!(jac, deriv, rxnarray, rxnind, Pind)
-    else
-        @inbounds @fastmath deriv = -3.0 * k * cs[rxnarray[1, rxnind]] * cs[rxnarray[2, rxnind]] * cs[rxnarray[3, rxnind]] * cs[rxnarray[4, rxnind]]
-        @inbounds jac[rxnarray[1, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[2, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[3, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[4, rxnind], Pind] -= deriv
-        _spreadreactantpartials!(jac, deriv, rxnarray, rxnind, Pind)
-    end
-    k = krev
-    if rxnarray[6, rxnind] == 0
-        nothing
-    elseif rxnarray[7, rxnind] == 0
-        @inbounds @fastmath deriv = -k * cs[rxnarray[5, rxnind]] * cs[rxnarray[6, rxnind]]
-        @inbounds jac[rxnarray[5, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[6, rxnind], Pind] -= deriv
-        _spreadproductpartials!(jac, deriv, rxnarray, rxnind, Pind)
-    elseif rxnarray[8, rxnind] == 0
-        @inbounds @fastmath deriv = -2.0 * k * cs[rxnarray[5, rxnind]] * cs[rxnarray[6, rxnind]] * cs[rxnarray[7, rxnind]]
-        @inbounds jac[rxnarray[5, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[6, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[7, rxnind], Pind] -= deriv
-        _spreadproductpartials!(jac, deriv, rxnarray, rxnind, Pind)
-    else
-        @inbounds @fastmath deriv = -3.0 * k * cs[rxnarray[5, rxnind]] * cs[rxnarray[6, rxnind]] * cs[rxnarray[7, rxnind]] * cs[rxnarray[8, rxnind]]
-        @inbounds jac[rxnarray[5, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[6, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[7, rxnind], Pind] -= deriv
-        @inbounds jac[rxnarray[8, rxnind], Pind] -= deriv
-        _spreadproductpartials!(jac, deriv, rxnarray, rxnind, Pind)
-    end
-end
-
 """
 This function calculates the ns partials in jacobiany involving k derivatives. dkdx is either dkdni and dkdV. x is either ni or V.
 """
