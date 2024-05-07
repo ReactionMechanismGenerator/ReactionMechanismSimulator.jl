@@ -144,8 +144,6 @@ function ConstantTVGasDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies
             y0[ind] = val
         end
     end
-
-
     @assert T != 0.0
     @assert V != 0.0
     ns = y0[1:end-1]
@@ -173,7 +171,7 @@ function ConstantTVGasDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies
     C = P/(R*T)
 
     y0[end] = P
-    kfs,krevs = getkfkrevs(phase,T,V,C,N,ns,Gs,diffs,P,0.0)
+    kfs,krevs = getkfkrevs(phase,T,P,C,N,ns,Gs,diffs,V,0.0)
     kfsp = deepcopy(kfs)
     for ind in efficiencyinds
         kfsp[ind] = 1.0
@@ -185,21 +183,12 @@ function ConstantTVGasDomain(;phase::E2,initialconds::Dict{X,X2},constantspecies
         jacobian=zeros(typeof(T),length(phase.species),length(phase.species))
     end
     rxnarray = getreactionindices(phase)
-    return ConstantTPDomain(phase,[1,length(phase.species),length(phase.species)+1],[1,length(phase.species)+length(phase.reactions)],constspcinds,
+    return ConstantTVGasDomain(phase,[1,length(phase.species),length(phase.species)+1],[1,length(phase.species)+length(phase.reactions)],constspcinds,
         T,V,kfs,krevs,efficiencyinds,Gs,rxnarray,mu,diffs,jacobian,sensitivity,false,MVector(false),MVector(0.0),p, Dict("P"=>length(phase.species)+1)), y0, p
 end
 export ConstantTVGasDomain
-@inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W3=SciMLBase.NullParameters()) where {W3<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q} #no parameter input
-    ns = y[d.indexes[1]:d.indexes[2]]
-    P = y[d.indexes[3]]
-    N = P*d.V/(R*d.T)
-    cs = ns./d.V
-    C = N/d.V
-    for ind in d.efficiencyinds #efficiency related rates may have changed
-        d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,0.0)
-    end
-    return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
-end
+
+
 
 
 struct ConstantVDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,I<:Integer,Q<:AbstractArray} <: AbstractVariableKDomain
@@ -1162,10 +1151,21 @@ end
 end
 
 
+@inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W3=SciMLBase.NullParameters()) where {W3<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q} #no parameter input
+    ns = y[d.indexes[1]:d.indexes[2]]
+    P = y[d.indexes[3]]
+    N = P * d.V / (R * d.T)
+    cs = ns./d.V
+    C = N/d.V
+    for ind in d.efficiencyinds #efficiency related rates may have changed
+        d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind], d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, d.V, 0.0)
+    end
+    return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+end
 @inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q<:Float64} #uses parameter input
     ns = y[d.indexes[1]:d.indexes[2]]
     P = y[d.indexes[3]]
-    N = P*d.V/(R*d.T)
+    N = P * d.V / (R * d.T)
     cs = ns./d.V
     C = N/d.V
     if !d.alternativepformat
@@ -1180,13 +1180,13 @@ end
         for ind in d.efficiencyinds #efficiency related rates may have changed
             d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,0.0;f=kfps[ind])
         end
-        return ns,cs,d.T,d.P,V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+        return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
     elseif nothermochg
         d.kfs = kfps
         for ind in d.efficiencyinds #efficiency related rates may have changed
             d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,0.0;f=kfps[ind])
         end
-        return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+        return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
     else #need to handle thermo changes
         d.kfs .= kfps
         if !d.alternativepformat
@@ -1198,14 +1198,15 @@ end
         for ind in d.efficiencyinds #efficiency related rates may have changed
             d.kfs[ind],d.krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,d.Gs,d.diffusivity,d.V,0.0;f=kfps[ind])
         end
-        return ns,cs,d.T,P,d.V,C,N,d.mu,d.kfs,d.krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+        return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
     end
 end
 
 @inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::Array{W3,1},t::Q,p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,W3<:ForwardDiff.Dual,Q} #Autodiff y
     ns = y[d.indexes[1]:d.indexes[2]]
     P = y[d.indexes[3]]
-    N = P*d.V/(R*d.T)
+    N = P * d.V / (R * d.T)
+
     cs = ns./d.V
     C = N/d.V
     if !d.alternativepformat
@@ -1225,7 +1226,7 @@ end
 @inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J,Q} #Autodiff p
     ns = y[d.indexes[1]:d.indexes[2]]
     P = y[d.indexes[3]]
-    N = P*d.V/(R*d.T)
+    N = P * d.V / (R * d.T)
     cs = ns./d.V
     C = N/d.V
     if !d.alternativepformat
@@ -1239,13 +1240,13 @@ end
     for ind in d.efficiencyinds #efficiency related rates may have changed
         kfs[ind],krevs[ind] = getkfkrev(d.phase.reactions[ind],d.phase,d.T,P,C,N,ns,Gs,d.diffusivity,d.V,0.0;f=kfs[ind])
     end
-    return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
+    return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
 end
 
 @inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Autodiff p
     ns = y[d.indexes[1]:d.indexes[2]]
     P = y[d.indexes[3]]
-    N = P*d.V/(R*d.T)
+    N = P * d.V / (R * d.T)
     cs = ns./d.V
     C = N/d.V
     kfs = similar(y,length(d.phase.reactions))
@@ -1267,7 +1268,7 @@ end
 @inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J,Q} #Tracker/reversediff
     ns = y[d.indexes[1]:d.indexes[2]]
     P = y[d.indexes[3]]
-    N = P*d.V/(R*d.T)
+    N = P * d.V / (R * d.T)
     cs = ns./d.V
     C = N/d.V
     if !d.alternativepformat
@@ -1284,7 +1285,7 @@ end
 @inline function calcthermo(d::ConstantTVGasDomain{W,Y},y::J,t::Q,p::W2=SciMLBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Tracker/reversediff
     ns = y[d.indexes[1]:d.indexes[2]]
     P = y[d.indexes[3]]
-    N = P*d.V/(R*d.T)
+    N = P * d.V / (R * d.T)
     cs = ns./d.V
     C = N/d.V
     if !d.alternativepformat
@@ -2138,6 +2139,44 @@ end
     end
 end
 
+@inline function calcdomainderivatives!(d::Q, dydt::Z7, interfaces::Z12; t::Z10, T::Z4, P::Z9, Us::Array{Z,1}, Hs::Array{Z11,1}, V::Z2, C::Z3, ns::Z5, N::Z6, Cvave::Z8) where {Q<:ConstantTVGasDomain,Z12,Z11,Z10,Z9,Z8<:Real,Z7,W<:IdealGas,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5}
+    @views @fastmath @inbounds dydt[d.indexes[3]] = sum(dydt[d.indexes[1]:d.indexes[2]]) * R * T / V
+    for ind in d.constantspeciesinds #make dydt zero for constant species
+        @inbounds dydt[ind] = 0.0
+    end
+    for inter in interfaces
+        if isa(inter, Inlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .+= inter.y .* inter.F(t)
+            dydt[d.indexes[3]] += inter.F(t) * R * T / P
+        elseif isa(inter, Outlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .-= inter.F(t) .* ns ./ N
+            dydt[d.indexes[3]] -= inter.F(t) * R * T / P
+        elseif isa(inter, kLAkHCondensationEvaporationWithReservoir) && d == inter.domain
+            kLAs = map.(inter.kLAs, inter.T)
+            kHs = map.(inter.kHs, inter.T)
+            evap = kLAs .* inter.V .* inter.cs
+            cond = kLAs .* inter.V .* cs * R * T ./ kHs
+            net_evap = evap .- cond
+            dydt[d.indexes[1]:d.indexes[2]] .+= net_evap
+            dydt[d.indexes[3]] += sum(net_evap) * R * T / P
+        elseif isa(inter, VolumetricFlowRateInlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .+= inter.Vin(t) * inter.cs
+            dydt[d.indexes[3]] += inter.Vin(t)
+        elseif isa(inter, VolumetricFlowRateOutlet) && d == inter.domain
+            dydt[d.indexes[1]:d.indexes[2]] .-= inter.Vout(t) * ns / V
+            dydt[d.indexes[3]] -= inter.Vout(t)
+        end
+    end
+    for inter in interfaces
+        if isa(inter, VolumeMaintainingOutlet) && d == inter.domain #VolumeMaintainingOutlet has to be evaluated after dVdt has been modified by everything else
+            @inbounds dVdt = dydt[d.indexes[3]]
+            @inbounds flow = P * dVdt / (R * T)
+            @views @inbounds dydt[d.indexes[1]:d.indexes[2]] .-= flow * ns / N
+            @inbounds dydt[d.indexes[3]] -= dVdt
+        end
+    end
+end
+
 @inline function calcdomainderivatives!(d::ConstantVDomain{W,Y}, dydt::K, interfaces::Z12; t::Z10, T::Z4, P::Z9, Us::Z, Hs::Z11, V::Z2, C::Z3, ns::Z5, N::Z6, Cvave::Z7) where {Z12,Z11,Z10,Z9,W<:IdealGas,Z7,K,Y<:Integer,Z6,Z,Z2,Z3,Z4,Z5}
     @views @fastmath @inbounds dydt[d.indexes[3]] = -dot(Us, dydt[d.indexes[1]:d.indexes[2]]) / (N * Cvave) #divide by V to cancel ωV to ω
     @views @fastmath @inbounds dydt[d.indexes[4]] = sum(dydt[d.indexes[1]:d.indexes[2]]) * R * T / V + P / T * dydt[d.indexes[3]]
@@ -2441,6 +2480,8 @@ end
     end
 end
 
+
+
 @inline function jacobiany!(jac::Q, y::U, p::W, t::Z, domain::D, interfaces::Q3, colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ConstantTPDomain}
     ns, cs, T, P, V, C, N, mu, kfs, krevs, Hs, Us, Gs, diffs, Cvave, cpdivR = calcthermo(domain, y, t, p)
     jacobianynsderiv!(jac, domain, domain.rxnarray, domain.efficiencyinds, cs, kfs, krevs, T, V, C)
@@ -2533,6 +2574,7 @@ end
         end
     end
 end
+
 
 @inline function jacobiany!(jac::Q, y::U, p::W, t::Z, domain::D, interfaces::Q3, colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ConstantVDomain}
     ns, cs, T, P, V, C, N, mu, kfs, krevs, Hs, Us, Gs, diffs, Cvave, cpdivR = calcthermo(domain, y, t, p)
@@ -2692,6 +2734,9 @@ end
 
     return jac
 end
+
+
+
 
 @inline function jacobiany!(jac::Q, y::U, p::W, t::Z, domain::D, interfaces::Q3, colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ConstantPDomain}
     ns, cs, T, P, V, C, N, mu, kfs, krevs, Hs, Us, Gs, diffs, Cvave, cpdivR = calcthermo(domain, y, t, p)

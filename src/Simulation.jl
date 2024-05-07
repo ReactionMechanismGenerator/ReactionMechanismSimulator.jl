@@ -203,11 +203,11 @@ end
 
 export concentrations
 
-getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTPDomain,ConstantTVDomain,FragmentBasedConstantTrhoDomain},K<:Real,Q,G,L} = bsol.domain.T
+getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTPDomain,ConstantTVDomain,ConstantTVGasDomain,FragmentBasedConstantTrhoDomain},K<:Real,Q,G,L} = bsol.domain.T
 getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ParametrizedVDomain,ConstantPDomain,ParametrizedPDomain},K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[3]]
 getT(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ParametrizedTConstantVDomain,ParametrizedTPDomain},K<:Real,Q,G,L} = bsol.domain.T(t)
 export getT
-getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain,ParametrizedTConstantVDomain},K<:Real,Q,G,L} = bsol.domain.V
+getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain,ConstantTVGasDomain,ParametrizedTConstantVDomain},K<:Real,Q,G,L} = bsol.domain.V
 getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ParametrizedVDomain,K<:Real,Q,G,L} = bsol.domain.V(t)
 getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTPDomain,ParametrizedTPDomain},K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[3]]
 getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ParametrizedPDomain,ConstantPDomain},K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[4]]
@@ -215,11 +215,12 @@ getV(bsol::Simulation{Q,W,L,G}, t::K) where {W<:FragmentBasedConstantTrhoDomain,
 export getV
 getP(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTPDomain,ConstantPDomain},K<:Real,Q,G,L} = bsol.domain.P
 getP(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantTVDomain,ParametrizedTConstantVDomain,FragmentBasedConstantTrhoDomain},K<:Real,Q,G,L} = 1.0e6
+getP(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantTVGasDomain,K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[3]]
 getP(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ParametrizedTPDomain,ParametrizedPDomain},K<:Real,Q,G,L} = bsol.domain.P(t)
 getP(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ParametrizedVDomain},K<:Real,Q,G,L} = bsol.sol(t)[bsol.domain.indexes[4]]
 export getP
 getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ConstantTPDomain,K<:Real,Q,G,L} = bsol.domain.P / (R * bsol.domain.T)
-getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain,ParametrizedTConstantVDomain},K<:Real,Q,G,L} = bsol.N(t) / bsol.domain.V
+getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:Union{ConstantVDomain,ConstantTVDomain,ConstantTVGasDomain,ParametrizedTConstantVDomain},K<:Real,Q,G,L} = bsol.N(t) / bsol.domain.V
 getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:FragmentBasedConstantTrhoDomain,K<:Real,Q,G,L} = bsol.N(t) / getV(bsol, t)
 getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ParametrizedVDomain,K<:Real,Q,G,L} = bsol.N(t) / bsol.domain.V(t)
 getC(bsol::Simulation{Q,W,L,G}, t::K) where {W<:ParametrizedTPDomain,K<:Real,Q,G,L} = bsol.domain.P(t) / (R * bsol.domain.T(t))

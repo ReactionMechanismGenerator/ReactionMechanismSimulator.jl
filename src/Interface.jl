@@ -403,15 +403,15 @@ function getkLAkHs(vl::VaporLiquidMassTransferInternalInterfaceConstantT, Tgas, 
 end
 
 function evaluate(vl::VaporLiquidMassTransferInternalInterfaceConstantT, dydt, Vgas, Vliq, Tgas, Tliq, N1, N2, P1, P2, Cvave1, Cvave2, ns1, ns2, Us1, Us2, cstot, p)
-    kLAs, kHs = getkLAkHs(vl, Tgas, Tliq)
-    @views @inbounds @fastmath evap = kLAs * Vliq .* cstot[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]] #evap_i = kLA_i * Vliq * cliq_i
-    @views @inbounds @fastmath cond = kLAs * Vliq .* cstot[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]] * R * Tgas ./ kHs #cond_i = kLA_i * Vliq * Pgas_i / kH_i, Pgas_i = cgas_i * R * Tgas
-    netevap = (evap .- cond)
+    kLAs, kHs = getkLAkHs(vl, vl.domaingas.T, vl.domainliq.T)
+    @views @fastmath evap = kLAs * vl.domainliq.V .* cstot[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]] #evap_i = kLA_i * Vliq * cliq_i
+    @views @fastmath cond = kLAs * vl.domainliq.V .* cstot[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]] * R * vl.domaingas.T ./ kHs #cond_i = kLA_i * Vliq * Pgas_i / kH_i, Pgas_i = cgas_i * R * Tgas
+    net_evap = (evap .- cond)
     @simd for ind in vl.ignoremasstransferspcinds
-        @inbounds netevap[ind] = 0.0
+        net_evap[ind] = 0.0
     end
-    @views @inbounds @fastmath dydt[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]] .+= netevap
-    @views @inbounds @fastmath dydt[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]] .-= netevap
+    @views @fastmath dydt[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]] .+= net_evap
+    @views @fastmath dydt[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]] .-= net_evap
 end
 export evaluate
 
