@@ -258,6 +258,7 @@ function rops(ssys::SystemSimulation, t)
     Nrxns_interface = [length(inter.reactions) for inter in ssys.interfaces if hasproperty(inter, :reactions)]
     if Nrxns_interface != Union{}[]
         Nxrns += sum(Nrxns_interface)
+    end
     Nspcs = sum([length(getphasespecies(sim.domain.phase)) for sim in ssys.sims])
     cstot = zeros(Nspcs)
     vns = Array{Any,1}(undef, length(domains))
