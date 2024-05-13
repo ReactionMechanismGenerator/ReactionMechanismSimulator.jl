@@ -2480,8 +2480,6 @@ end
     end
 end
 
-
-
 @inline function jacobiany!(jac::Q, y::U, p::W, t::Z, domain::D, interfaces::Q3, colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ConstantTPDomain}
     ns, cs, T, P, V, C, N, mu, kfs, krevs, Hs, Us, Gs, diffs, Cvave, cpdivR = calcthermo(domain, y, t, p)
     jacobianynsderiv!(jac, domain, domain.rxnarray, domain.efficiencyinds, cs, kfs, krevs, T, V, C)
@@ -2574,7 +2572,6 @@ end
         end
     end
 end
-
 
 @inline function jacobiany!(jac::Q, y::U, p::W, t::Z, domain::D, interfaces::Q3, colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ConstantVDomain}
     ns, cs, T, P, V, C, N, mu, kfs, krevs, Hs, Us, Gs, diffs, Cvave, cpdivR = calcthermo(domain, y, t, p)
@@ -2734,9 +2731,6 @@ end
 
     return jac
 end
-
-
-
 
 @inline function jacobiany!(jac::Q, y::U, p::W, t::Z, domain::D, interfaces::Q3, colorvec::Q2=nothing) where {Q3<:AbstractArray,Q2,Q<:AbstractArray,U<:AbstractArray,W,Z<:Real,D<:ConstantPDomain}
     ns, cs, T, P, V, C, N, mu, kfs, krevs, Hs, Us, Gs, diffs, Cvave, cpdivR = calcthermo(domain, y, t, p)
