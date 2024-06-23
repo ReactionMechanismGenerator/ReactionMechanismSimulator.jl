@@ -4,3 +4,7 @@
 docs/build/
 .DS_Store
 deps/build.log
+.CondaPkg/
+rms_env/
+*.cov
+Manifest.toml
