@@ -24,14 +24,6 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          environment-file: environment.yml
-          python-version: 3.7
-          activate-environment: rms_env
-      - name: Fix PyCall linking
-        run: |
-            julia -e 'ENV["PYTHON"]=ENV["CONDA"] * "/envs/rms_env/bin/python"; using Pkg; Pkg.add("PyCall"); Pkg.build("PyCall")'
       - uses: julia-actions/julia-buildpkg@v1
       - name: Build
         run: |
