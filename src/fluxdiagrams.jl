@@ -1,4 +1,4 @@
-using PyCall
+using PythonCall
 using SparseArrays
 using Images
 using Colors
@@ -75,7 +75,7 @@ export drawspecies
 
 """
 generates and returns the image of a single flux diagram at the given time point
-all PyPlot colorscheme names are valid inputs for colorscheme
+all PythonPlot colorscheme names are valid inputs for colorscheme
 """
 function getfluxdiagram(bsol,t;centralspecieslist=Array{String,1}(),superimpose=false,
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
@@ -134,7 +134,7 @@ export getfluxdiagram
 """
 generates a series of flux diagrams at the time points indicated
 each flux diagram will have the same nodes and edges as determined by the options
-all PyPlot colorscheme names are valid inputs for colorscheme
+all PythonPlot colorscheme names are valid inputs for colorscheme
 """
 function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpose=false,
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
@@ -494,10 +494,10 @@ end
 function getcolor(speciesrate,maxspeciesrate,minspeciesrate,colorscheme="viridis")
     """
     gives the color corresponding to the scaled log species rate
-    for a given PyPlot color scheme
+    for a given PythonPlot color scheme
     """
     scale = log(maxspeciesrate)-log(minspeciesrate)
     value = (log(abs(speciesrate))-log(minspeciesrate))/scale
-    out = PyPlot.get_cmap(colorscheme)(value)[1:3]
+    out = PythonPlot.get_cmap(colorscheme)(value)[1:3]
     return "#"*hex(RGB(out...))
 end
