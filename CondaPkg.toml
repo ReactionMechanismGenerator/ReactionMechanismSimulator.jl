@@ -1,0 +1,1 @@
+channels = ["defaults", "mjohnson541", "rmg", "conda-forge", "cantera"]
