@@ -3,6 +3,7 @@ using SciMLBase
 using Sundials
 using CSV
 using DataFrames
+using SciMLSensitivity
 
 @testset "Test Reactors" begin
 
