@@ -28,10 +28,14 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - name: Build
         run: |
-            julia -e 'using Pkg; Pkg.develop(PackageSpec(path="../ReactionMechanismSimulator.jl")); Pkg.build("ReactionMechanismSimulator");'
+            current_path=${{ github.workspace }}
+            export JULIA_CONDAPKG_ENV="$current_path/rms_env"
+            julia -e 'using Pkg; Pkg.develop(Pkg.PackageSpec(path="../ReactionMechanismSimulator.jl/")); Pkg.build("ReactionMechanismSimulator");'
       - name: Run tests
         run: |
-            julia -e 'using Pkg; Pkg.test("ReactionMechanismSimulator";coverage=true)'
+            current_path=${{ github.workspace }}
+            export JULIA_CONDAPKG_ENV="$current_path/rms_env"
+            julia -e 'using Pkg; Pkg.test("ReactionMechanismSimulator"; coverage=true)'
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v1
         with:
