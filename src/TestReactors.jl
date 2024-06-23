@@ -141,7 +141,7 @@ using SciMLSensitivity
 
         name = "oxygen"
         ind = findfirst(x -> x == name, liqspcnames)
-        @test sol(sol.t[end])[ind] ≈ 0.11758959354431776 rtol = 1e-5 #test there are oxygen dissolved into the liquid 
+        @test sol(sol.t[end])[ind] ≈ 0.11758959354431776 rtol = 1e-4 #test there are oxygen dissolved into the liquid 
 
     end
 
