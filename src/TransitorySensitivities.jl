@@ -236,7 +236,7 @@ function transitorysensitivitiesfullexact(sim::Simulation,t;tau=NaN,
         tspan = (0.0,tau)
         react = Reactor(sim.domain,sim.sol(t),tspan,sim.interfaces;p=sim.sol.prob.p,forwardsensitivities=true);
         sol = solve(react.ode,solver,abstol=abstol,reltol=reltol)
-        dSdt = reduce(hcat,DiffEqSensitivity.extract_local_sensitivities(sol,tau)[2])./tau
+        dSdt = reduce(hcat,SciMLSensitivity.extract_local_sensitivities(sol,tau)[2])./tau
     end
 
     if normalized
@@ -264,7 +264,7 @@ function transitorysensitivitiesfullexact(ssys::SystemSimulation,t;tau=NaN,
         tspan = (0.0,tau)
         react = Reactor(ssys.domains,sim.sol(t),tspan,ssys.interfaces;p=ssys.p,forwardsensitivities=true);
         sol = solve(react.ode,solver,abstol=abstol,reltol=reltol)
-        dSdt = reduce(hcat,DiffEqSensitivity.extract_local_sensitivities(sol,tau)[2])./tau
+        dSdt = reduce(hcat,SciMLSensitivity.extract_local_sensitivities(sol,tau)[2])./tau
     end
 
     if normalized
@@ -351,7 +351,7 @@ function transitorysensitivitiesparamexact(sim::Simulation,t,ind;tau=NaN,
         jacparam(u,p,tn) = jacobianp(sol,t+tn,p,ind)
         odeparam = remake(react.ode,f=fparam,paramjac=jacparam)
         sol = solve(odeparam,solver,abstol=abstol,reltol=reltol)
-        dSdt = reduce(hcat,DiffEqSensitivity.extract_local_sensitivities(sol,tau)[2])./tau
+        dSdt = reduce(hcat,SciMLSensitivity.extract_local_sensitivities(sol,tau)[2])./tau
     end
 
     if normalized
@@ -383,7 +383,7 @@ function transitorysensitivitiesparamexact(ssys::SystemSimulation,t,ind;tau=NaN,
         jacparam(u,p,tn) = jacobianp(sol,t+tn,p,ind)
         odeparam = remake(react.ode,f=fparam,paramjac=jacparam)
         sol = solve(odeparam,solver,abstol=abstol,reltol=reltol)
-        dSdt = reduce(hcat,DiffEqSensitivity.extract_local_sensitivities(sol,tau)[2])./tau
+        dSdt = reduce(hcat,SciMLSensitivity.extract_local_sensitivities(sol,tau)[2])./tau
     end
 
     if normalized
