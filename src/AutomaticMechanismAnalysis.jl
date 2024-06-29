@@ -665,16 +665,28 @@ function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,branchfract=0.01)
             s *= "Associated key reaction path in $spname loss direction \n"
             for i = 1:length(rp.rxninds)
                 rstr = getrxnstr(sim.reactions[rp.rxninds[i]])
+                sgn = rp.spcsinds[i+1] in sim.reactions[rp.rxninds[i]].productinds
+                if sgn
+                    sn = "+"
+                else
+                    sn = "-"
+                end
                 br = round(rp.branchfracts[i],sigdigits=6)
-                s *= "$rstr at path branching of $br \n"
+                s *= "$rstr ($sn) at path branching of $br \n"
             end
         else
             s *= "Associated key reaction path in $spname production direction \n"
             revinds = reverse(rp.rxninds)
             for i = 1:length(rp.rxninds)
                 rstr = getrxnstr(sim.reactions[revinds[i]])
+                sgn = rp.spcsinds[i+1] in sim.reactions[rp.rxninds[i]].productinds
+                if sgn
+                    sn = "+"
+                else
+                    sn = "-"
+                end
                 br = round(rp.branchfracts[i],sigdigits=6)
-                s *= "$rstr at path step branching of $br \n"
+                s *= "$rstr ($sn) at path step branching of $br \n"
             end
         end
         s *= "\n"
@@ -684,7 +696,7 @@ function getrxnanalysisstring(sim,ra;branchingcutoff=1e-2,branchfract=0.01)
     for i = 1:length(ra.clusterprodlossfracts)
         if abs(ra.clusterprodlossfracts[i]) > branchfract
             cluster = ra.clusternames[i]
-            fract = abs(ra.clusterprodlossfracts[i])
+            fract = round(abs(ra.clusterprodlossfracts[i]),sigdigits=6)
             if ra.clusterprodlossfracts[i] > 0
                 s *= "Reaction accounts for $fract of the net production for cluster $cluster \n"
             else
