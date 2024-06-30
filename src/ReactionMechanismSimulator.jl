@@ -1,7 +1,34 @@
 module ReactionMechanismSimulator
-using PythonCall
+ENV["JULIA_CONDAPKG_BACKEND"] = "MicroMamba"
 using CondaPkg
 using Logging
+packages = keys(CondaPkg.current_packages())
+
+if !("rmg" in packages) && !("rmgmolecule" in packages)
+    @info "missing rmg and rmgmolecule installing rmgmolecule..."
+    if "python" in packages
+        py_version = VersionNumber(CondaPkg.current_packages()["python"][:version])
+    else
+        py_version = nothing
+    end
+    if py_version === nothing || !(v"3.7" <= py_version && py_version <= v"3.9")
+        @info "python version was not in 3.7-3.9 changing python version"
+        CondaPkg.add("python"; version="3.9",resolve=false)
+        CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541",resolve=false)
+        CondaPkg.add("matplotlib", channel="conda-forge",resolve=false)
+        CondaPkg.add("rdkit", channel="conda-forge",resolve=false)
+        CondaPkg.add("pydot", channel="conda-forge",resolve=false)
+        CondaPkg.resolve()
+    else
+        CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541",resolve=false)
+        CondaPkg.add("matplotlib", channel="conda-forge",resolve=false)
+        CondaPkg.add("rdkit", channel="conda-forge",resolve=false)
+        CondaPkg.add("pydot", channel="conda-forge",resolve=false)
+        CondaPkg.resolve()
+    end
+end
+
+using PythonCall
 const Chem = PythonCall.pynew()
 const Desc = PythonCall.pynew()
 const molecule = PythonCall.pynew()
@@ -16,24 +43,6 @@ const chebyshev = PythonCall.pynew()
 const solvation = PythonCall.pynew()
 const fragment = PythonCall.pynew()
 const pydot = PythonCall.pynew()
-
-packages = keys(CondaPkg.current_packages())
-
-if !("rmg" in packages) && !("rmgmolecule" in packages)
-    @info "missing rmg and rmgmolecule installing rmgmolecule..."
-    if !(v"3.7" <= PythonCall.C.python_version() && PythonCall.C.python_version() <= v"3.9")
-        @info "python version was not in 3.7-3.9 changing python version"
-        CondaPkg.add("python"; version="3.9")
-    end
-    CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541")
-    CondaPkg.add("matplotlib", channel="conda-forge")
-    CondaPkg.add("rdkit", channel="conda-forge")
-    CondaPkg.add("pydot", channel="conda-forge")
-
-    Pkgc = Base.require(Base.PkgId(Base.UUID("44cfe95a-1eb2-52ea-b672-e2afdf69b78f"), "Pkg"))
-    Pkgc.build("PythonCall")
-end
-
 
 function __init__()
     PythonCall.pycopy!(Chem, pyimport("rdkit.Chem"))
