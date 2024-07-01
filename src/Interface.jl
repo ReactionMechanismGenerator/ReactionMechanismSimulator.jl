@@ -460,7 +460,6 @@ function evaluate(vl::VaporLiquidMassTransferInternalInterfaceConstantT, dydt, V
     kLAs, kHs = getkLAkHs(vl, vl.domaingas.T, vl.domainliq.T)
     @views @inbounds @fastmath evap = kLAs * vl.domainliq.V .* cstot[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]] #evap_i = kLA_i * Vliq * cliq_i
     @views @inbounds @fastmath cond = kLAs * vl.domainliq.V .*cstot[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]] * R * vl.domaingas.T ./ kHs #cond_i = kLA_i * Vliq * Pgas_i / kH_i, Pgas_i = cgas_i * R * Tgas
-    cond[findall(x->x<0,kHs)].=0
     net_evap = (evap .- cond)
     @simd for ind in vl.ignoremasstransferspcinds
         net_evap[ind] = 0.0
