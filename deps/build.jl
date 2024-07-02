@@ -4,7 +4,7 @@ packages = keys(CondaPkg.current_packages())
 if !("rmg" in packages) && !("rmgmolecule" in packages)
 
     if !(v"3.7" <= PythonCall.C.python_version() && PythonCall.C.python_version() <= v"3.9")
-        CondaPkg.add("python"; version="3.9")
+        CondaPkg.add("python"; version=">=3.9")
     end
     CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541")
     CondaPkg.add("matplotlib", channel="conda-forge")
