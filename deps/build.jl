@@ -9,7 +9,7 @@ catch
     has_rmgpy = false
 end
 try
-    PythonCall.pyimport("rmgmolecule")
+    PythonCall.pyimport("molecule")
 catch
     has_rmgmolecule = false
 end
