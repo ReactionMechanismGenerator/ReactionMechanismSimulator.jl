@@ -1,7 +1,20 @@
 using CondaPkg
 using PythonCall
-packages = keys(CondaPkg.current_packages())
-if !("rmg" in packages) && !("rmgmolecule" in packages)
+
+has_rmgpy = true
+has_rmgmolecule = true
+try
+    PythonCall.pyimport("rmgpy")
+catch
+    has_rmgpy = false
+end
+try
+    PythonCall.pyimport("rmgmolecule")
+catch
+    has_rmgmolecule = false
+end
+
+if !has_rmgpy && !has_rmgmolecule
 
     if !(v"3.7" <= PythonCall.C.python_version() && PythonCall.C.python_version() <= v"3.9")
         CondaPkg.add("python"; version=">=3.9")
