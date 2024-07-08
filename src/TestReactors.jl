@@ -212,6 +212,10 @@ using SciMLSensitivity
         @test y[o2ind] / N ≈ 0.200419093 rtol = 1e-4
         @test y[h2oind] / N ≈ 0.386618602 rtol = 1e-4
 
+        #plotting  
+        plotrops(sim, "H2", 20.4402454, N=10)
+        getfluxdiagram(sim, 20.4402454)
+        
         #analytic jacobian vs. ForwardDiff jacobian
         t = 20.44002454
         y = sol(t)
