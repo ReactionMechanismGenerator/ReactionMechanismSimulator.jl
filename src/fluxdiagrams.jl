@@ -343,7 +343,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         end
     end
 
-    graph = pydot.graph_from_dot_data(graph.create_dot(prog="dot"))[1]
+    graph = pydot.graph_from_dot_data(graph.create_dot(prog="dot").decode("utf-8"))[1]
 
     for t in 1:length(ts)
         slope = -maximumnodepenwidth / log10(concentrationtol)
