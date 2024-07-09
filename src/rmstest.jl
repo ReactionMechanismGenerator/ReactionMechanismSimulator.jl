@@ -18,13 +18,13 @@ if !("rmg" in packages) && !("rmgmolecule" in packages)
         CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541",resolve=false)
         CondaPkg.add("matplotlib", channel="conda-forge",resolve=false)
         CondaPkg.add("rdkit", channel="conda-forge",resolve=false)
-        CondaPkg.add("pydot", channel="conda-forge",resolve=false)
+        CondaPkg.add("pydot", channel="conda-forge",resolve=false,version=">=2.0")
         CondaPkg.resolve()
     else
         CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541",resolve=false)
         CondaPkg.add("matplotlib", channel="conda-forge",resolve=false)
         CondaPkg.add("rdkit", channel="conda-forge",resolve=false)
-        CondaPkg.add("pydot", channel="conda-forge",resolve=false)
+        CondaPkg.add("pydot", channel="conda-forge",resolve=false,version=">=2.0")
         CondaPkg.resolve()
     end
 end
