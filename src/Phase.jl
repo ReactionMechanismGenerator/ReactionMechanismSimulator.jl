@@ -41,7 +41,7 @@ function IdealGas(species,reactions; name="",diffusionlimited=false)
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
-        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
+        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,electronchange=rxn.electronchange,
         radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs,comment=rxn.comment) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     rxnarray = getreactionindices(species,rxns)
@@ -80,7 +80,7 @@ function IdealDiluteSolution(species,reactions,solvent; name="",diffusionlimited
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
-        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
+        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,electronchange=rxn.electronchange,
         radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs,comment=rxn.comment) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     rxnarray = getreactionindices(species,rxns)
@@ -120,7 +120,7 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
-        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
+        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,electronchange=rxn.electronchange,
         radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs,comment=rxn.comment) for (i,rxn) in enumerate(rxns)]
     therm = getvecthermo(species)
     rxnarray = getreactionindices(species,rxns)
@@ -161,7 +161,7 @@ function FragmentBasedIdealFilm(species, reactions; name="", diffusionlimited=fa
     vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds],reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,
-        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,
+        products=rxn.products,productinds=rxn.productinds,kinetics=rxn.kinetics,electronchange=rxn.electronchange,
         radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs,
         fragmentbasedreactants=rxn.fragmentbasedreactants,fragmentbasedreactantinds=rxn.fragmentbasedreactantinds,
         fragmentbasedproducts=rxn.fragmentbasedproducts,fragmentbasedproductinds=rxn.fragmentbasedproductinds,
