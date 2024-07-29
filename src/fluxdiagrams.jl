@@ -343,7 +343,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         end
     end
 
-    graph = pydot.graph_from_dot_data(graph.create_dot(prog="dot").decode("utf-8"))[1]
+    graph = pydot.graph_from_dot_data(graph.create_dot(prog="dot").decode("utf-8"))[0]
 
     for t in 1:length(ts)
         slope = -maximumnodepenwidth / log10(concentrationtol)
@@ -355,7 +355,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
                 species_string = string("\"",species.name,"\"")
             end
 
-            node = graph.get_node(species_string)[1]
+            node = graph.get_node(species_string)[0]
             concentration = concs[index,t] / maxconcentration
             if concentration < concentrationtol
                 penwidth = 0.0
@@ -399,7 +399,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
                     product_string = string("\"",product.name,"\"")
                 end
 
-                edge = graph.get_edge(reactant_string,product_string)[1]
+                edge = graph.get_edge(reactant_string,product_string)[0]
 
                 speciesrate = speciesrates[reactantindex,productindex,t] / maxspcrate
                 if speciesrate < 0
