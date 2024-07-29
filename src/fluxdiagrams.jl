@@ -498,6 +498,6 @@ function getcolor(speciesrate,maxspeciesrate,minspeciesrate,colorscheme="viridis
     """
     scale = log(maxspeciesrate)-log(minspeciesrate)
     value = (log(abs(speciesrate))-log(minspeciesrate))/scale
-    out = PythonPlot.get_cmap(colorscheme)(value)[1:3]
-    return "#"*hex(RGB(out...))
+    out = pyconvert(Vector{Float64},PythonPlot.get_cmap(colorscheme)(value))
+    return "#"*hex(RGB(out[1:3]...))
 end
