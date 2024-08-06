@@ -95,6 +95,14 @@ function ReactiveInternalInterfaceConstantTPhi(domain1,domain2,reactions,T,A,phi
     M,Nrp1,Nrp2 = getstoichmatrix(domain1,domain2,reactions)
     Gpart = ArrayPartition(domain1.Gs,domain2.Gs)
     dGrxns = -M*Gpart
+    electronchanges = [hasproperty(reaction, :electronchange) ? reaction.electronchange : 0.0 for reaction in reactions]
+    referencepotentials = [hasproperty(reaction.kinetics, :V0) ? reaction.kinetics.V0 : 0.0 for reaction in reactions]
+    if isa(domain1.phase, IdealSurface)
+        phi = domain1.phi !== nothing ? domain1.phi : phi
+    elseif isa(domain2.phase, IdealSurface)
+        phi = domain2.phi !== nothing ? domain2.phi : phi
+    end
+    dGrxns .+= electronchanges.*(phi.-referencepotentials).*F
     kfs = getkf.(reactions,nothing,T,0.0,0.0,Ref([]),A,phi,dGrxns,0.0)
     Kc = getKcs(domain1.phase,domain2.phase,T,Nrp1,Nrp2,dGrxns)
     krevs = kfs./Kc
