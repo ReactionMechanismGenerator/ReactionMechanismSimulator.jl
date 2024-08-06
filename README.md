@@ -33,7 +33,7 @@ RMS has been used in many applications:
 ## How to cite
 Please include the following citations for ReactionMechanismSimulator.jl in general and for transitory sensitivities and the automatic mechanism analysis toolkit respectively. 
 
-- <div class="csl-entry">Johnson, M. S., Pang, H.-W., Payne, A. M., &#38; Green, W. H. (2023). <i>ReactionMechanismSimulator.jl: A Modern Approach to Chemical Kinetic Mechanism Simulation and Analysis</i>. https://doi.org/10.26434/CHEMRXIV-2023-TJ34T</div>
+- <div class="csl-entry">Johnson, M. S., Pang, H.-W., Payne, A. M., &#38; Green, W. H. (2023). <i>ReactionMechanismSimulator.jl: A Modern Approach to Chemical Kinetic Mechanism Simulation and Analysis</i>. Int. J. Chem. Kinet. 2024;1-16 https://doi.org/10.1002/kin.21753</div>
 - <div class="csl-entry">Johnson, M. S., McGill, C. J., &#38; Green, W. H. (2022). <i>Transitory Sensitivity in Automatic Chemical Kinetic Mechanism Analysis</i>. https://doi.org/10.26434/CHEMRXIV-2022-ZSFJC</div>
 
 ## Installation

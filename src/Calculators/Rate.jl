@@ -27,15 +27,16 @@ end
 @inline (arr::StickingCoefficient)(T::Q;P::N=0.0,C::S=0.0,phi=0.0,dGrxn=0.0,d=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath min(arr.A*T^arr.n*exp(-arr.Ea/(R*T)),1.0)
 export StickingCoefficient
 
-@with_kw struct Arrheniusq{N<:Real,K<:Real,Q<:Real,P<:AbstractRateUncertainty,B} <: AbstractRate
+@with_kw struct Arrheniusq{N<:Real,K<:Real,Q<:Real,R<:Real,P<:AbstractRateUncertainty,B} <: AbstractRate
         A::N
         n::K
         Ea::Q
         q::B = 0.0
+        V0::R = 0.0
         unc::P = EmptyRateUncertainty()
 end
-@inline (arr::Arrheniusq)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0,dGrxn=0.0,d=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea-arr.q*F*phi)/(R*T))
-@inline (arr::Arrheniusq)(T::Q;P::N=0.0,C::S=0.0,phi=0.0,dGrxn=0.0,d=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea-arr.q*F*phi)/(R*T))
+@inline (arr::Arrheniusq)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0,dGrxn=0.0,d=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea-arr.q*F*(phi-arr.V0))/(R*T))
+@inline (arr::Arrheniusq)(T::Q;P::N=0.0,C::S=0.0,phi=0.0,dGrxn=0.0,d=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea-arr.q*F*(phi-arr.V0))/(R*T))
 export Arrheniusq
 
 @with_kw struct Marcus{N<:Real,K<:Real,Q,P<:AbstractRateUncertainty,B} <: AbstractRate
@@ -248,7 +249,7 @@ export getkineticstype
 
 @inline extracttypename(typ::Symbol) = string(typ)
 @inline extracttypename(typ) = string(typ.name)
-    
+
 @inline function _calcdkdCeff(tbarr::ThirdBody,T::Float64,Ceff::Float64)
     return @fastmath tbarr.arr(T)
 end
