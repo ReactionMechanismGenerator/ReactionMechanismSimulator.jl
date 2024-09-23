@@ -740,6 +740,8 @@ mutable struct FragmentBasedConstantTrhoDomain{N<:AbstractPhase,S<:Integer,W<:Re
     constantspeciesinds::Array{S,1}
     T::Float64
     rho::Float64
+    phi::W
+    d::W
     A::Float64
     kfs::Array{W,1}
     krevs::Array{W,1}
@@ -766,6 +768,8 @@ function FragmentBasedConstantTrhoDomain(; phase::Z, initialconds::Dict{X,E}, co
     mass = 0.0
     P = 1.0e8
     A = 0.0
+    phi = 0.0 #default 0
+    d = 0.0
 
     fragmentnames = getfield.(getphasespecies(phase), :name)
 
@@ -781,6 +785,10 @@ function FragmentBasedConstantTrhoDomain(; phase::Z, initialconds::Dict{X,E}, co
         elseif key == "mass"
             mass = val
             y0[end] = val
+        elseif key == "Phi"
+            phi = val
+        elseif key == "d"
+            d = val
         else
             ind = findfirst(isequal(key), fragmentnames)
             @assert typeof(ind) <: Integer "$key not found in fragment list: $fragmentnames"
@@ -829,7 +837,7 @@ function FragmentBasedConstantTrhoDomain(; phase::Z, initialconds::Dict{X,E}, co
     end
     rxnarray = getreactionindices(phase)
     return FragmentBasedConstantTrhoDomain(phase, [1, length(fragmentnames), length(fragmentnames) + 1], [1, length(phase.species) + length(phase.reactions)], constspcinds,
-        T, rho, A, kfs, krevs, kfsnondiff, efficiencyinds, Gs, rxnarray, mu, diffs, jacobian, sensitivity, false, MVector(false), MVector(0.0), p, Dict("mass" => length(fragmentnames) + 1)), y0, p
+        T, rho, phi, d, A, kfs, krevs, kfsnondiff, efficiencyinds, Gs, rxnarray, mu, diffs, jacobian, sensitivity, false, MVector(false), MVector(0.0), p, Dict("mass" => length(fragmentnames) + 1)), y0, p
 end
 
 export FragmentBasedConstantTrhoDomain
@@ -842,6 +850,7 @@ mutable struct ConstantTLiqFilmDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Re
     T::W
     epsilon::W
     phi::W
+    d::W
     kfs::Array{W,1}
     krevs::Array{W,1}
     kfsnondiff::Array{W,1}
@@ -866,6 +875,7 @@ function ConstantTLiqFilmDomain(; phase::Z, initialconds::Dict{X,E}, constantspe
     V = 0.0
     P = 1.0e8
     phi = 0.0
+    d = 0.0
     epsilon = 0.0
     y0 = zeros(length(phase.species) + 1)
     spnames = [x.name for x in phase.species]
@@ -879,6 +889,10 @@ function ConstantTLiqFilmDomain(; phase::Z, initialconds::Dict{X,E}, constantspe
             y0[end] = val
         elseif key == "epsilon"
             epsilon = val
+        elseif key == "Phi"
+            phi = val
+        elseif key == "d"
+            d = val
         else
             ind = findfirst(isequal(key), spnames)
             @assert typeof(ind) <: Integer "$key not found in species list: $spnames"
@@ -922,7 +936,7 @@ function ConstantTLiqFilmDomain(; phase::Z, initialconds::Dict{X,E}, constantspe
     end
     rxnarray = getreactionindices(phase)
     return ConstantTLiqFilmDomain(phase, [1, length(phase.species), length(phase.species) + 1], [1, length(phase.species) + length(phase.reactions)], constspcinds,
-        T, epsilon, phi, kfs, krevs, kfsnondiff, efficiencyinds, Gs, rxnarray, mu, diffs, jacobian, sensitivity, false, MVector(false), MVector(0.0), p, Dict{String,Int64}(["V" => length(phase.species) + 1])), y0, p
+        T, epsilon, phi, d, kfs, krevs, kfsnondiff, efficiencyinds, Gs, rxnarray, mu, diffs, jacobian, sensitivity, false, MVector(false), MVector(0.0), p, Dict{String,Int64}(["V" => length(phase.species) + 1])), y0, p
 end
 
 export ConstantTLiqFilmDomain
