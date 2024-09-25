@@ -456,9 +456,12 @@ function FragmentBasedReactiveFilmGrowthInterfaceConstantT(domainfilm, domain2, 
 
     rxnarray, fragmentbasedrxnarray = getfragmentbasedinterfacereactioninds(domainfilm, domain2, reactions)
 
-    kfs = getkf.(reactions, nothing, T, 0.0, 0.0, Ref([]), 0.0, 0.0)
-    Kc = getKc.(reactions, domainfilm.phase, domain2.phase, Ref(domainfilm.Gs), Ref(domain2.Gs), T, 0.0)
-    krevs = kfs ./ Kc
+    M,Nrp1,Nrp2 = getstoichmatrix(domainfilm,domain2,reactions)
+    Gpart = ArrayPartition(domainfilm.Gs,domain2.Gs)
+    dGrxns = -M*Gpart
+    kfs = getkf.(reactions,nothing,T,0.0,0.0,Ref([]),0.0,0.0,dGrxns,0.0)
+    Kc = getKcs(domain1.phase,domain2.phase,T,Nrp1,Nrp2,dGrxns)
+    krevs = kfs./Kc
 
     M, Nrp1, Nrp2 = getstoichmatrix(domainfilm, domain2, reactions)
     reversibility = Array{Bool,1}(getfield.(reactions, :reversible))
