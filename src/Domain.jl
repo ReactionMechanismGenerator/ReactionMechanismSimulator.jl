@@ -826,9 +826,9 @@ function FragmentBasedConstantTrhoDomain(; phase::Z, initialconds::Dict{X,E}, co
     end
 
     C = N/V
-    dGrxns = -(phase.stoichmatrix*Gs)
-    kfs,krevs = getkfkrevs(phase,T,P,C,N,ns,Gs,diffs,V,0.0,0.0)
-    kfsnondiff = getkfs(phase,T,P,C,ns,V,0.0,dGrxns,0.0)
+    dGrxns = -(phase.stoichmatrix*Gs).+phase.electronchange.*(phi*F)
+    kfs,krevs = getkfkrevs(phase,T,P,C,N,ns,Gs,diffs,V,phi,d)
+    kfsnondiff = getkfs(phase,T,P,C,ns,V,phi,dGrxns,d)
     p = vcat(Gs,kfsnondiff)
     if sparse
         jacobian = zeros(typeof(T), length(getphasespecies(phase)), length(getphasespecies(phase)))
@@ -926,8 +926,8 @@ function ConstantTLiqFilmDomain(; phase::Z, initialconds::Dict{X,E}, constantspe
     end
     P = 1.0e8  #essentiallly assuming this is a liquid
     C = N / V
-    kfs, krevs = getkfkrevs(phase, T, P, C, N, ns, Gs, diffs, V, phi)
-    kfsnondiff = getkfs(phase, T, P, C, ns, V, phi)
+    kfs, krevs = getkfkrevs(phase, T, P, C, N, ns, Gs, diffs, V, phi, d)
+    kfsnondiff = getkfs(phase, T, P, C, ns, V, phi, d)
     p = vcat(Gs, kfsnondiff)
     if sparse
         jacobian = zeros(typeof(T), length(phase.species), length(phase.species))
