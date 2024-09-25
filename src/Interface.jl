@@ -31,7 +31,7 @@ struct ReactiveInternalInterface{T,B,C,C2,N,Q<:AbstractReaction,X} <: AbstractRe
     parameterindexes::Array{Int64,1}
     domaininds::Array{Int64,1}
     p::Array{Float64,1}
-    reversibililty::Array{Bool,1}
+    reversibility::Array{Bool,1}
     forwardability::Array{Bool,1}
 end
 function ReactiveInternalInterface(domain1,domain2,reactions,A)
@@ -452,7 +452,7 @@ struct FragmentBasedReactiveFilmGrowthInterfaceConstantT{D1,D2,Q<:AbstractReacti
     parameterindexes::Array{Int64,1}
     domaininds::Array{Int64,1}
     p::Array{Float64,1}
-    reversibililty::Array{Bool,1}
+    reversibility::Array{Bool,1}
     forwardability::Array{Bool,1}
     Mws::Array{Float64,1}
 end
@@ -468,7 +468,7 @@ function FragmentBasedReactiveFilmGrowthInterfaceConstantT(domainfilm, domain2, 
     Gpart = ArrayPartition(domainfilm.Gs,domain2.Gs)
     dGrxns = -M*Gpart
     kfs = getkf.(reactions,nothing,T,0.0,0.0,Ref([]),0.0,0.0,dGrxns,0.0)
-    Kc = getKcs(domain1.phase,domain2.phase,T,Nrp1,Nrp2,dGrxns)
+    Kc = getKcs(domainfilm.phase,domain2.phase,T,Nrp1,Nrp2,dGrxns)
     krevs = kfs./Kc
 
     M, Nrp1, Nrp2 = getstoichmatrix(domainfilm, domain2, reactions)

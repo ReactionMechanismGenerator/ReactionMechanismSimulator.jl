@@ -233,7 +233,7 @@ end
         return kfsdiff, krev
     else
         len = length(phase.reactions)
-        kfs = zeros(typeof(Gs[1]),len)ss
+        kfs = zeros(typeof(Gs[1]),len)
         krev = zeros(typeof(Gs[1]),len)
         @simd for i = 1:len
            @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,dGrxns[i],diffs,V,phi,d)
