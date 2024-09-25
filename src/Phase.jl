@@ -125,7 +125,7 @@ function IdealSurface(species,reactions,sitedensity;name="",diffusionlimited=fal
     therm = getvecthermo(species)
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
-    echangevec = getfield.(rxns,:electronchange).*F
+    echangevec = getfield.(rxns,:electronchange)
     electronchange = convert(Array{Float64,1},echangevec)
     reversibility = getfield.(rxns,:reversible)
     forwardability = getfield.(rxns,:forwardable)
@@ -170,11 +170,7 @@ function FragmentBasedIdealFilm(species, reactions; name="", diffusionlimited=fa
     rxnarray = getreactionindices(species,rxns)
     M,Nrp = getstoichmatrix(rxnarray,species)
     echangevec = getfield.(rxns,:electronchange)
-    if all(echangevec .== 0)
-        electronchange = nothing
-    else 
-        electronchange = convert(echangevec,Array{Float64,1})
-    end
+    electronchange = convert(Array{Float64,1},echangevec)
     reversibility = getfield.(rxns,:reversible)
     forwardability = getfield.(rxns,:forwardable)
 
