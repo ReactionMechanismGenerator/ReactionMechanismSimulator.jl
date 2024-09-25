@@ -31,7 +31,7 @@ struct ReactiveInternalInterface{T,B,C,C2,N,Q<:AbstractReaction,X} <: AbstractRe
     parameterindexes::Array{Int64,1}
     domaininds::Array{Int64,1}
     p::Array{Float64,1}
-    reversibililty::Array{Bool,1}
+    reversibility::Array{Bool,1}
     forwardability::Array{Bool,1}
 end
 function ReactiveInternalInterface(domain1,domain2,reactions,A)
@@ -452,7 +452,7 @@ struct FragmentBasedReactiveFilmGrowthInterfaceConstantT{D1,D2,Q<:AbstractReacti
     parameterindexes::Array{Int64,1}
     domaininds::Array{Int64,1}
     p::Array{Float64,1}
-    reversibililty::Array{Bool,1}
+    reversibility::Array{Bool,1}
     forwardability::Array{Bool,1}
     Mws::Array{Float64,1}
 end
