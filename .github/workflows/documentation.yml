@@ -26,18 +26,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
-            ${{ runner.os }}-
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Build
-        run: |
-            current_path=${{ github.workspace }}
-            export JULIA_CONDAPKG_ENV="$current_path/rms_env"
-            julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate();'
-      - name: Build and deploy
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
-          DOCUMENTER_DEBUG: true
-        run: |
-          current_path=${{ github.workspace }}
-          export JULIA_CONDAPKG_ENV="$current_path/rms_env"
-          julia --color=yes --project=docs docs/make.jl
+      - uses: julia-actions/julia-buildpkg@latest
+      - uses: julia-actions/julia-docdeploy@latest
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
