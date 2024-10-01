@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - marcus_development
 jobs:
   test:
     runs-on: ubuntu-latest
