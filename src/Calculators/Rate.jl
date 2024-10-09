@@ -44,8 +44,8 @@ export Arrheniusq
     n::K
     lmbd_i_coefs::Q
     lmbd_o::K
-    wr::K
-    wp::K
+    wr::K = 0.0
+    wp::K = 0.0
     beta::B
     unc::P = EmptyRateUncertainty()
 end
