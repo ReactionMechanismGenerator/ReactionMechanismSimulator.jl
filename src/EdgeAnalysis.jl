@@ -373,6 +373,7 @@ function processfluxes(sim::SystemSimulation,
     end
     for d in sim.interfaces
         if hasproperty(d,:rxnarray)
+            interspecieslist = vcat(d.domain1.phase.species, d.domain2.phase.species)
             @inbounds for i = 1:size(d.rxnarray)[2]
                 if @inbounds any(d.rxnarray[:,i].>length(corespeciesconcentrations))
                     continue
@@ -383,8 +384,8 @@ function processfluxes(sim::SystemSimulation,
                         @inbounds corespeciesconsumptionrates[d.rxnarray[j,i]] += frts[i+index]
                         @inbounds corespeciesproductionrates[d.rxnarray[j,i]] += rrts[i+index]
                         corespeciesnetconsumptionrates[d.rxnarray[j,i]] += net_forward_rate
-                        if d.phase.species[d.rxnarray[j,i]].radicalelectrons == 1
-                            coreradicalnetterminationrates[d.rxnarray[j,i]] += net_forward_rate * abs(min(d.phase.reactions[i].radicalchange, 0.0))    
+                        if interspecieslist[d.rxnarray[j,i]].radicalelectrons == 1
+                            coreradicalnetterminationrates[d.rxnarray[j,i]] += net_forward_rate * abs(min(d.reactions[i].radicalchange, 0.0))    
                         end
                     else
                         break
@@ -396,8 +397,8 @@ function processfluxes(sim::SystemSimulation,
                         @inbounds corespeciesproductionrates[d.rxnarray[j,i]] += frts[i+index]
                         @inbounds corespeciesconsumptionrates[d.rxnarray[j,i]] += rrts[i+index]
                         corespeciesnetconsumptionrates[d.rxnarray[j,i]] += net_reverse_rate
-                        if d.phase.species[d.rxnarray[j,i]].radicalelectrons == 1
-                            coreradicalnetterminationrates[d.rxnarray[j,i]] += net_reverse_rate * abs(min(-d.phase.reactions[i].radicalchange, 0.0))    
+                        if interspecieslist[d.rxnarray[j,i]].radicalelectrons == 1
+                            coreradicalnetterminationrates[d.rxnarray[j,i]] += net_reverse_rate * abs(min(-d.reactions[i].radicalchange, 0.0))    
                         end
                     else
                         break
