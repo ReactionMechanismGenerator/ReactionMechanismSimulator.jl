@@ -77,7 +77,7 @@ using SciMLSensitivity
         interfaces = [kLAkHCondensationEvaporationWithReservoir(domain, conds)]
         react = Reactor(domain, y0, (0.0, 140000.01), interfaces; p=p)
 
-        sol1 = solve(react.ode, react.recommendedsolver, abstol=1e-18, reltol=1e-6)
+        sol1 = solve(react.ode, react.recommendedsolver, abstol=1e-16, reltol=1e-6)
 
         phaseDict = readinput("../src/testing/TdependentkLAkH.rms")
         spcs = phaseDict["phase"]["Species"]
@@ -91,7 +91,7 @@ using SciMLSensitivity
         interfaces = [kLAkHCondensationEvaporationWithReservoir(domain, conds)]
         react = Reactor(domain, y0, (0.0, 140000.01), interfaces; p=p) #Create the reactor object
 
-        sol2 = solve(react.ode, react.recommendedsolver, abstol=1e-18, reltol=1e-6)
+        sol2 = solve(react.ode, react.recommendedsolver, abstol=1e-16, reltol=1e-6)
 
         spcnames = getfield.(liq.species, :name)
         octaneind = findfirst(isequal("octane"), spcnames)
@@ -137,7 +137,7 @@ using SciMLSensitivity
         domains = (domainliq, domaingas)
         interfaces = [vl, inletgas, outletgas]
         react, y0, p = Reactor(domains, (y0liq, y0gas), (0.0, tf), interfaces, (pliq, pgas, pinter))
-        sol = solve(react.ode, react.recommendedsolver, abstol=1e-18, reltol=1e-6)
+        sol = solve(react.ode, react.recommendedsolver, abstol=1e-16, reltol=1e-6)
 
         name = "oxygen"
         ind = findfirst(x -> x == name, liqspcnames)
@@ -585,7 +585,7 @@ using SciMLSensitivity
 
         react, y0, p = Reactor((domaingas, domaincat), (y0gas, y0cat), (0.0, 0.1), (inter,), (pgas, pcat, pinter))
 
-        sol = solve(react.ode, CVODE_BDF(), abstol=1e-20, reltol=1e-6)
+        sol = solve(react.ode, CVODE_BDF(), abstol=1e-16, reltol=1e-6)
 
         ssys = SystemSimulation(sol, (domaingas, domaincat,), (inter,), p)
 
