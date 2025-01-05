@@ -35,8 +35,16 @@ export StickingCoefficient
         V0::R = 0.0
         unc::P = EmptyRateUncertainty()
 end
-@inline (arr::Arrheniusq)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0,dGrxn=0.0,d=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea-arr.q*F*(phi-arr.V0))/(R*T))
-@inline (arr::Arrheniusq)(T::Q;P::N=0.0,C::S=0.0,phi=0.0,dGrxn=0.0,d=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea-arr.q*F*(phi-arr.V0))/(R*T))
+@inline (arr::Arrheniusq)(;T::Q, P::N=0.0, C::S=0.0, phi=0.0, dGrxn=0.0, d=0.0) where {Q<:Real, N<:Real, S<:Real} = begin
+    barrier = arr.Ea+arr.q*F*(phi-arr.V0)
+    corrected_barrier = max(0, dGrxn, barrier)
+    @fastmath arr.A*T^arr.n*exp(-corrected_barrier/(R*T))
+end
+@inline (arr::Arrheniusq)(T::Q; P::N=0.0, C::S=0.0, phi=0.0, dGrxn=0.0, d=0.0) where {Q<:Real, N<:Real, S<:Real} = begin
+    barrier = arr.Ea+arr.q*F*(phi-arr.V0)
+    corrected_barrier = max(0, dGrxn, barrier)
+    @fastmath arr.A*T^arr.n*exp(-corrected_barrier/(R*T))
+end
 export Arrheniusq
 
 @with_kw struct Marcus{N<:Real,K<:Real,Q,P<:AbstractRateUncertainty,B} <: AbstractRate
