@@ -1,7 +1,7 @@
 module ReactionMechanismSimulator
 using PythonCall
 using CondaPkg
-packages = keys(CondaPkg.current_packages())
+# packages = keys(CondaPkg.current_packages())
 const Chem = PythonCall.pynew()
 const Desc = PythonCall.pynew()
 const molecule = PythonCall.pynew()
