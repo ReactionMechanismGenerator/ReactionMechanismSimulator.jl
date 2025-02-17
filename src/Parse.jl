@@ -1,6 +1,6 @@
 using Unitful
 using YAML
-using PyCall
+using PythonCall
 using StaticArrays
 
 module Calc
@@ -131,7 +131,7 @@ function getatomdictfromrdkit(mol)
     atmD = Dict{String,Int64}()
     molecularweight = 0.0
     for atm in mol.GetAtoms()
-        v = elementdict[atm.GetAtomicNum()]
+        v = elementdict[PythonCall.pyconvert(Int64, atm.GetAtomicNum())]
         if v in keys(atmD)
             atmD[v] += 1
         else
@@ -140,9 +140,9 @@ function getatomdictfromrdkit(mol)
     end
     nbonds = length(mol.GetBonds())
     try
-        molecularweight = Desc.MolWt(mol)/1000.0
-    catch
-        @warn("unable to compute molecular weight")
+        molecularweight = PythonCall.pyconvert(Float64, Desc.MolWt(mol)) / 1000.0
+    catch e
+        @warn("unable to compute molecular weight: $e")
     end
     return atmD,nbonds,molecularweight
 end
@@ -151,7 +151,7 @@ export getatomdictfromrdkit
 function getatomdictfromrmg(mol)
     atmD = Dict{String,Int64}()
     for atm in mol.atoms
-        v = elementdict[atm.element.number]
+        v = elementdict[PythonCall.pyconvert(Int64, atm.element.number)]
         if v in keys(atmD)
             atmD[v] += 1
         else
@@ -159,7 +159,7 @@ function getatomdictfromrmg(mol)
         end
     end
     nbonds = length(mol.get_all_edges())
-    molecularweight = mol.get_molecular_weight()
+    molecularweight = PythonCall.pyconvert(Float64, mol.get_molecular_weight())
     return atmD,nbonds,molecularweight
 end
 function getatomdictsmiles(smiles)
@@ -168,7 +168,12 @@ function getatomdictsmiles(smiles)
         mol.assign_representative_molecule()
         getatomdictfromrmg(mol.mol_repr)
     else
-        getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
+        try
+            return getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
+        catch e
+            println("RDKit parsing failed, using RMG instead", e)
+            return getatomdictfromrmg(molecule.Molecule().from_smiles(smiles))
+        end
     end
 end
 
