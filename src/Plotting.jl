@@ -1,4 +1,4 @@
-using PyPlot
+using PythonPlot
 
 """
 Plot the mole fractions of the simulation bsol from t0 to tf
@@ -484,7 +484,7 @@ function plottimescales(Jy;taumax=1e6,taumin=1e-18,taures=10.0^0.5,usediag=true)
     else
         taus = 1.0./abs.(eigvals(Jy))
     end
-    PyPlot.hist([x==Inf ? 0.0 : x for x in taus],bins=10.0.^(log10(taumin):log10(taures):log10(taumax)))
+    PythonPlot.hist([x == Inf ? 0.0 : x for x in taus], bins=10.0 .^ (log10(taumin):log10(taures):log10(taumax)))
     xscale("log")
     xlabel("Species Time Scale [sec]")
     ylabel("Counts")
