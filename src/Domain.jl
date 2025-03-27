@@ -3113,6 +3113,12 @@ end
             @simd for i in domain.indexes[1]:domain.indexes[2]
                 @inbounds @fastmath jac[i, i] -= inter.Vout(t) / V
             end
+        elseif isa(inter, ConstantReservoirDiffusion) && domain == inter.domain 
+            # dn/dt .+= inter.A .* domain.diffusivity .* (inter.c .- ns./V) / inter.layer_thickness
+            # d/dni(dni/dt) .-= (inter.A .* d.diffusivity / (V * inter.layer_thickness) 
+            @simd for i in domain.indexes[1]:domain.indexes[2]
+                @inbounds @fastmath jac[i, i] -= inter.A * domain.diffusivity / (V * inter.layer_thickness)
+            end
         end
     end
 
