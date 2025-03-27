@@ -1879,6 +1879,8 @@ export calcthermo
             cond = kLAs .* inter.molefractions .* inter.P ./ kHs * V
 
             dydt[d.indexes[1]:d.indexes[2]] .-= (evap .- cond)
+        elseif isa(inter, ConstantReservoirDiffusion) && d == inter.domain 
+            dydt[d.indexes[1]:d.indexes[2]] .+= inter.A .* d.diffusivity .* (inter.c .- ns./V) / inter.layer_thickness
         elseif isa(inter, VolumetricFlowRateInlet) && d == inter.domain
             dydt[d.indexes[1]:d.indexes[2]] .+= inter.Vin(t) * inter.cs
         elseif isa(inter, VolumetricFlowRateOutlet) && d == inter.domain
