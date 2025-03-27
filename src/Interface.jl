@@ -283,6 +283,20 @@ struct Outlet{V,FF<:Function} <: AbstractBoundaryInterface
 end
 export Outlet
 
+struct ConstantReservoirDiffusion{S,V<:AbstractArray,U<:Real}
+    domain::S
+    c::V
+    A::U
+    layer_thickness::U
+end
+
+function ConstantReservoirDiffusion(domain::V, conddict::Dict{X1,X}, A::B, layer_thickness::B) where {V,X1,X,B<:Real}
+    cs = makespcsvector(domain.phase, conddict)
+    return ConstantReservoirDiffusion(domain,cs,A,layer_thickness)
+end
+
+export ConstantReservoirDiffusion
+
 """
 kLAkHCondensationEvaporationWithReservoir adds evaporation and condensation to
 (1) a liquid phase domain with a constant composition vapor resevoir, where number of moles, P, and T need to be specified, or
