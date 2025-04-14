@@ -12,9 +12,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v1
+
+      - name: Setup Miniforge Python 3.9
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          version: '1.10'
+          miniforge-variant: Miniforge3
+          miniforge-version: latest
+          python-version: "3.9"
+          activate-environment: rms_env
+          auto-update-conda: true
+          show-channel-urls: true
+          conda-remove-defaults: "true"
+
+      - name: Setup Juliaup
+        uses: julia-actions/install-juliaup@v2
+        with:
+          channel: '1.9'
+
       - uses: actions/cache@v1
         env:
           cache-name: cache-artifacts
@@ -25,18 +39,25 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
+
+      - name: Set some env vars
+        run: |
+          # https://juliapy.github.io/PythonCall.jl/stable/pythoncall/#If-you-already-have-Python-and-required-Python-packages-installed
+          echo "JULIA_CONDAPKG_BACKEND=Current" >> $GITHUB_ENV
+          echo "JULIA_PYTHONCALL_EXE=$CONDA_PREFIX/bin/python" >> $GITHUB_ENV
+
       - uses: julia-actions/julia-buildpkg@v1
+
       - name: Build
         run: |
-            current_path=${{ github.workspace }}
-            export JULIA_CONDAPKG_ENV="$current_path/rms_env"
             julia -e 'using Pkg; Pkg.develop(Pkg.PackageSpec(path="../ReactionMechanismSimulator.jl/")); Pkg.build("ReactionMechanismSimulator");'
+
       - name: Run tests
         run: |
-            current_path=${{ github.workspace }}
-            export JULIA_CONDAPKG_ENV="$current_path/rms_env"
             julia -e 'using Pkg; Pkg.test("ReactionMechanismSimulator"; coverage=true)'
+
       - uses: julia-actions/julia-processcoverage@v1
+
       - uses: codecov/codecov-action@v1
         with:
           file: lcov.info
