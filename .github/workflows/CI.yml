@@ -27,7 +27,7 @@ jobs:
       - name: Setup Juliaup
         uses: julia-actions/install-juliaup@v2
         with:
-          channel: '1.9'
+          channel: '1.10'
 
       - uses: julia-actions/cache@v2
 
