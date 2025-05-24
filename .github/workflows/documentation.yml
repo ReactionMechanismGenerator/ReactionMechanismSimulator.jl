@@ -26,7 +26,7 @@ jobs:
 
       - name: Build
         run: |
-            julia -e 'using Pkg; Pkg.develop(Pkg.PackageSpec(path="../ReactionMechanismSimulator.jl/")); Pkg.build("ReactionMechanismSimulator");'
+            julia -e 'using Pkg; Pkg.develop(Pkg.PackageSpec(path="../ReactionMechanismSimulator.jl/")); Pkg.build("ReactionMechanismSimulator"); Pkg.instantiate();'
 
       - name: Build and deploy Documentation
         env:
