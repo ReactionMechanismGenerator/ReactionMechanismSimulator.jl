@@ -18,17 +18,9 @@ jobs:
         with:
           channel: '1.10'
 
-      - uses: julia-actions/cache@v2
-
-      - uses: julia-actions/julia-buildpkg@v1
-
-      - name: Build
+      - name: Build and Test
         run: |
-            julia -e 'using Pkg; Pkg.develop(Pkg.PackageSpec(path="../ReactionMechanismSimulator.jl/")); Pkg.build("ReactionMechanismSimulator");'
-
-      - name: Run tests
-        run: |
-            julia -e 'using Pkg; Pkg.test("ReactionMechanismSimulator"; coverage=true)'
+            julia -e 'using Pkg; Pkg.develop(Pkg.PackageSpec(path="../ReactionMechanismSimulator.jl/")); Pkg.build("ReactionMechanismSimulator"); Pkg.test("ReactionMechanismSimulator"; coverage=true)'
 
       - uses: julia-actions/julia-processcoverage@v1
 
