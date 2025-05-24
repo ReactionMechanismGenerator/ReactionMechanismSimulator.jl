@@ -1037,8 +1037,10 @@ function selectobjects(react,edgereact,coreedgedomains,coreedgeinters,domains,in
         dydt,rts,frts,rrts,cs,corespeciesrates,charrate,edgespeciesrates,edgereactionrates,edgerxnradrateratios,
         corespeciesrateratios,edgespeciesrateratios,corereactionrates,corespeciesconcentrations,
         corespeciesproductionrates,corespeciesconsumptionrates = processfluxes(sim,corespcsinds,corerxninds,edgespcsinds,edgerxninds)
-        @inbounds ind = edgespcsinds[argmax(edgespeciesrates)]
-        @inbounds invalidobjects = [sim.species[ind]]
+        if !isempty(edgespeciesrates)
+            @inbounds ind = edgespcsinds[argmax(edgespeciesrates)]
+            @inbounds invalidobjects = [sim.species[ind]]
+        end        
         return (terminated,true,invalidobjects,unimolecularthreshold,
             bimolecularthreshold,trimolecularthreshold,maxedgespeciesrateratios,t,conversion)
     end
