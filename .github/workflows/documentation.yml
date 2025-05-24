@@ -15,29 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Miniforge Python 3.9
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniforge-variant: Miniforge3
-          miniforge-version: latest
-          python-version: "3.9"
-          activate-environment: rms_env
-          auto-update-conda: true
-          show-channel-urls: true
-          conda-remove-defaults: "true"
-
       - name: Setup Juliaup
         uses: julia-actions/install-juliaup@v2
         with:
           channel: '1.10'
 
       - uses: julia-actions/cache@v2
-
-      - name: Set some env vars
-        run: |
-          # https://juliapy.github.io/PythonCall.jl/stable/pythoncall/#If-you-already-have-Python-and-required-Python-packages-installed
-          echo "JULIA_CONDAPKG_BACKEND=Current" >> $GITHUB_ENV
-          echo "JULIA_PYTHONCALL_EXE=$CONDA_PREFIX/bin/python" >> $GITHUB_ENV
 
       - uses: julia-actions/julia-buildpkg@v1
 
