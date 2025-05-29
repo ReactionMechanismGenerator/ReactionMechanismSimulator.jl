@@ -13,21 +13,24 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@latest
+      - uses: actions/checkout@v4
+
+      - name: Setup Juliaup
+        uses: julia-actions/install-juliaup@v2
         with:
-          version: 1.8
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          environment-file: environment.yml
-          python-version: 3.7
-          activate-environment: rms_env
-      - name: Install dependencies
+          channel: '1.10'
+
+      - uses: julia-actions/cache@v2
+
+      - uses: julia-actions/julia-buildpkg@v1
+
+      - name: Build
         run: |
-            julia -e 'ENV["PYTHON"]=ENV["CONDA"] * "/envs/rms_env/bin/python"; using Pkg; Pkg.add("PyCall"); Pkg.build("PyCall")'
-            julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate();'
-      - name: Build and deploy
+            julia -e 'using Pkg; Pkg.develop(Pkg.PackageSpec(path="../ReactionMechanismSimulator.jl/")); Pkg.build("ReactionMechanismSimulator"); Pkg.instantiate();'
+
+      - name: Build and deploy Documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_DEBUG: true
-        run: julia --color=yes --project=docs docs/make.jl
+        run: |
+          julia --color=yes --project=docs docs/make.jl
