@@ -49,20 +49,28 @@ function ReactiveInternalInterface(domain1, domain2, reactions, A)
 end
 export ReactiveInternalInterface
 
-function getkfskrevs(ri::ReactiveInternalInterface, T1, T2, phi1, phi2, Gs1, Gs2, cstot::Array{Q,1}) where {Q}
-    kfs = getkfs(ri, T1, 0.0, 0.0, Array{Q,1}(), ri.A, phi1)
+function getkfskrevs(ri::ReactiveInternalInterface, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot::Array{Q,1}) where {Q}
+    if !(coverages1 === nothing) && coverages2 === nothing
+        kfs = getkfs(ri, T1, 0.0, 0.0, Array{Q,1}(), ri.A, phi1; coverages=coverages1)
+    elseif !(coverages2 === nothing) && coverages1 === nothing
+        kfs = getkfs(ri, T1, 0.0, 0.0, Array{Q,1}(), ri.A, phi1; coverages=coverages2)
+    elseif coverages1 === nothing && coverages2 === nothing 
+        kfs = getkfs(ri, T1, 0.0, 0.0, Array{Q,1}(), ri.A, phi1)
+    else 
+        throw(DomainError("Coverage dependence of an interface between two surfaces is indeterminate (which coverage should be used?)"))
+    end
     Kc = getKc.(ri.reactions, ri.domain1.phase, ri.domain2.phase, Ref(Gs1), Ref(Gs2), T1, phi1)
     krevs = kfs ./ Kc
     return kfs, krevs
 end
 
-function evaluate(ri::ReactiveInternalInterface, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, cstot, p::W) where {W<:SciMLBase.NullParameters}
-    kfs, krevs = getkfskrevs(ri, T1, T2, phi1, phi2, Gs1, Gs2, cstot)
+function evaluate(ri::ReactiveInternalInterface, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot, p::W) where {W<:SciMLBase.NullParameters}
+    kfs, krevs = getkfskrevs(ri, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot)
     addreactionratecontributions!(dydt, ri.rxnarray, cstot, kfs, krevs, ri.A)
 end
 
-function evaluate(ri::ReactiveInternalInterface, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, cstot, p)
-    kfs, krevs = getkfskrevs(ri, T1, T2, phi1, phi2, Gs1, Gs2, cstot)
+function evaluate(ri::ReactiveInternalInterface, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot, p)
+    kfs, krevs = getkfskrevs(ri, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot)
     addreactionratecontributions!(dydt, ri.rxnarray, cstot, kfs .* p[ri.parameterindexes[1]:ri.parameterindexes[2]], krevs .* p[ri.parameterindexes[1]:ri.parameterindexes[2]], ri.A)
 end
 export evaluate
