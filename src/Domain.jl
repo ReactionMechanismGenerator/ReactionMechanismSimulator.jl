@@ -1619,7 +1619,7 @@ end
         kfs = d.kfs 
         krevs = d.krevs
         Gs = d.Gs
-        return ns, cs, d.T, P, d.A, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, , similar(cs,0,0)
+        return ns, cs, d.T, P, d.A, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, similar(cs,0,0)
     end
     
 end
