@@ -4,7 +4,9 @@ using PythonCall
 using StaticArrays
 
 module Calc
+    include("Calculators/RateCoverageDependence.jl")
     include("Calculators/RateUncertainty.jl")
+    include("Calculators/ThermoCoverageDependence.jl")
     include("Calculators/ThermoUncertainty.jl")
     include("Calculators/Thermo.jl")
     include("Calculators/Diffusion.jl")
@@ -15,6 +17,7 @@ module Calc
     include("Calculators/kLAkH.jl")
 end
 module Spc
+    include("Calculators/ThermoCoverageDependence.jl")
     include("Calculators/ThermoUncertainty.jl")
     include("Calculators/Thermo.jl")
     include("Calculators/Diffusion.jl")
@@ -22,7 +25,9 @@ module Spc
     include("Species.jl")
 end
 module Rxn
+    include("Calculators/RateCoverageDependence.jl")
     include("Calculators/RateUncertainty.jl")
+    include("Calculators/ThermoCoverageDependence.jl")
     include("Calculators/ThermoUncertainty.jl")
     include("Calculators/Thermo.jl")
     include("Calculators/Diffusion.jl")
