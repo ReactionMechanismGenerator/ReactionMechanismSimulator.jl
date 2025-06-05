@@ -931,7 +931,7 @@ export ConstantTLiqFilmDomain
     for ind in d.efficiencyinds #efficiency related rates may have changed
         d.kfs[ind], d.krevs[ind] = getkfkrev(d.phase.reactions[ind], d.phase, d.T, d.P, C, N, ns, d.Gs, d.diffusivity, V, 0.0)
     end
-    return ns, cs, d.T, d.P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, d.T, d.P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q<:Float64} #uses parameter input
@@ -952,13 +952,13 @@ end
         for ind in d.efficiencyinds #efficiency related rates may have changed
             d.kfs[ind], d.krevs[ind] = getkfkrev(d.phase.reactions[ind], d.phase, d.T, d.P, C, N, ns, d.Gs, d.diffusivity, V, 0.0; f=kfps[ind])
         end
-        return ns, cs, d.T, d.P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+        return ns, cs, d.T, d.P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
     elseif nothermochg
         d.kfs = kfps
         for ind in d.efficiencyinds #efficiency related rates may have changed
             d.kfs[ind], d.krevs[ind] = getkfkrev(d.phase.reactions[ind], d.phase, d.T, d.P, C, N, ns, d.Gs, d.diffusivity, V, 0.0; f=kfps[ind])
         end
-        return ns, cs, d.T, d.P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+        return ns, cs, d.T, d.P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
     else #need to handle thermo changes
         d.kfs .= kfps
         if !d.alternativepformat
@@ -970,7 +970,7 @@ end
         for ind in d.efficiencyinds #efficiency related rates may have changed
             d.kfs[ind], d.krevs[ind] = getkfkrev(d.phase.reactions[ind], d.phase, d.T, d.P, C, N, ns, d.Gs, d.diffusivity, V, 0.0; f=kfps[ind])
         end
-        return ns, cs, d.T, d.P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+        return ns, cs, d.T, d.P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
     end
 end
 
@@ -991,7 +991,7 @@ end
     for ind in d.efficiencyinds #efficiency related rates may have changed
         kfs[ind], krevs[ind] = getkfkrev(d.phase.reactions[ind], d.phase, d.T, d.P, C, N, ns, Gs, d.diffusivity, V, 0.0; f=kfs[ind])
     end
-    return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J,Q} #Autodiff p
@@ -1011,7 +1011,7 @@ end
     for ind in d.efficiencyinds #efficiency related rates may have changed
         kfs[ind], krevs[ind] = getkfkrev(d.phase.reactions[ind], d.phase, d.T, d.P, C, N, ns, Gs, d.diffusivity, V, 0.0; f=kfs[ind])
     end
-    return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Autodiff p
@@ -1033,7 +1033,7 @@ end
     for ind in d.efficiencyinds #efficiency related rates may have changed
         kfs[ind], krevs[ind] = getkfkrev(d.phase.reactions[ind], d.phase, d.T, d.P, C, N, ns, Gs, d.diffusivity, V, 0.0; f=kfs[ind])
     end
-    return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J,Q} #Tracker/reversediff
@@ -1050,7 +1050,7 @@ end
         kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind], d.phase, d.T, d.P, C, N, ns, Gs, d.diffusivity, V, 0.0)[1] * d.p[length(d.phase.species)+ind] * p[d.parameterindexes[1]-1+length(d.phase.species)+ind] : p[d.parameterindexes[1]-1+length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
     end
     krevs = getkfkrevs(d.phase, d.T, d.P, C, N, ns, Gs, d.diffusivity, V, 0.0; kfs=kfs)[2]
-    return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Tracker/reversediff
@@ -1067,7 +1067,7 @@ end
         kfs = [ind in d.efficiencyinds ? getkfkrev(d.phase.reactions[ind], d.phase, d.T, d.P, C, N, ns, Gs, d.diffusivity, V, 0.0)[1] * d.p[length(d.phase.species)+ind] * p[d.parameterindexes[1]-1+length(d.phase.species)+ind] : p[d.parameterindexes[1]-1+length(d.phase.species)+ind] for ind in 1:length(d.phase.reactions)]
     end
     krevs = getkfkrevs(d.phase, d.T, d.P, C, N, ns, Gs, d.diffusivity, V, 0.0; kfs=kfs)[2]
-    return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1092,7 +1092,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, d.V, 0.0)
-    return ns, cs, T, P, d.V, C, N, 0.0, kfs, krevs, Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0
+    return ns, cs, T, P, d.V, C, N, 0.0, kfs, krevs, Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1118,7 +1118,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, d.V, 0.0)
-    return @views @fastmath ns, cs, T, P, d.V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0
+    return @views @fastmath ns, cs, T, P, d.V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1144,7 +1144,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, d.V, 0.0)
-    return @views @fastmath ns, cs, T, P, d.V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0
+    return @views @fastmath ns, cs, T, P, d.V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1168,7 +1168,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, d.P, C, N, ns, Gs, diffs, V, 0.0)
-    return ns, cs, T, d.P, V, C, N, 0.0, kfs, krevs, Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0
+    return ns, cs, T, d.P, V, C, N, 0.0, kfs, krevs, Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1194,9 +1194,9 @@ end
     end
     kfs, krevs = getkfkrevs(d.phase, T, d.P, C, N, ns, Gs, diffs, V, 0.0)
     if p != SciMLBase.NullParameters()
-        return @views @fastmath ns, cs, T, d.P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0
+        return @views @fastmath ns, cs, T, d.P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0, nothing
     else
-        return ns, cs, T, d.P, V, C, N, 0.0, kfs, krevs, Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0
+        return ns, cs, T, d.P, V, C, N, 0.0, kfs, krevs, Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0, nothing
     end
 end
 
@@ -1222,7 +1222,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, d.P, C, N, ns, Gs, diffs, V, 0.0)
-    return @views @fastmath ns, cs, T, d.P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0
+    return @views @fastmath ns, cs, T, d.P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 
 @inline function calcthermo(d::ParametrizedVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1247,7 +1247,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, 0.0)
-    return ns, cs, T, P, V, C, N, 0.0, kfs, krevs, Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0
+    return ns, cs, T, P, V, C, N, 0.0, kfs, krevs, Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 
 @inline function calcthermo(d::ParametrizedVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1273,7 +1273,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, 0.0)
-    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0
+    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 
 @inline function calcthermo(d::ParametrizedVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1299,7 +1299,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, 0.0)
-    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0
+    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Us, Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 
 @inline function calcthermo(d::ParametrizedPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1324,7 +1324,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, 0.0)
-    return ns, cs, T, P, V, C, N, 0.0, kfs, krevs, Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0
+    return ns, cs, T, P, V, C, N, 0.0, kfs, krevs, Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 
 @inline function calcthermo(d::ParametrizedPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1350,7 +1350,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, 0.0)
-    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0
+    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 @inline function calcthermo(d::ParametrizedPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     P = d.P(t)
@@ -1375,7 +1375,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, 0.0)
-    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0
+    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Hs, Array{Float64,1}(), Gs, diffs, Cvave, cpdivR, 0.0, nothing
 end
 
 @inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
@@ -1396,7 +1396,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, d.phi)
-    return ns, cs, T, P, V, C, N, mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, T, P, V, C, N, mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
@@ -1418,7 +1418,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, d.phi)
-    return @views @fastmath ns, cs, T, P, V, C, N, mu, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), d.phi
+    return @views @fastmath ns, cs, T, P, V, C, N, mu, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), d.phi, nothing
 end
 
 @inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
@@ -1440,7 +1440,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, d.phi)
-    return @views @fastmath ns, cs, T, P, V, C, N, mu, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), d.phi
+    return @views @fastmath ns, cs, T, P, V, C, N, mu, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), d.phi, nothing
 end
 
 @inline function calcthermo(d::ParametrizedTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1465,7 +1465,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, 0.0)
-    return ns, cs, T, P, V, C, N, 0.0, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, T, P, V, C, N, 0.0, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ParametrizedTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1491,7 +1491,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, 0.0)
-    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), 0.0
+    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ParametrizedTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
@@ -1517,7 +1517,7 @@ end
         diffs = Array{Float64,1}()
     end
     kfs, krevs = getkfkrevs(d.phase, T, P, C, N, ns, Gs, diffs, V, 0.0)
-    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), 0.0
+    return @views @fastmath ns, cs, T, P, V, C, N, 0.0, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, diffs, 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:SciMLBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
@@ -1526,7 +1526,7 @@ end
     cs = ns ./ d.V
     C = N / d.V
     P = 1.0e8
-    return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+    return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:Array{Float64,1},Q}
@@ -1539,31 +1539,31 @@ end
         @views nothermochg = d.Gs == p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         @views nokfchg = d.kfsnondiff == p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         if nothermochg && nokfchg
-            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         elseif nothermochg
             d.kfsnondiff = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, d.V, d.phi; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         else
             d.kfsnondiff = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, d.V, d.phi; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         end
     else
         @views nothermochg = d.Gs == d.p[1:length(d.phase.species)] .+ p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         @views nokfchg = d.kfsnondiff == d.p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         if nothermochg && nokfchg
-            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         elseif nothermochg
             d.kfsnondiff .= d.p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, d.V, d.phi; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         else
             d.kfsnondiff .= d.p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.Gs .= d.p[1:length(d.phase.species)] .+ p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, d.V, d.phi; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         end
     end
 
@@ -1583,7 +1583,7 @@ end
         kfsnondiff = convert(typeof(y), d.p[length(d.phase.species)+1:end] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
     end
     kfs, krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, Gs, d.diffusivity, d.V, d.phi; kfs=kfsnondiff)
-    return ns, cs, d.T, P, d.V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+    return ns, cs, d.T, P, d.V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
 end
 
 @inline function calcthermo(d::ConstantTVDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff p
@@ -1600,7 +1600,7 @@ end
         kfsnondiff = d.p[length(d.phase.species)+1:end] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
     end
     kfs, krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, Gs, d.diffusivity, d.V, d.phi; kfs=kfsnondiff)
-    return ns, cs, d.T, P, d.V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+    return ns, cs, d.T, P, d.V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
 end
 
 @inline function calcthermo(d::ConstantTAPhiDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:SciMLBase.NullParameters,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q}
@@ -1683,7 +1683,7 @@ function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=S
     cs = ns ./ V
     C = N / V
     P = 1.0e8
-    return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:Array{Float64,1},W<:FragmentBasedIdealFilm,Y<:Integer,J<:Array{Float64,1},Q}
@@ -1698,31 +1698,31 @@ function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=S
         @views nothermochg = d.Gs == p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         @views nokfchg = d.kfsnondiff == p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         if nothermochg && nokfchg
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
         elseif nothermochg
             d.kfsnondiff = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, V, 0.0; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
         else
             d.kfsnondiff = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, V, 0.0; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
         end
     else
         @views nothermochg = d.Gs == d.p[1:length(d.phase.species)] .+ p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         @views nokfchg = d.kfsnondiff == d.p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         if nothermochg && nokfchg
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
         elseif nothermochg
             d.kfsnondiff .= d.p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, V, 0.0; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
         else
             d.kfsnondiff .= d.p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.Gs .= d.p[1:length(d.phase.species)] .+ p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, V, 0.0; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
         end
     end
 
@@ -1744,7 +1744,7 @@ function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::Array{W2,1}, t::
         kfsnondiff = convert(typeof(y), d.p[length(d.phase.species)+1:end] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
     end
     kfs, krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, Gs, d.diffusivity, V, 0.0; kfs=kfsnondiff)
-    return ns, cs, d.T, P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, d.T, P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2,W<:FragmentBasedIdealFilm,Y<:Integer,J<:AbstractArray,Q} #autodiff p
@@ -1763,7 +1763,7 @@ function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=S
         kfsnondiff = d.p[length(d.phase.species)+1:end] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
     end
     kfs, krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, Gs, d.diffusivity, V, 0.0; kfs=kfsnondiff)
-    return ns, cs, d.T, P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
+    return ns, cs, d.T, P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0, nothing
 end
 
 @inline function calcthermo(d::ConstantTLiqFilmDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:Array{Float64,1},Q}
@@ -1777,31 +1777,31 @@ end
         @views nothermochg = d.Gs == p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         @views nokfchg = d.kfsnondiff == p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         if nothermochg && nokfchg
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         elseif nothermochg
             d.kfsnondiff = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, V, d.phi; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         else
             d.kfsnondiff = p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.Gs = p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, V, d.phi; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         end
     else
         @views nothermochg = d.Gs == d.p[1:length(d.phase.species)] .+ p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
         @views nokfchg = d.kfsnondiff == d.p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
         if nothermochg && nokfchg
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         elseif nothermochg
             d.kfsnondiff .= d.p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, V, d.phi; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         else
             d.kfsnondiff .= d.p[length(d.phase.species)+1:length(d.phase.species)+length(d.phase.reactions)] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
             d.Gs .= d.p[1:length(d.phase.species)] .+ p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)]
             d.kfs, d.krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, d.Gs, d.diffusivity, V, d.phi; kfs=d.kfsnondiff)
-            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+            return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
         end
     end
 
@@ -1822,7 +1822,7 @@ end
         kfsnondiff = convert(typeof(y), d.p[length(d.phase.species)+1:end] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)])
     end
     kfs, krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, Gs, d.diffusivity, V, d.phi; kfs=kfsnondiff)
-    return ns, cs, d.T, P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+    return ns, cs, d.T, P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
 end
 
 @inline function calcthermo(d::ConstantTLiqFilmDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff p
@@ -1840,7 +1840,7 @@ end
         kfsnondiff = d.p[length(d.phase.species)+1:end] .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(d.phase.reactions)]
     end
     kfs, krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, Gs, d.diffusivity, V, d.phi; kfs=kfsnondiff)
-    return ns, cs, d.T, P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
+    return ns, cs, d.T, P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, nothing
 end
 
 export calcthermo
