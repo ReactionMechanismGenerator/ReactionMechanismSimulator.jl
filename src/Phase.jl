@@ -317,9 +317,23 @@ export iterate
 Broadcast.broadcastable(p::T) where {T<:AbstractPhase} = Ref(p)
 export broadcastable
 
-function getreactionindices(spcs,rxns) where {Q<:AbstractPhase}
+function getreactionindices(spcs,rxns)
     arr = zeros(Int64,(8,length(rxns)))
     names = [spc.name for spc in spcs]
+    for spc in spcs
+        if hasproperty(spc.thermo,:covdep)
+            if spc.thermo.covdep isa PolynomialThermoEnergyCoverageDependence
+                for (name,v) in spc.thermo.covdep.polys
+                    ind = findfirst(isequal(name),names)
+                    spc.thermo.covdep.indpolys[ind] = v
+                end 
+            elseif spc.thermo.covdep isa EmptyThermoCoverageDependence
+
+            else 
+                throw(TypeError(spc.thermo.covdep,"Thermo Coverage Dependence Type Not Understood"))
+            end
+        end
+    end
     for (i,rxn) in enumerate(rxns)
         inds = [findfirst(isequal(spc),spcs) for spc in rxn.reactants]
         for (j,spc) in enumerate(rxn.reactants)
@@ -342,6 +356,28 @@ function getreactionindices(spcs,rxns) where {Q<:AbstractPhase}
                     rxn.kinetics.efficiencies[ind] = val
                 end
             end
+        end
+        if hasproperty(rxn.kinetics,:covdep) 
+            if rxn.kinetics.covdep isa PolynomialRateCoverageDependence
+                for (name,v) in rxn.kinetics.covdep.Epolys
+                    ind = findfirst(isequal(name),names)
+                    rxn.kinetics.covdep.indEpolys[ind] = v
+                end 
+                for (name,v) in rxn.kinetics.covdep.avals
+                    ind = findfirst(isequal(name),names)
+                    rxn.kinetics.covdep.indavals[ind] = v
+                end 
+                for (name,v) in rxn.kinetics.covdep.ms
+                    ind = findfirst(isequal(name),names)
+                    rxn.kinetics.covdep.indms[ind] = v
+                end 
+            elseif rxn.kinetics.covdep isa EmptyRateCoverageDependence
+
+            else 
+                throw(TypeError(rxn.kinetics.covdep,"Kinetic Coverage Dependence Type Not Understood"))
+            end
+
+                
         end
     end
     return arr
