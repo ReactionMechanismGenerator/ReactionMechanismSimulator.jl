@@ -28,6 +28,9 @@ ms corresponds to m (float)
     indms::Dict{N,L} = Dict()
 end
 @inline function getcovdepactivationbarriercorrection(covdep::PolynomialRateCoverageDependence,T,coverages)
+    if length(coverages) == 0
+        return zero(typeof(coverages).parameters[1])
+    end
     E = 0.0
     for (ind,Epoly) in covdep.indEpolys
         E += evalpoly(coverages[ind],indEpoly)
@@ -35,6 +38,9 @@ end
     return E
 end
 @inline function getcovdepfactorcorrection(covdep::PolynomialRateCoverageDependence,T,coverages)
+    if length(coverages) == 0
+        return zero(typeof(coverages).parameters[1])
+    end
     av = 0.0
     for (ind,a) in covdep.indavals
        av += coverages[ind]*a

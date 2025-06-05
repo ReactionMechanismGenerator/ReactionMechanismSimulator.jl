@@ -23,6 +23,9 @@ end
     return PolynomialThermoEnergyCoverageDependence(polys,Dict{Int64,Vector{Float64}}())
 end
 @inline function getcovdepenthalpycorrection(covdep::PolynomialThermoEnergyCoverageDependence,T,coverages)
+    if length(coverages) == 0
+        return zero(typeof(coverages).parameters[1])
+    end
     E = zero(coverages[1])
     for (ind,poly) in covdep.indpolys
         E += evalpoly(coverages[ind],poly)
