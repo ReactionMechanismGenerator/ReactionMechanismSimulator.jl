@@ -7,35 +7,38 @@ export AbstractRate
 abstract type AbstractFalloffRate <: AbstractRate end
 export AbstractFalloffRate
 
-@with_kw struct Arrhenius{N<:Real,K<:Real,Q<:Real,P<:AbstractRateUncertainty} <: AbstractRate
+@with_kw struct Arrhenius{N<:Real,K<:Real,Q<:Real,P<:AbstractRateUncertainty,H<:AbstractRateCoverageDependence} <: AbstractRate
         A::N
         n::K
         Ea::Q
         unc::P = EmptyRateUncertainty()
+        covdep::H = EmptyRateCoverageDependence()
 end
-@inline (arr::Arrhenius)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))
-@inline (arr::Arrhenius)(T::Q;P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-arr.Ea/(R*T))
+@inline (arr::Arrhenius)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0,coverages=nothing) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-(arr.Ea+getcovdepactivationbarriercorrection(arr.covdep,T,coverages))/(R*T))*getcovdepfactorcorrection(arr.covdep,T,coverages)
+@inline (arr::Arrhenius)(T::Q;P::N=0.0,C::S=0.0,phi=0.0,coverages=nothing) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp(-(arr.Ea+getcovdepactivationbarriercorrection(arr.covdep,T,coverages))/(R*T))*getcovdepfactorcorrection(arr.covdep,T,coverages)
 export Arrhenius
 
-@with_kw struct StickingCoefficient{N<:Real,K<:Real,Q<:Real,P<:AbstractRateUncertainty} <: AbstractRate
+@with_kw struct StickingCoefficient{N<:Real,K<:Real,Q<:Real,P<:AbstractRateUncertainty,H<:AbstractRateCoverageDependence} <: AbstractRate
         A::N
         n::K
         Ea::Q
         unc::P = EmptyRateUncertainty()
+        covdep::H = EmptyRateCoverageDependence()
 end
-@inline (arr::StickingCoefficient)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath min(arr.A*T^arr.n*exp(-arr.Ea/(R*T)),1.0)
-@inline (arr::StickingCoefficient)(T::Q;P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath min(arr.A*T^arr.n*exp(-arr.Ea/(R*T)),1.0)
+@inline (arr::StickingCoefficient)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0,coverages=nothing) where {Q<:Real,N<:Real,S<:Real} = @fastmath min(arr.A*T^arr.n*exp(-(arr.Ea+getcovdepactivationbarriercorrection(arr.covdep,T,coverages))/(R*T))*getcovdepfactorcorrection(arr.covdep,T,coverages),1.0)
+@inline (arr::StickingCoefficient)(T::Q;P::N=0.0,C::S=0.0,phi=0.0,coverages=nothing) where {Q<:Real,N<:Real,S<:Real} = @fastmath min(arr.A*T^arr.n*exp(-(arr.Ea+getcovdepactivationbarriercorrection(arr.covdep,T,coverages))/(R*T))*getcovdepfactorcorrection(arr.covdep,T,coverages),1.0)
 export StickingCoefficient
 
-@with_kw struct Arrheniusq{N<:Real,K<:Real,Q<:Real,P<:AbstractRateUncertainty,B} <: AbstractRate
+@with_kw struct Arrheniusq{N<:Real,K<:Real,Q<:Real,P<:AbstractRateUncertainty,B,H<:AbstractRateCoverageDependence} <: AbstractRate
         A::N
         n::K
         Ea::Q
         q::B = 0.0
         unc::P = EmptyRateUncertainty()
+        covdep::H = EmptyRateCoverageDependence()
 end
-@inline (arr::Arrheniusq)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea-arr.q*F*phi)/(R*T))
-@inline (arr::Arrheniusq)(T::Q;P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-arr.Ea-arr.q*F*phi)/(R*T))
+@inline (arr::Arrheniusq)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0,coverages=nothing) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-(arr.Ea+getcovdepactivationbarriercorrection(arr.covdep,T,coverages))-arr.q*F*phi)/(R*T))*getcovdepfactorcorrection(arr.covdep,T,coverages)
+@inline (arr::Arrheniusq)(T::Q;P::N=0.0,C::S=0.0,phi=0.0,coverages=nothing) where {Q<:Real,N<:Real,S<:Real} = @fastmath arr.A*T^arr.n*exp((-(arr.Ea+getcovdepactivationbarriercorrection(arr.covdep,T,coverages))-arr.q*F*phi)/(R*T))*getcovdepfactorcorrection(arr.covdep,T,coverages)
 export Arrheniusq
 
 @with_kw struct PdepArrhenius{T<:Real,Q<:AbstractRateUncertainty,Z<:AbstractRate} <: AbstractRate
@@ -45,7 +48,7 @@ export Arrheniusq
 end
 PdepArrhenius(Ps::Array{Q,1},arrs::Array{Z,1}) where {Q<:Real,Z<:AbstractRate} = PdepArrhenius(sort(Ps),arrs)
 
-@inline function (parr::PdepArrhenius)(;T::Q=nothing,P::V=nothing,C::S=0.0,phi=0.0) where {Q<:Real,V<:Real,S<:Real}
+@inline function (parr::PdepArrhenius)(;T::Q=nothing,P::V=nothing,C::S=0.0,phi=0.0,coverages=nothing) where {Q<:Real,V<:Real,S<:Real}
     inds = getBoundingIndsSorted(P,parr.Ps)::Tuple{Int64,Int64}
 
     if inds[2] == -1
@@ -60,15 +63,16 @@ PdepArrhenius(Ps::Array{Q,1},arrs::Array{Z,1}) where {Q<:Real,Z<:AbstractRate} =
 end
 export PdepArrhenius
 
-@with_kw struct MultiArrhenius{Q<:AbstractRateUncertainty} <: AbstractRate
+@with_kw struct MultiArrhenius{Q<:AbstractRateUncertainty,H<:AbstractRateCoverageDependence} <: AbstractRate
     arrs::Array{Arrhenius,1}
     unc::Q = EmptyRateUncertainty()
+    covdep::H = EmptyRateCoverageDependence()
 end
 
-@inline function (marr::MultiArrhenius)(;T::Q,P::R=0.0,C::S=0.0,phi=0.0) where {Q<:Real,R<:Real,S<:Real}
+@inline function (marr::MultiArrhenius)(;T::Q,P::R=0.0,C::S=0.0,phi=0.0,coverages=nothing) where {Q<:Real,R<:Real,S<:Real}
     out = 0.0
     for arr in marr.arrs
-        @fastmath out += arr(T)
+        @fastmath out += arr(T;coverages=coverages)
     end
     return out
 end
@@ -79,7 +83,7 @@ export MultiArrhenius
     unc::Q = EmptyRateUncertainty()
 end
 
-@inline function (parr::MultiPdepArrhenius)(;T::Q,P::R=0.0,C::S=0.0,phi=0.0) where {Q<:Real,R<:Real,S<:Real}
+@inline function (parr::MultiPdepArrhenius)(;T::Q,P::R=0.0,C::S=0.0,phi=0.0,coverages=nothing) where {Q<:Real,R<:Real,S<:Real}
     out = 0.0
     for pdar in parr.parrs
         @fastmath out += pdar(T=T,P=P)
@@ -95,7 +99,7 @@ export MultiPdepArrhenius
     unc::Q = EmptyRateUncertainty()
 end
 
-(tbarr::ThirdBody)(;T::Q=nothing,P::R=0.0,C::S=nothing,phi=0.0) where {Q<:Real,R<:Real,S<:Real} = C*(tbarr.arr(T))
+(tbarr::ThirdBody)(;T::Q=nothing,P::R=0.0,C::S=nothing,phi=0.0,coverages=nothing) where {Q<:Real,R<:Real,S<:Real} = C*(tbarr.arr(T))
 export ThirdBody
 
 @with_kw struct Lindemann{N<:Integer,K<:AbstractFloat,Q<:AbstractRateUncertainty} <: AbstractFalloffRate
@@ -106,7 +110,7 @@ export ThirdBody
     unc::Q = EmptyRateUncertainty()
 end
 
-@inline function (lnd::Lindemann)(;T::Q=nothing,P::R=0.0,C::S=nothing,phi=0.0) where {Q<:Real,R<:Real,S<:Real}
+@inline function (lnd::Lindemann)(;T::Q=nothing,P::R=0.0,C::S=nothing,phi=0.0,coverages=nothing) where {Q<:Real,R<:Real,S<:Real}
     k0 = lnd.arrlow(T=T)
     kinf = lnd.arrhigh(T=T)
     @fastmath Pr = k0*C/kinf
@@ -126,7 +130,7 @@ export Lindemann
     unc::R = EmptyRateUncertainty()
 end
 
-@inline function (tr::Troe)(;T::Q,P::R=0.0,C::S=nothing,phi=0.0) where {Q<:Real,R<:Real,S<:Real}
+@inline function (tr::Troe)(;T::Q,P::R=0.0,C::S=nothing,phi=0.0,coverages=nothing) where {Q<:Real,R<:Real,S<:Real}
     k0 = tr.arrlow(T=T)
     kinf = tr.arrhigh(T=T)
     @fastmath Pr = k0*C/kinf
@@ -195,7 +199,7 @@ export getredtemp
 end
 export getredpress
 
-@inline function (ch::Chebyshev)(;T::N,P::Q=0.0,C::B=0.0,phi=0.0) where {N<:Real,B<:Real,Q<:Real}
+@inline function (ch::Chebyshev)(;T::N,P::Q=0.0,C::B=0.0,phi=0.0,coverages=nothing) where {N<:Real,B<:Real,Q<:Real}
     k = 0.0
     Tred = getredtemp(ch,T)
     Pred = getredpress(ch,P)
@@ -210,7 +214,12 @@ end
 export Chebyshev
 
 @inline function getkineticstype(kin::B) where {B<:AbstractRate}
-    return extracttypename(typeof(kin).name)
+    cdep = [string(x) for x in typeof(kin).parameters if occursin("CoverageDependence",string(x))]
+    if length(cdep) == 0 || cdep[1] == "EmptyRateCoverageDependence"
+        return extracttypename(typeof(kin).name)
+    else
+        return extracttypename(typeof(kin).name) * "_" * cdep[1]
+    end
 end
 
 @inline function getkineticstype(kin::PdepArrhenius)
