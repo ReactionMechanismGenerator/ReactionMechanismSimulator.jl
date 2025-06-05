@@ -74,7 +74,7 @@ end
 end
 export selectPoly
 
-@inline function calcHSCpdless(poly::NASApolynomialvec,T::X) where {X<:Real}
+@inline function calcHSCpdless(poly::NASApolynomialvec{Array{1,EmptyThermoCoverageDependence}},T::X;coverages=nothing) where {X<:Real}
     if size(poly.coefs)[1] != 7
         Tpoly0 = T
         Tpoly1 = T*T
@@ -119,9 +119,63 @@ export selectPoly
     return (cpdivR,hdivRT,sdivR)
 end
 
-@inline function calcHSCpdless(nasavec::NASAvec,T::X) where {X<:Real}
+@inline function calcHSCpdless(poly::NASApolynomialvec{Q},T::X;coverages=nothing) where {X<:Real,Q}
+    hdivRT = similar(coverages)
+    sdivR = similar(coverages)
+    cpdivR = similar(coverages)
+    if size(poly.coefs)[1] != 7
+        Tpoly0 = T
+        Tpoly1 = T*T
+        Tpoly2 = Tpoly1*T
+        Tpoly3 = Tpoly2*T
+        Tpoly4 = 1.0/T
+        Tpoly5 = Tpoly4*Tpoly4
+        Tpoly6 = log(T)
+
+        ct0 = poly.coefs[1,:].*Tpoly5
+        ct1 = poly.coefs[2,:].*Tpoly4
+        ct2 = poly.coefs[3,:]
+        ct3 = poly.coefs[4,:].*Tpoly0
+        ct4 = poly.coefs[5,:].*Tpoly1
+        ct5 = poly.coefs[6,:].*Tpoly2
+        ct6 = poly.coefs[7,:].*Tpoly3
+
+        cpdivR .= ct0 .+ ct1 .+ ct2 .+ ct3 .+ ct4 .+ ct5 .+ ct6
+        hdivRT .= -ct0.+Tpoly6.*ct1.+ct2.+0.5.*ct3.+0.33333333333.*ct4.+0.25.*ct5+0.2.*ct6+poly.coefs[8,:].*Tpoly4
+        sdivR .= -0.5.*ct0 .- ct1 .+ Tpoly6.*ct2 .+ ct3 .+ 0.5.*ct4 .+ 0.33333333333.*ct5 .+ 0.25*ct6 .+ poly.coefs[9,:]
+    else
+        Tpoly0 = T
+        Tpoly1 = T*T
+        Tpoly2 = Tpoly1*T
+        Tpoly3 = Tpoly2*T
+        Tpoly4 = 1.0/T
+        #Tpoly5 = Tpoly4*Tpoly4
+        Tpoly6 = log(T)
+
+        #ct0 = 0.0
+        #ct1 = 0.0
+        ct2 = poly.coefs[1,:]
+        ct3 = poly.coefs[2,:].*Tpoly0
+        ct4 = poly.coefs[3,:].*Tpoly1
+        ct5 = poly.coefs[4,:].*Tpoly2
+        ct6 = poly.coefs[5,:].*Tpoly3
+
+        cpdivR .= ct2 .+ ct3 .+ ct4 .+ ct5 .+ ct6
+        hdivRT .= ct2.+0.5.*ct3.+0.33333333333.*ct4.+0.25.*ct5.+0.2.*ct6.+poly.coefs[6,:].*Tpoly4
+        sdivR .= Tpoly6.*ct2 .+ ct3 .+ 0.5.*ct4 .+ 0.33333333333.*ct5 .+ 0.25.*ct6 .+ poly.coefs[7,:]
+    end
+    for i in 1:length(hdivRT)
+        hdivRT .+= getcovdepenthalpycorrection(poly.covdeps[i],T,coverages)/(R*T)
+        sdivR .+= getcovdepentropycorrection(poly.covdeps[i],T,coverages)/R 
+        cpdivR .+= getcovdepheatcapacitycorrection(poly.covdeps[i],T,coverages)/R
+    end
+    return (cpdivR,hdivRT,sdivR)
+end
+
+
+@inline function calcHSCpdless(nasavec::NASAvec,T::X;coverages=nothing) where {X<:Real}
     poly = selectPoly(nasavec,T)
-    return calcHSCpdless(poly,T)
+    return calcHSCpdless(poly,T;coverages=coverages)
 end
 
 @with_kw struct ConstantGvec{B,J} <: AbstractThermo
