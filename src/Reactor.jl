@@ -664,7 +664,7 @@ end
     cstot .= 0.0
     dydt .= 0.0
     domain = domains[1]
-    ns, cs, T, P, V, C, N, mu, kfs, krevs, Hs, Us, Gs, diffs, Cvave, cpdivR, phi = calcthermo(domain, y, t, p)
+    ns, cs, T, P, V, C, N, mu, kfs, krevs, Hs, Us, Gs, diffs, Cvave, cpdivR, phi, coverages = calcthermo(domain, y, t, p)
     vns = Array{Any,1}(undef, length(domains))
     vns[1] = ns
     vcs = Array{Any,1}(undef, length(domains))
@@ -700,11 +700,13 @@ end
     vcpdivR[1] = cpdivR
     vphi = Array{Any,1}(undef, length(domains))
     vphi[1] = phi
+    vcoverages = Array{Any,1}(undef, length(domains))
+    vcoverages[1] = coverages
     addreactionratecontributions!(dydt, domain.rxnarray, cstot, kfs, krevs)
     @views dydt[domain.indexes[1]:domain.indexes[2]] .*= V
     for (i, domain) in enumerate(@views domains[2:end])
         k = i + 1
-        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vcpdivR[k], vphi[k] = calcthermo(domain, y, t, p)
+        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vcpdivR[k], vphi[k], vcoverages[k] = calcthermo(domain, y, t, p)
         cstot[domain.indexes[1]:domain.indexes[2]] .= vcs[k]
         addreactionratecontributions!(dydt, domain.rxnarray, cstot, vkfs[k], vkrevs[k])
         @views dydt[domain.indexes[1]:domain.indexes[2]] .*= vV[k]
@@ -713,7 +715,7 @@ end
         if isa(inter, FragmentBasedReactiveFilmGrowthInterfaceConstantT)
             evaluate(inter, dydt, vV[inter.domaininds[1]], cstot)
         elseif isa(inter, AbstractReactiveInternalInterface)
-            evaluate(inter, dydt, domains, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], cstot, p)
+            evaluate(inter, dydt, domains, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], vcoverages[inter.domaininds[1]], vcoverages[inter.domaininds[2]], cstot, p)
         elseif isa(inter, VaporLiquidMassTransferInternalInterfaceConstantT)
             evaluate(inter, dydt, vV[inter.domaininds[1]], vV[inter.domaininds[2]], vT[inter.domaininds[1]], vT[inter.domaininds[2]], vN[inter.domaininds[1]], vN[inter.domaininds[2]], vP[inter.domaininds[1]], vP[inter.domaininds[2]], vCvave[inter.domaininds[1]], vCvave[inter.domaininds[2]], vns[inter.domaininds[1]], vns[inter.domaininds[2]], vUs[inter.domaininds[1]], vUs[inter.domaininds[2]], cstot, p)
         end
