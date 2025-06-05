@@ -127,13 +127,13 @@ export ReactiveInternalInterfaceConstantTPhi
 
 function getkfskrevs(ri::ReactiveInternalInterfaceConstantTPhi, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot)
     if ri.iscovdep
-        if !(coverages1 === nothing) && coverages2 === nothing
-          coverages = coverages1
-        elseif !(coverages2 === nothing) && coverages1 === nothing
+        if length(coverages1) != 0 && length(coverages2) == 0
+            coverages = coverages1
+        elseif length(coverages2) != 0 && length(coverages1) == 0
             coverages = coverages2
-        elseif coverages1 === nothing && coverages2 === nothing 
-            coverages = nothing
-        else 
+        elseif length(coverages1) == 0 && length(coverages2) == 0 
+            coverages = coverages1
+        else
             throw(DomainError("Coverage dependence of an interface between two surfaces is indeterminate (which coverage should be used?)"))
         end
         kfs = getkf.(ri.reactions, nothing, ri.T, 0.0, 0.0, Ref([]), ri.A, ri.phi; coverages=coverages)
@@ -147,13 +147,13 @@ end
 
 function evaluate(ri::ReactiveInternalInterfaceConstantTPhi, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot, p::W) where {W<:SciMLBase.NullParameters}
     if ri.iscovdep
-        if !(coverages1 === nothing) && coverages2 === nothing
-          coverages = coverages1
-        elseif !(coverages2 === nothing) && coverages1 === nothing
+        if length(coverages1) != 0 && length(coverages2) == 0
+            coverages = coverages1
+        elseif length(coverages2) != 0 && length(coverages1) == 0
             coverages = coverages2
-        elseif coverages1 === nothing && coverages2 === nothing 
-            coverages = nothing
-        else 
+        elseif length(coverages1) == 0 && length(coverages2) == 0 
+            coverages = coverages1
+        else
             throw(DomainError("Coverage dependence of an interface between two surfaces is indeterminate (which coverage should be used?)"))
         end
         kfs = getkf.(ri.reactions, nothing, ri.T, 0.0, 0.0, Ref([]), ri.A, ri.phi; coverages=coverages)
@@ -167,13 +167,13 @@ end
 
 function evaluate(ri::ReactiveInternalInterfaceConstantTPhi, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot, p)
     if ri.iscovdep
-        if !(coverages1 === nothing) && coverages2 === nothing
+        if length(coverages1) != 0 && length(coverages2) == 0
             coverages = coverages1
-        elseif !(coverages2 === nothing) && coverages1 === nothing
+        elseif length(coverages2) != 0 && length(coverages1) == 0
             coverages = coverages2
-        elseif coverages1 === nothing && coverages2 === nothing 
-            coverages = nothing
-        else 
+        elseif length(coverages1) == 0 && length(coverages2) == 0 
+            coverages = coverages1
+        else
             throw(DomainError("Coverage dependence of an interface between two surfaces is indeterminate (which coverage should be used?)"))
         end
         kfs = getkf.(ri.reactions, nothing, ri.T, 0.0, 0.0, Ref([]), ri.A, ri.phi; coverages=coverages) .* p[ri.parameterindexes[1]:ri.parameterindexes[2]] 
