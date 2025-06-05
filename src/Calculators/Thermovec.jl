@@ -5,19 +5,22 @@ export AbstractThermovec
 
 include("Thermo.jl")
 
-@with_kw struct NASApolynomialvec <: AbstractThermo
+@with_kw struct NASApolynomialvec{Q} <: AbstractThermo
     coefs::Array{Float64,2}
     Tmin::Float64
     Tmax::Float64
+    covdeps::Q = nothing
 end
 
-@with_kw struct NASAvec{T<:AbstractThermoUncertainty} <: AbstractThermo
+@with_kw struct NASAvec{T<:AbstractThermoUncertainty,Q} <: AbstractThermo
     polys::Array{NASApolynomialvec,1}
     unc::T = EmptyThermoUncertainty()
+    covdeps::Q = nothing
 end
 function NASAvec(nasas::B) where {B<:Array}
     Tmin = nasas[1].polys[1].Tmin
     Tmax = nasas[1].polys[end].Tmax
+    covdeps = [nasa.covdep for nasa in nasas]
     Ts = Array{Float64,1}()
     for nasa in nasas
         for (i,poly) in enumerate(nasa.polys)
@@ -53,12 +56,10 @@ function NASAvec(nasas::B) where {B<:Array}
                 polyvec[:,j] = nasapoly.coefs
             end
         end
-        nasapvec = NASApolynomialvec(polyvec,Ts[i],Ts[i+1])
+        nasapvec = NASApolynomialvec(polyvec,Ts[i],Ts[i+1],nothing)
         push!(polyvecs,nasapvec)
     end
-    
-    return NASAvec(polys=polyvecs) 
-        
+    return NASAvec(polys=polyvecs,covdeps=covdeps)
 end
 @inline function selectPoly(nasa::NASAvec,T::N) where {N<:Real}
     """
