@@ -656,6 +656,7 @@ mutable struct ConstantTAPhiDomain{N<:AbstractPhase,S<:Integer,W<:Real,W2<:Real,
     t::MArray{Tuple{1},W2,1,1}
     p::Array{W,1}
     thermovariabledict::Dict{String,Int64}
+    iscovdep::Bool
 end
 function ConstantTAPhiDomain(; phase::E2, initialconds::Dict{X,X2}, constantspecies::Array{X3,1}=Array{String,1}(),
     sparse::Bool=false, sensitivity::Bool=false, stationary::Bool=false) where {E<:Real,E2<:AbstractPhase,W<:Real,X,X2,X3}
@@ -683,6 +684,7 @@ function ConstantTAPhiDomain(; phase::E2, initialconds::Dict{X,X2}, constantspec
     @assert T != 0.0
     ns = y0
     N = sum(ns)
+    coverages = ns ./ phase.sitedensity
 
     if length(constantspecies) > 0
         spcnames = getfield.(phase.species, :name)
@@ -691,15 +693,22 @@ function ConstantTAPhiDomain(; phase::E2, initialconds::Dict{X,X2}, constantspec
         constspcinds = Array{Int64,1}()
     end
     efficiencyinds = [rxn.index for rxn in phase.reactions if typeof(rxn.kinetics) <: AbstractFalloffRate && length(rxn.kinetics.efficiencies) > 0]
-    Gs = calcgibbs(phase, T)
+    Gs = calcgibbs(phase, T; coverages=coverages)
     if :solvent in fieldnames(typeof(phase)) && typeof(phase.solvent) != EmptySolvent
         mu = phase.solvent.mu(T)
     else
         mu = 0.0
     end
     C = 0.0 #this currently shouldn't matter here, on a surface you shouldn't have pdep
-    kfs, krevs = getkfkrevs(phase, T, 0.0, C, N, ns, Gs, [], A, phi)
-    p = vcat(Gs, kfs)
+    iscovdep = any([!(spc.thermo.covdep isa EmptyThermoCoverageDependence) for spc in phase.species]) || any([!(rxn.kinetics.covdep isa EmptyRateCoverageDependence) for rxn in phase.reactions])
+    kfs, krevs = getkfkrevs(phase, T, 0.0, C, N, ns, Gs, [], A, phi; coverages=coverages)
+    if !iscovdep
+        p = vcat(Gs, kfs)
+        alternativepformat = false 
+    else 
+        p = vcat(zeros(length(phase.species)), ones(length(phase.reactions)))
+        alternativepformat = true 
+    end 
     if sparse
         jacobian = spzeros(typeof(T), length(phase.species), length(phase.species))
     else
@@ -707,7 +716,7 @@ function ConstantTAPhiDomain(; phase::E2, initialconds::Dict{X,X2}, constantspec
     end
     rxnarray = getreactionindices(phase)
     return ConstantTAPhiDomain(phase, [1, length(phase.species)], [1, length(phase.species) + length(phase.reactions)], constspcinds,
-        T, A, phi, kfs, krevs, efficiencyinds, Gs, rxnarray, mu, Array{Float64,1}(), jacobian, sensitivity, false, MVector(false), MVector(0.0), p, Dict{String,Int64}()), y0, p
+        T, A, phi, kfs, krevs, efficiencyinds, Gs, rxnarray, mu, Array{Float64,1}(), jacobian, sensitivity, alternativepformat, MVector(false), MVector(0.0), p, Dict{String,Int64}(), iscovdep), y0, p
 end
 export ConstantTAPhiDomain
 
