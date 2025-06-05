@@ -56,7 +56,7 @@ function NASAvec(nasas::B) where {B<:Array}
                 polyvec[:,j] = nasapoly.coefs
             end
         end
-        nasapvec = NASApolynomialvec(polyvec,Ts[i],Ts[i+1],nothing)
+        nasapvec = NASApolynomialvec(polyvec,Ts[i],Ts[i+1],covdeps)
         push!(polyvecs,nasapvec)
     end
     return NASAvec(polys=polyvecs,covdeps=covdeps)
