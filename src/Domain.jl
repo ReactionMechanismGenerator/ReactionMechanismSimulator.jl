@@ -1658,7 +1658,7 @@ end
         @fastmath @views hdivRT .+= p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)] ./ (R * d.T)
         @fastmath Gs = (hdivRT .- sdivR) * (R *d.T)
         kfs, krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, Gs, Array{Float64,1}(), d.A, d.phi; coverages=coverages)
-        return ns, cs, d.T, P, d.A, C, N, d.mu, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, coverages
+        return ns, cs, d.T, P, d.A, C, N, d.mu, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, coverages
     end
 end
 
@@ -1684,7 +1684,7 @@ end
         @fastmath @views hdivRT .+= p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)] ./ (R * d.T)
         @fastmath Gs = (hdivRT .- sdivR) * (R * d.T)
         kfs, krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, Gs, Array{Float64,1}(), d.A, d.phi; coverages=coverages)
-        return ns, cs, d.T, P, d.A, C, N, d.mu, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, coverages
+        return ns, cs, d.T, P, d.A, C, N, d.mu, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, coverages
     end
 end
 
@@ -1710,7 +1710,7 @@ end
         @fastmath @views hdivRT .+= p[d.parameterindexes[1]-1+1:d.parameterindexes[1]-1+length(d.phase.species)] ./ (R * T)
         @fastmath Gs = (hdivRT .- sdivR) * (R * d.T)
         kfs, krevs = getkfkrevs(d.phase, d.T, P, C, N, ns, Gs, Array{Float64,1}(), d.A, d.phi; coverages=coverages)
-        return ns, cs, d.T, P, d.A, C, N, d.mu, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, coverages
+        return ns, cs, d.T, P, d.A, C, N, d.mu, kfs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], krevs .* p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)], Array{Float64,1}(), Array{Float64,1}(), Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi, coverages
     end
 end
 
