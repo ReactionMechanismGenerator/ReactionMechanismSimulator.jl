@@ -225,7 +225,7 @@ export getkfkrev
 
 @inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7;coverages=nothing,kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2,Q3<:AbstractArray}
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V,phi)
+        kfs = getkfs(phase,T,P,C,ns,V,phi;coverages=coverages)
         if phi == 0.0
             krev = @fastmath kfs./getKcs(phase,T,Gs)
         else 
@@ -258,7 +258,7 @@ end
 
 @inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7;coverages=nothing,kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q3<:AbstractArray} #autodiff p
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V,phi)
+        kfs = getkfs(phase,T,P,C,ns,V,phi;coverages=coverages)
         if phi == 0.0
             krev = @fastmath kfs./getKcs(phase,T,Gs)
         else 
