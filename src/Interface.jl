@@ -35,6 +35,7 @@ struct ReactiveInternalInterface{T,B,C,C2,N,Q<:AbstractReaction,X} <: AbstractRe
     forwardability::Array{Bool,1}
 end
 function ReactiveInternalInterface(domain1, domain2, reactions, A)
+    reactions = upgradekinetics(reactions, domain1, domain2)
     vectuple, vecinds, otherrxns, otherrxninds, posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds], reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i, reactants=rxn.reactants, reactantinds=rxn.reactantinds, products=rxn.products,
@@ -269,6 +270,31 @@ function upgradekinetics(rxns, domain1, domain2)
     end
     newrxns = Array{ElementaryReaction,1}(undef, length(rxns))
     for (i, rxn) in enumerate(rxns)
+        if hasproperty(rxn.kinetics,:covdep) && !(rxn.kinetics.covdep isa EmptyRateCoverageDependence)
+            if domain1.phase isa IdealSurface && !(domain2.phase isa IdealSurface)
+                names = getfield.(domain1.phase.species,:name)
+            elseif domain2.phase isa IdealSurface && !(domain1.phase isa IdealSurface)
+                names = getfield.(domain2.phase.species,:name)
+            else 
+                throw(DomainError(rxn.kinetics.covdep,"Unsure which surface domain should be used for coverage dependence"))
+            end
+            if rxn.kinetics.covdep isa PolynomialRateCoverageDependence
+                for (name,v) in rxn.kinetics.covdep.Epolys
+                    ind = findfirst(isequal(name),names)
+                    rxn.kinetics.covdep.indEpolys[ind] = v
+                end 
+                for (name,v) in rxn.kinetics.covdep.avals
+                    ind = findfirst(isequal(name),names)
+                    rxn.kinetics.covdep.indavals[ind] = v
+                end 
+                for (name,v) in rxn.kinetics.covdep.ms
+                    ind = findfirst(isequal(name),names)
+                    rxn.kinetics.covdep.indms[ind] = v
+                end 
+            else
+                throw(TypeError(rxn.kinetics.covdep,"Kinetic Coverage Dependence Type Not Understood"))
+            end
+        end
         if isa(rxn.kinetics, StickingCoefficient)
             spc = [spc for spc in rxn.reactants if !(spc in surfdomain.phase.species)]
             @assert length(spc) == 1
@@ -293,7 +319,7 @@ function stickingcoefficient2arrhenius(sc, sitedensity, N, mw; Tmin=300.0, Tmax=
     @assert fit.converged
     p = fit.param
     p[1] = abs(p[1])
-    return Arrhenius(; A=p[1], n=p[2], Ea=p[3])
+    return Arrhenius(; A=p[1], n=p[2], Ea=p[3], covdep=sc.covdep)
 end
 
 struct Inlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real,FF<:Function} <: AbstractBoundaryInterface
