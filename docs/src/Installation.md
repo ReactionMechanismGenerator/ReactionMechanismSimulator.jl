@@ -37,9 +37,10 @@ The above instructions will automatically handle Julia-Python linking. However, 
 
 ```
 import Pkg
-Pkg.add("PyCall")                              
-ENV["CONDA_JL_HOME"] = PATH_TO_YOUR_ENV        
-Pkg.build("Conda")                             
-ENV["PYTHON"] = PATH_TO_PYTHON                 
-Pkg.build("PyCall")                            
+ENV["JULIA_CONDAPKG_BACKEND"] = "Null"
+ENV["JULIA_PYTHONCALL_EXE"] = "/path/to/python"
+Pkg.add("CondaPkg")
+Pkg.build("CondaPkg")
+Pkg.add("PythonCall")                                    
+Pkg.build("PythonCall")
 ```
