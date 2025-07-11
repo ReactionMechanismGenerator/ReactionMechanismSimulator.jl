@@ -35,13 +35,13 @@ conda activate your_conda_environment
 ```
 
 ```
-conda env config vars set JULIA_CONDAPKG_BACKEND=Current
+conda env config vars set JULIA_CONDAPKG_BACKEND=Null
 conda env config vars set JULIA_CONDAPKG_EXE=$(which conda)
 conda env config vars set JULIA_PYTHONCALL_EXE=$CONDA_PREFIX/bin/python
 conda env config vars set PYTHON_JULIAPKG_EXE=$(which julia)
 conda env config vars set PYTHON_JULIAPKG_PROJECT=$CONDA_PREFIX/julia_env
 
-export JULIA_CONDAPKG_BACKEND=Current
+export JULIA_CONDAPKG_BACKEND=Null
 export JULIA_CONDAPKG_EXE="$(which conda)"
 export JULIA_PYTHONCALL_EXE="$CONDA_PREFIX/bin/python"
 export PYTHON_JULIAPKG_EXE="$(which julia)"
