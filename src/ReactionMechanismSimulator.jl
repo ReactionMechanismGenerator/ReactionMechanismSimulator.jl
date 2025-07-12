@@ -2,41 +2,23 @@ module ReactionMechanismSimulator
 ENV["JULIA_CONDAPKG_BACKEND"] = "MicroMamba"
 using CondaPkg
 using Logging
-has_rmgpy = true
-has_rmgmolecule = true
-try
-    PythonCall.pyimport("rmgpy")
-catch
-    has_rmgpy = false
-end
-try
-    PythonCall.pyimport("rmgmolecule")
-catch
-    has_rmgmolecule = false
-end
+using PythonCall
+
+has_rmgpy = try; PythonCall.pyimport("rmgpy"); true; catch e; false; end
+has_rmgmolecule = try; PythonCall.pyimport("molecule"); true; catch e; false; end
 
 if !has_rmgpy && !has_rmgmolecule
     @info "missing rmg and rmgmolecule installing rmgmolecule..."
-    if "python" in packages
-        py_version = VersionNumber(CondaPkg.current_packages()["python"][:version])
-    else
-        py_version = nothing
-    end
-    if py_version === nothing || !(v"3.7" <= py_version && py_version <= v"3.9")
+    if !(v"3.7" <= PythonCall.C.python_version() && PythonCall.C.python_version() <= v"3.9")
         @info "python version was not in 3.7-3.9 changing python version"
         CondaPkg.add("python"; version=">=3.9",resolve=false)
-        CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541",resolve=false)
-        CondaPkg.add("matplotlib", channel="conda-forge",resolve=false)
-        CondaPkg.add("rdkit", channel="conda-forge",resolve=false)
-        CondaPkg.add("pydot", channel="conda-forge",resolve=false,version=">=2.0")
-        CondaPkg.resolve()
-    else
-        CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541",resolve=false)
-        CondaPkg.add("matplotlib", channel="conda-forge",resolve=false)
-        CondaPkg.add("rdkit", channel="conda-forge",resolve=false)
-        CondaPkg.add("pydot", channel="conda-forge",resolve=false,version=">=2.0")
-        CondaPkg.resolve()
     end
+    
+    CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541",resolve=false)
+    CondaPkg.add("matplotlib", channel="conda-forge",resolve=false)
+    CondaPkg.add("rdkit", channel="conda-forge",resolve=false)
+    CondaPkg.add("pydot", channel="conda-forge",resolve=false,version=">=2.0")
+    CondaPkg.resolve()
 end
 
 using PythonCall
