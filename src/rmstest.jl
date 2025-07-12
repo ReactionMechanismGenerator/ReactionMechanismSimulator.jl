@@ -3,9 +3,20 @@ Logging.disable_logging(Logging.Warn)
 ENV["JULIA_CONDAPKG_BACKEND"] = "MicroMamba"
 using CondaPkg 
 
-packages = keys(CondaPkg.current_packages())
+has_rmgpy = true
+has_rmgmolecule = true
+try
+    PythonCall.pyimport("rmgpy")
+catch
+    has_rmgpy = false
+end
+try
+    PythonCall.pyimport("molecule")
+catch
+    has_rmgmolecule = false
+end
 
-if !("rmg" in packages) && !("rmgmolecule" in packages)
+if !has_rmgpy && !has_rmgmolecule
     @info "missing rmg and rmgmolecule installing rmgmolecule..."
     if "python" in packages
         py_version = VersionNumber(CondaPkg.current_packages()["python"][:version])
@@ -14,7 +25,7 @@ if !("rmg" in packages) && !("rmgmolecule" in packages)
     end
     if py_version === nothing || !(v"3.7" <= py_version && py_version <= v"3.9")
         @info "python version was not in 3.7-3.9 changing python version"
-        CondaPkg.add("python"; version="3.9",resolve=false)
+        CondaPkg.add("python"; version=">=3.9",resolve=false)
         CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541",resolve=false)
         CondaPkg.add("matplotlib", channel="conda-forge",resolve=false)
         CondaPkg.add("rdkit", channel="conda-forge",resolve=false)
