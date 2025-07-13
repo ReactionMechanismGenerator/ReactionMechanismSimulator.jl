@@ -13,10 +13,16 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@latest
+      - uses: actions/checkout@v4
+      - name: Setup Juliaup
+        uses: julia-actions/install-juliaup@v2
         with:
-          version: '1.10'
+          channel: '1.10'
+
+      - uses: julia-actions/cache@v2
+
+      - uses: julia-actions/julia-buildpkg@v1
+      
       - name: Install dependencies
         run: |
             current_path=${{ github.workspace }}

@@ -11,20 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v1
+      - name: Setup Juliaup
+        uses: julia-actions/install-juliaup@v2
         with:
-          version: '1.10'
-      - uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
+          channel: '1.10'
+
+      - uses: julia-actions/cache@v2
+
       - uses: julia-actions/julia-buildpkg@v1
+      
       - name: Build
         run: |
             current_path=${{ github.workspace }}
