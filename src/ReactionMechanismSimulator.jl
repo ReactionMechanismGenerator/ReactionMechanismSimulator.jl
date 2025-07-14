@@ -1,31 +1,15 @@
 module ReactionMechanismSimulator
-ENV["JULIA_CONDAPKG_BACKEND"] = "MicroMamba"
 using CondaPkg
 using Logging
-packages = keys(CondaPkg.current_packages())
+using PythonCall
 
-if !("rmg" in packages) && !("rmgmolecule" in packages)
+include("Initialization.jl")
+
+has_rmgpy,has_rmgmolecule = checkmolecule()
+
+if !has_rmgpy && !has_rmgmolecule
     @info "missing rmg and rmgmolecule installing rmgmolecule..."
-    if "python" in packages
-        py_version = VersionNumber(CondaPkg.current_packages()["python"][:version])
-    else
-        py_version = nothing
-    end
-    if py_version === nothing || !(v"3.7" <= py_version && py_version <= v"3.9")
-        @info "python version was not in 3.7-3.9 changing python version"
-        CondaPkg.add("python"; version="3.9",resolve=false)
-        CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541",resolve=false)
-        CondaPkg.add("matplotlib", channel="conda-forge",resolve=false)
-        CondaPkg.add("rdkit", channel="conda-forge",resolve=false)
-        CondaPkg.add("pydot", channel="conda-forge",resolve=false,version=">=2.0")
-        CondaPkg.resolve()
-    else
-        CondaPkg.add("rmgmolecule"; version=">=0.3.0", channel="mjohnson541",resolve=false)
-        CondaPkg.add("matplotlib", channel="conda-forge",resolve=false)
-        CondaPkg.add("rdkit", channel="conda-forge",resolve=false)
-        CondaPkg.add("pydot", channel="conda-forge",resolve=false,version=">=2.0")
-        CondaPkg.resolve()
-    end
+    installmolecule()
 end
 
 using PythonCall
@@ -74,34 +58,5 @@ function __init__()
     end
     PythonCall.pycopy!(pydot, pyimport("pydot"))
 end
-include("Constants.jl")
-include("Tools.jl")
-include("Calculators/RateUncertainty.jl")
-include("Calculators/ThermoUncertainty.jl")
-include("Calculators/Thermo.jl")
-include("Calculators/Diffusion.jl")
-include("Calculators/Rate.jl")
-include("Calculators/Viscosity.jl")
-include("Calculators/Thermovec.jl")
-include("Calculators/Ratevec.jl")
-include("Calculators/kLAkH.jl")
-include("Species.jl")
-include("Solvent.jl")
-include("Reaction.jl")
-include("Phase.jl")
-include("PhaseState.jl")
-include("Interface.jl")
-include("Domain.jl")
-include("yml.jl")
-include("Parse.jl")
-include("ModelReduction.jl")
-include("Reactor.jl")
-include("ThreadedSensitivities.jl")
-include("Simulation.jl")
-include("TransitorySensitivities.jl")
-include("AutomaticMechanismAnalysis.jl")
-include("EdgeAnalysis.jl")
-include("Debugging.jl")
-include("Plotting.jl")
-include("fluxdiagrams.jl")
+loadsubmodules()
 end
