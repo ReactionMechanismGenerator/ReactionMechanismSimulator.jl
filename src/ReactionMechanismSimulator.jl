@@ -1,5 +1,4 @@
 module ReactionMechanismSimulator
-ENV["JULIA_CONDAPKG_BACKEND"] = "MicroMamba"
 using CondaPkg
 using Logging
 using PythonCall

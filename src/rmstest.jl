@@ -1,6 +1,5 @@
 import Logging
 Logging.disable_logging(Logging.Warn)
-ENV["JULIA_CONDAPKG_BACKEND"] = "MicroMamba"
 using CondaPkg 
 using PythonCall
 
