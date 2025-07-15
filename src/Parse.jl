@@ -168,7 +168,12 @@ function getatomdictsmiles(smiles)
         mol.assign_representative_molecule()
         getatomdictfromrmg(mol.mol_repr)
     else
-        getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
+        try
+            return getatomdictfromrdkit(Chem.AddHs(Chem.MolFromSmiles(smiles)))
+        catch e
+            println("RDKit parsing failed, using RMG instead", e)
+            return getatomdictfromrmg(molecule.Molecule().from_smiles(smiles))
+        end
     end
 end
 

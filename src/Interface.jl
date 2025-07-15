@@ -31,29 +31,31 @@ struct ReactiveInternalInterface{T,B,C,C2,N,Q<:AbstractReaction,X} <: AbstractRe
     parameterindexes::Array{Int64,1}
     domaininds::Array{Int64,1}
     p::Array{Float64,1}
-    reversibililty::Array{Bool,1}
+    reversibility::Array{Bool,1}
     forwardability::Array{Bool,1}
 end
-function ReactiveInternalInterface(domain1, domain2, reactions, A)
-    vectuple, vecinds, otherrxns, otherrxninds, posinds = getveckinetics(reactions)
-    rxns = vcat(reactions[vecinds], reactions[otherrxninds])
-    rxns = [ElementaryReaction(index=i, reactants=rxn.reactants, reactantinds=rxn.reactantinds, products=rxn.products,
-        productinds=rxn.productinds, kinetics=rxn.kinetics, radicalchange=rxn.radicalchange, reversible=rxn.reversible, forwardable=rxn.forwardable, pairs=rxn.pairs) for (i, rxn) in enumerate(rxns)]
-    rxnarray = getinterfacereactioninds(domain1, domain2, rxns)
-    M, Nrp1, Nrp2 = getstoichmatrix(domain1, domain2, reactions)
-    reversibility = Array{Bool,1}(getfield.(rxns, :reversible))
-    forwardability = Array{Bool,1}(getfield.(rxns, :forwardable))
-    return ReactiveInternalInterface(domain1, domain2,
-        rxns, vectuple, posinds, rxnarray, M, Nrp1, Nrp2, A, [1, length(reactions)],
-        [0, 1], ones(length(rxns)), reversibility, forwardability), ones(length(rxns))
+function ReactiveInternalInterface(domain1,domain2,reactions,A)
+    vectuple,vecinds,otherrxns,otherrxninds,posinds = getveckinetics(reactions)
+    rxns = vcat(reactions[vecinds],reactions[otherrxninds])
+    rxns = [ElementaryReaction(index=i,reactants=rxn.reactants,reactantinds=rxn.reactantinds,products=rxn.products,
+        productinds=rxn.productinds,kinetics=rxn.kinetics,electronchange=rxn.electronchange,radicalchange=rxn.radicalchange,reversible=rxn.reversible,forwardable=rxn.forwardable,pairs=rxn.pairs) for (i,rxn) in enumerate(rxns)]
+    rxnarray = getinterfacereactioninds(domain1,domain2,rxns)
+    M,Nrp1,Nrp2 = getstoichmatrix(domain1,domain2,reactions)
+    reversibility = Array{Bool,1}(getfield.(rxns,:reversible))
+    forwardability = Array{Bool,1}(getfield.(rxns,:forwardable))
+    return ReactiveInternalInterface(domain1,domain2,
+            rxns,vectuple,posinds,rxnarray,M,Nrp1,Nrp2,A,[1,length(reactions)],
+            [0,1],ones(length(rxns)),reversibility,forwardability),ones(length(rxns))
 end
 export ReactiveInternalInterface
 
-function getkfskrevs(ri::ReactiveInternalInterface, T1, T2, phi1, phi2, Gs1, Gs2, cstot::Array{Q,1}) where {Q}
-    kfs = getkfs(ri, T1, 0.0, 0.0, Array{Q,1}(), ri.A, phi1)
-    Kc = getKc.(ri.reactions, ri.domain1.phase, ri.domain2.phase, Ref(Gs1), Ref(Gs2), T1, phi1)
-    krevs = kfs ./ Kc
-    return kfs, krevs
+function getkfskrevs(ri::ReactiveInternalInterface,T1,T2,phi1,phi2,Gs1,Gs2,cstot::Array{Q,1}) where {Q}
+    Gpart = ArrayPartition(Gs1,Gs2)
+    dGrxns = -ri.stoichmatrix*Gpart
+    kfs = getkfs(ri,T1,0.0,0.0,Array{Q,1}(),ri.A,phi1,dGrxns,0.0)
+    Kc = getKcs(ri.domain1.phase,ri.domain2.phase,T1,ri.Nrp1,ri.Nrp2,dGrxns)
+    krevs = kfs./Kc
+    return kfs,krevs
 end
 
 function evaluate(ri::ReactiveInternalInterface, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, cstot, p::W) where {W<:SciMLBase.NullParameters}
@@ -86,18 +88,28 @@ struct ReactiveInternalInterfaceConstantTPhi{J,N,B,B2,B3,C,C2,Q<:AbstractReactio
     reversibility::Array{Bool,1}
     forwardability::Array{Bool,1}
 end
-function ReactiveInternalInterfaceConstantTPhi(domain1, domain2, reactions, T, A, phi=0.0)
-    @assert domain1.T == domain2.T
-    reactions = upgradekinetics(reactions, domain1, domain2)
-    rxnarray = getinterfacereactioninds(domain1, domain2, reactions)
-    kfs = getkf.(reactions, nothing, T, 0.0, 0.0, Ref([]), A, phi)
-    Kc = getKc.(reactions, domain1.phase, domain2.phase, Ref(domain1.Gs), Ref(domain2.Gs), T, phi)
-    krevs = kfs ./ Kc
-    M, Nrp1, Nrp2 = getstoichmatrix(domain1, domain2, reactions)
-    reversibility = Array{Bool,1}(getfield.(reactions, :reversible))
-    forwardability = Array{Bool,1}(getfield.(reactions, :forwardable))
-    if isa(reactions, Vector{Any})
-        reactions = convert(Vector{ElementaryReaction}, reactions)
+function ReactiveInternalInterfaceConstantTPhi(domain1,domain2,reactions,T,A,phi=0.0)
+    @assert domain1.T == domain2.T 
+    reactions = upgradekinetics(reactions,domain1,domain2)
+    rxnarray = getinterfacereactioninds(domain1,domain2,reactions)
+    M,Nrp1,Nrp2 = getstoichmatrix(domain1,domain2,reactions)
+    Gpart = ArrayPartition(domain1.Gs,domain2.Gs)
+    dGrxns = -M*Gpart
+    electronchanges = [hasproperty(reaction, :electronchange) ? reaction.electronchange : 0.0 for reaction in reactions]
+    referencepotentials = [hasproperty(reaction.kinetics, :V0) ? reaction.kinetics.V0 : 0.0 for reaction in reactions]
+    if isa(domain1.phase, IdealSurface)
+        phi = domain1.phi !== nothing ? domain1.phi : phi
+    elseif isa(domain2.phase, IdealSurface)
+        phi = domain2.phi !== nothing ? domain2.phi : phi
+    end
+    dGrxns .+= electronchanges.*(phi.-referencepotentials).*F
+    kfs = getkf.(reactions,nothing,T,0.0,0.0,Ref([]),A,phi,dGrxns,0.0)
+    Kc = getKcs(domain1.phase,domain2.phase,T,Nrp1,Nrp2,dGrxns)
+    krevs = kfs./Kc
+    reversibility = Array{Bool,1}(getfield.(reactions,:reversible))
+    forwardability = Array{Bool,1}(getfield.(reactions,:forwardable))
+    if isa(reactions,Vector{Any})
+        reactions = convert(Vector{ElementaryReaction},reactions)
     end
     if isa(kfs, Vector{Any})
         kfs = convert(Vector{Float64}, kfs)
@@ -209,7 +221,7 @@ function upgradekinetics(rxns, domain1, domain2)
             @assert length(spc) == 1
             kin = stickingcoefficient2arrhenius(rxn.kinetics, surfdomain.phase.sitedensity, length(rxn.reactants) - 1, spc[1].molecularweight)
             newrxns[i] = ElementaryReaction(index=rxn.index, reactants=rxn.reactants, reactantinds=rxn.reactantinds, products=rxn.products,
-                productinds=rxn.productinds, kinetics=kin, radicalchange=rxn.radicalchange, reversible=rxn.reversible, forwardable=rxn.forwardable, pairs=rxn.pairs)
+                productinds=rxn.productinds, kinetics=kin, electronchange=rxn.electronchange, radicalchange=rxn.radicalchange, reversible=rxn.reversible, forwardable=rxn.forwardable, pairs=rxn.pairs)
         else
             newrxns[i] = rxn
         end
@@ -270,6 +282,20 @@ struct Outlet{V,FF<:Function} <: AbstractBoundaryInterface
     F::FF
 end
 export Outlet
+
+struct ConstantReservoirDiffusion{S,V<:AbstractArray,U<:Real}
+    domain::S
+    c::V
+    A::U
+    layer_thickness::U
+end
+
+function ConstantReservoirDiffusion(domain::V, conddict::Dict{X1,X}, A::B, layer_thickness::B) where {V,X1,X,B<:Real}
+    cs = makespcsvector(domain.phase, conddict)
+    return ConstantReservoirDiffusion(domain,cs,A,layer_thickness)
+end
+
+export ConstantReservoirDiffusion
 
 """
 kLAkHCondensationEvaporationWithReservoir adds evaporation and condensation to
@@ -440,7 +466,7 @@ struct FragmentBasedReactiveFilmGrowthInterfaceConstantT{D1,D2,Q<:AbstractReacti
     parameterindexes::Array{Int64,1}
     domaininds::Array{Int64,1}
     p::Array{Float64,1}
-    reversibililty::Array{Bool,1}
+    reversibility::Array{Bool,1}
     forwardability::Array{Bool,1}
     Mws::Array{Float64,1}
 end
@@ -452,9 +478,12 @@ function FragmentBasedReactiveFilmGrowthInterfaceConstantT(domainfilm, domain2, 
 
     rxnarray, fragmentbasedrxnarray = getfragmentbasedinterfacereactioninds(domainfilm, domain2, reactions)
 
-    kfs = getkf.(reactions, nothing, T, 0.0, 0.0, Ref([]), 0.0, 0.0)
-    Kc = getKc.(reactions, domainfilm.phase, domain2.phase, Ref(domainfilm.Gs), Ref(domain2.Gs), T, 0.0)
-    krevs = kfs ./ Kc
+    M,Nrp1,Nrp2 = getstoichmatrix(domainfilm,domain2,reactions)
+    Gpart = ArrayPartition(domainfilm.Gs,domain2.Gs)
+    dGrxns = -M*Gpart
+    kfs = getkf.(reactions,nothing,T,0.0,0.0,Ref([]),0.0,0.0,dGrxns,0.0)
+    Kc = getKcs(domainfilm.phase,domain2.phase,T,Nrp1,Nrp2,dGrxns)
+    krevs = kfs./Kc
 
     M, Nrp1, Nrp2 = getstoichmatrix(domainfilm, domain2, reactions)
     reversibility = Array{Bool,1}(getfield.(reactions, :reversible))
