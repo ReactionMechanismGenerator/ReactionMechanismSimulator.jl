@@ -35,6 +35,7 @@ struct ReactiveInternalInterface{T,B,C,C2,N,Q<:AbstractReaction,X} <: AbstractRe
     forwardability::Array{Bool,1}
 end
 function ReactiveInternalInterface(domain1, domain2, reactions, A)
+    reactions = upgradekinetics(reactions, domain1, domain2)
     vectuple, vecinds, otherrxns, otherrxninds, posinds = getveckinetics(reactions)
     rxns = vcat(reactions[vecinds], reactions[otherrxninds])
     rxns = [ElementaryReaction(index=i, reactants=rxn.reactants, reactantinds=rxn.reactantinds, products=rxn.products,
@@ -49,20 +50,28 @@ function ReactiveInternalInterface(domain1, domain2, reactions, A)
 end
 export ReactiveInternalInterface
 
-function getkfskrevs(ri::ReactiveInternalInterface, T1, T2, phi1, phi2, Gs1, Gs2, cstot::Array{Q,1}) where {Q}
-    kfs = getkfs(ri, T1, 0.0, 0.0, Array{Q,1}(), ri.A, phi1)
+function getkfskrevs(ri::ReactiveInternalInterface, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot::Array{Q,1}) where {Q}
+    if !(coverages1 === nothing) && coverages2 === nothing
+        kfs = getkfs(ri, T1, 0.0, 0.0, Array{Q,1}(), ri.A, phi1; coverages=coverages1)
+    elseif !(coverages2 === nothing) && coverages1 === nothing
+        kfs = getkfs(ri, T1, 0.0, 0.0, Array{Q,1}(), ri.A, phi1; coverages=coverages2)
+    elseif coverages1 === nothing && coverages2 === nothing 
+        kfs = getkfs(ri, T1, 0.0, 0.0, Array{Q,1}(), ri.A, phi1)
+    else 
+        throw(DomainError("Coverage dependence of an interface between two surfaces is indeterminate (which coverage should be used?)"))
+    end
     Kc = getKc.(ri.reactions, ri.domain1.phase, ri.domain2.phase, Ref(Gs1), Ref(Gs2), T1, phi1)
     krevs = kfs ./ Kc
     return kfs, krevs
 end
 
-function evaluate(ri::ReactiveInternalInterface, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, cstot, p::W) where {W<:SciMLBase.NullParameters}
-    kfs, krevs = getkfskrevs(ri, T1, T2, phi1, phi2, Gs1, Gs2, cstot)
+function evaluate(ri::ReactiveInternalInterface, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot, p::W) where {W<:SciMLBase.NullParameters}
+    kfs, krevs = getkfskrevs(ri, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot)
     addreactionratecontributions!(dydt, ri.rxnarray, cstot, kfs, krevs, ri.A)
 end
 
-function evaluate(ri::ReactiveInternalInterface, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, cstot, p)
-    kfs, krevs = getkfskrevs(ri, T1, T2, phi1, phi2, Gs1, Gs2, cstot)
+function evaluate(ri::ReactiveInternalInterface, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot, p)
+    kfs, krevs = getkfskrevs(ri, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot)
     addreactionratecontributions!(dydt, ri.rxnarray, cstot, kfs .* p[ri.parameterindexes[1]:ri.parameterindexes[2]], krevs .* p[ri.parameterindexes[1]:ri.parameterindexes[2]], ri.A)
 end
 export evaluate
@@ -85,12 +94,15 @@ struct ReactiveInternalInterfaceConstantTPhi{J,N,B,B2,B3,C,C2,Q<:AbstractReactio
     p::Array{Float64,1}
     reversibility::Array{Bool,1}
     forwardability::Array{Bool,1}
+    iscovdep::Bool
+    phi::Float64
 end
 function ReactiveInternalInterfaceConstantTPhi(domain1, domain2, reactions, T, A, phi=0.0)
     @assert domain1.T == domain2.T
     reactions = upgradekinetics(reactions, domain1, domain2)
     rxnarray = getinterfacereactioninds(domain1, domain2, reactions)
-    kfs = getkf.(reactions, nothing, T, 0.0, 0.0, Ref([]), A, phi)
+    iscovdep = any([!(spc.thermo.covdep isa EmptyThermoCoverageDependence) for spc in domain1.phase.species]) || any([!(spc.thermo.covdep isa EmptyThermoCoverageDependence) for spc in domain2.phase.species]) || any([!(rxn.kinetics.covdep isa EmptyRateCoverageDependence) for rxn in reactions])
+    kfs = getkf.(reactions, nothing, T, 0.0, 0.0, Ref([]), A, phi; coverages=nothing)
     Kc = getKc.(reactions, domain1.phase, domain2.phase, Ref(domain1.Gs), Ref(domain2.Gs), T, phi)
     krevs = kfs ./ Kc
     M, Nrp1, Nrp2 = getstoichmatrix(domain1, domain2, reactions)
@@ -102,33 +114,87 @@ function ReactiveInternalInterfaceConstantTPhi(domain1, domain2, reactions, T, A
     if isa(kfs, Vector{Any})
         kfs = convert(Vector{Float64}, kfs)
     end
-    return ReactiveInternalInterfaceConstantTPhi(domain1, domain2, reactions,
-        rxnarray, M, Nrp1, Nrp2, kfs, krevs, T, A, [1, length(reactions)],
-        [0, 1], kfs[1:end], reversibility, forwardability), kfs[1:end]
+    if !iscovdep
+        return ReactiveInternalInterfaceConstantTPhi(domain1, domain2, reactions,
+            rxnarray, M, Nrp1, Nrp2, kfs, krevs, T, A, [1, length(reactions)],
+            [0, 1], kfs[1:end], reversibility, forwardability, iscovdep, phi), kfs[1:end]
+    else 
+        return ReactiveInternalInterfaceConstantTPhi(domain1, domain2, reactions,
+            rxnarray, M, Nrp1, Nrp2, kfs, krevs, T, A, [1, length(reactions)],
+            [0, 1], kfs[1:end], reversibility, forwardability, iscovdep, phi), ones(length(kfs))
+    end
 end
 export ReactiveInternalInterfaceConstantTPhi
 
-function getkfskrevs(ri::ReactiveInternalInterfaceConstantTPhi, T1, T2, phi1, phi2, Gs1, Gs2, cstot)
-    return ri.kfs, ri.krevs
-end
-
-function evaluate(ri::ReactiveInternalInterfaceConstantTPhi, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, cstot, p::W) where {W<:SciMLBase.NullParameters}
-    addreactionratecontributions!(dydt, ri.rxnarray, cstot, ri.kfs, ri.krevs, ri.A)
-end
-
-function evaluate(ri::ReactiveInternalInterfaceConstantTPhi, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, cstot, p)
-    if p[ri.parameterindexes[1]:ri.parameterindexes[2]] == ri.kfs
-        kfs = ri.kfs
-    else
-        kfs = p[ri.parameterindexes[1]:ri.parameterindexes[2]]
-    end
-    if length(Gs1) == 0 || length(Gs2) == 0 || (all(Gs1 .== ri.domain1.Gs) && all(Gs2 .== ri.domain2.Gs))
-        krevs = ri.krevs
-    else
-        Kc = getKcs(ri, T1, Gs1, Gs2)
+function getkfskrevs(ri::ReactiveInternalInterfaceConstantTPhi, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot)
+    if ri.iscovdep
+        if length(coverages1) != 0 && length(coverages2) == 0
+            coverages = coverages1
+        elseif length(coverages2) != 0 && length(coverages1) == 0
+            coverages = coverages2
+        elseif length(coverages1) == 0 && length(coverages2) == 0 
+            coverages = coverages1
+        else
+            throw(DomainError("Coverage dependence of an interface between two surfaces is indeterminate (which coverage should be used?)"))
+        end
+        kfs = getkf.(ri.reactions, nothing, ri.T, 0.0, 0.0, Ref([]), ri.A, ri.phi; coverages=coverages)
+        Kc = getKc.(ri.reactions, ri.domain1.phase, ri.domain2.phase, Ref(Gs1), Ref(Gs2), ri.T, ri.phi)
         krevs = kfs ./ Kc
+        return kfs,krevs
+    else
+        return ri.kfs, ri.krevs
     end
-    addreactionratecontributions!(dydt, ri.rxnarray, cstot, kfs, krevs, ri.A)
+end
+
+function evaluate(ri::ReactiveInternalInterfaceConstantTPhi, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot, p::W) where {W<:SciMLBase.NullParameters}
+    if ri.iscovdep
+        if length(coverages1) != 0 && length(coverages2) == 0
+            coverages = coverages1
+        elseif length(coverages2) != 0 && length(coverages1) == 0
+            coverages = coverages2
+        elseif length(coverages1) == 0 && length(coverages2) == 0 
+            coverages = coverages1
+        else
+            throw(DomainError("Coverage dependence of an interface between two surfaces is indeterminate (which coverage should be used?)"))
+        end
+        kfs = getkf.(ri.reactions, nothing, ri.T, 0.0, 0.0, Ref([]), ri.A, ri.phi; coverages=coverages)
+        Kc = getKc.(ri.reactions, ri.domain1.phase, ri.domain2.phase, Ref(Gs1), Ref(Gs2), ri.T, phi1)
+        krevs = kfs ./ Kc
+        addreactionratecontributions!(dydt, ri.rxnarray, cstot, kfs, krevs, ri.A)
+    else
+        addreactionratecontributions!(dydt, ri.rxnarray, cstot, ri.kfs, ri.krevs, ri.A)
+    end
+end
+
+function evaluate(ri::ReactiveInternalInterfaceConstantTPhi, dydt, domains, T1, T2, phi1, phi2, Gs1, Gs2, coverages1, coverages2, cstot, p)
+    if ri.iscovdep
+        if length(coverages1) != 0 && length(coverages2) == 0
+            coverages = coverages1
+        elseif length(coverages2) != 0 && length(coverages1) == 0
+            coverages = coverages2
+        elseif length(coverages1) == 0 && length(coverages2) == 0 
+            coverages = coverages1
+        else
+            throw(DomainError("Coverage dependence of an interface between two surfaces is indeterminate (which coverage should be used?)"))
+        end
+        kfs = getkf.(ri.reactions, nothing, ri.T, 0.0, 0.0, Ref([]), ri.A, ri.phi; coverages=coverages) .* p[ri.parameterindexes[1]:ri.parameterindexes[2]] 
+        Kc = getKc.(ri.reactions, ri.domain1.phase, ri.domain2.phase, Ref(Gs1), Ref(Gs2), ri.T, ri.phi)
+        krevs = kfs ./ Kc
+        addreactionratecontributions!(dydt, ri.rxnarray, cstot, kfs, krevs, ri.A)
+    else
+        if p[ri.parameterindexes[1]:ri.parameterindexes[2]] == ri.kfs
+            kfs = ri.kfs
+        else
+            kfs = p[ri.parameterindexes[1]:ri.parameterindexes[2]]
+        end
+        if length(Gs1) == 0 || length(Gs2) == 0 || (all(Gs1 .== ri.domain1.Gs) && all(Gs2 .== ri.domain2.Gs))
+            krevs = ri.krevs
+        else
+            Kc = getKcs(ri, T1, Gs1, Gs2)
+            krevs = kfs ./ Kc
+        end
+        addreactionratecontributions!(dydt, ri.rxnarray, cstot, kfs, krevs, ri.A)
+    end
 end
 export evaluate
 
@@ -204,6 +270,31 @@ function upgradekinetics(rxns, domain1, domain2)
     end
     newrxns = Array{ElementaryReaction,1}(undef, length(rxns))
     for (i, rxn) in enumerate(rxns)
+        if hasproperty(rxn.kinetics,:covdep) && !(rxn.kinetics.covdep isa EmptyRateCoverageDependence)
+            if domain1.phase isa IdealSurface && !(domain2.phase isa IdealSurface)
+                names = getfield.(domain1.phase.species,:name)
+            elseif domain2.phase isa IdealSurface && !(domain1.phase isa IdealSurface)
+                names = getfield.(domain2.phase.species,:name)
+            else 
+                throw(DomainError(rxn.kinetics.covdep,"Unsure which surface domain should be used for coverage dependence"))
+            end
+            if rxn.kinetics.covdep isa PolynomialRateCoverageDependence
+                for (name,v) in rxn.kinetics.covdep.Epolys
+                    ind = findfirst(isequal(name),names)
+                    rxn.kinetics.covdep.indEpolys[ind] = v
+                end 
+                for (name,v) in rxn.kinetics.covdep.avals
+                    ind = findfirst(isequal(name),names)
+                    rxn.kinetics.covdep.indavals[ind] = v
+                end 
+                for (name,v) in rxn.kinetics.covdep.ms
+                    ind = findfirst(isequal(name),names)
+                    rxn.kinetics.covdep.indms[ind] = v
+                end 
+            else
+                throw(TypeError(rxn.kinetics.covdep,"Kinetic Coverage Dependence Type Not Understood"))
+            end
+        end
         if isa(rxn.kinetics, StickingCoefficient)
             spc = [spc for spc in rxn.reactants if !(spc in surfdomain.phase.species)]
             @assert length(spc) == 1
@@ -228,7 +319,7 @@ function stickingcoefficient2arrhenius(sc, sitedensity, N, mw; Tmin=300.0, Tmax=
     @assert fit.converged
     p = fit.param
     p[1] = abs(p[1])
-    return Arrhenius(; A=p[1], n=p[2], Ea=p[3])
+    return Arrhenius(; A=p[1], n=p[2], Ea=p[3], covdep=sc.covdep)
 end
 
 struct Inlet{Q<:Real,S,V<:AbstractArray,U<:Real,X<:Real,FF<:Function} <: AbstractBoundaryInterface

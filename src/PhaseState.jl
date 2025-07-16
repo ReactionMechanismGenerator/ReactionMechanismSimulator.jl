@@ -5,23 +5,23 @@ using Tracker
 using ReverseDiff
 using RecursiveArrayTools
 
-@inline function calcgibbs(ph::U,T::W) where {U<:IdealPhase,W<:Real}
-    return getGibbs.(getfield.(ph.species,:thermo),T)
+@inline function calcgibbs(ph::U,T::W;coverages=nothing) where {U<:IdealPhase,W<:Real}
+    return getGibbs.(getfield.(ph.species,:thermo),T,coverages=coverages)
 end
 export calcgibbs
 
-@inline function calcenthalpyinternalgibbs(ph::U,T::W,P::Z,V::Q) where {U<:IdealPhase,W,Z,Q<:Real}
-    Hs = getEnthalpy.(getfield.(ph.species,:thermo),T)
+@inline function calcenthalpyinternalgibbs(ph::U,T::W,P::Z,V::Q;coverages=nothing) where {U<:IdealPhase,W,Z,Q<:Real}
+    Hs = getEnthalpy.(getfield.(ph.species,:thermo),T,coverages=coverages)
     Us = Hs .- P*V
-    Gs = Hs .- T.*getEntropy.(getfield.(ph.species,:thermo),T)
+    Gs = Hs .- T.*getEntropy.(getfield.(ph.species,:thermo),T,coverages=coverages)
     return Hs,Us,Gs
 end
 
 
-@inline function calcenthalpyinternalgibbs(ph::Union{IdealGas,IdealSurface},T::W,P::Z,V::Q) where {W,Z,Q<:Real}
-    Hs = getEnthalpy.(getfield.(ph.species,:thermo),T)
+@inline function calcenthalpyinternalgibbs(ph::Union{IdealGas,IdealSurface},T::W,P::Z,V::Q;coverages=nothing) where {W,Z,Q<:Real}
+    Hs = getEnthalpy.(getfield.(ph.species,:thermo),T,coverages)
     Us = Hs .- R*T
-    Gs = Hs .- T.*getEntropy.(getfield.(ph.species,:thermo),T)
+    Gs = Hs .- T.*getEntropy.(getfield.(ph.species,:thermo),T,coverages)
     return Hs,Us,Gs
 end
 
@@ -50,27 +50,27 @@ end
 
 export makespcsvector
 
-@inline function getkf(rxn::ElementaryReaction,ph,T,P,C,ns,V,phi)
+@inline function getkf(rxn::ElementaryReaction,ph,T,P,C,ns,V,phi;coverages=nothing)
     if isdefined(rxn.kinetics,:efficiencies) && length(rxn.kinetics.efficiencies) > 0
         @views @inbounds @fastmath C += sum([ns[i]*val for (i,val) in rxn.kinetics.efficiencies])/V
     end
-    return rxn.kinetics(T=T,P=P,C=C,phi=phi)
+    return rxn.kinetics(T=T,P=P,C=C,phi=phi,coverages=coverages)
 end
 export getkf
 
-@inline function getkfs(ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4,phi) where {U,W1,W2,W3,W4<:Real,Q<:AbstractArray}
+@inline function getkfs(ph::U,T::W1,P::W2,C::W3,ns::Q,V::W4,phi;coverages=nothing) where {U,W1,W2,W3,W4<:Real,Q<:AbstractArray}
     kfs = similar(ns,length(ph.reactions))
     i = 1
     oldind = 1
     ind = 0
     while i <= length(ph.veckineticsinds) #vectorized kinetics
         @inbounds ind = ph.veckineticsinds[i]
-        @inbounds kfs[oldind:ind] = ph.veckinetics[i](;T=T,P=P,C=C)
+        @inbounds kfs[oldind:ind] = ph.veckinetics[i](;T=T,P=P,C=C,coverages=coverages)
         oldind = ind+1
         i += 1
     end
     @simd for i in ind+1:length(ph.reactions)
-        @inbounds kfs[i] = getkf(ph.reactions[i],ph,T,P,C,ns,V,phi)
+        @inbounds kfs[i] = getkf(ph.reactions[i],ph,T,P,C,ns,V,phi,coverages=coverages)
     end
     return kfs
 end
@@ -181,12 +181,12 @@ export getKcs
 Calculates the forward and reverse rate coefficients for a given reaction, phase and state
 Maintains diffusion limitations if the phase has diffusionlimited=true
 """
-@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W8;kf::W6=-1.0,f::W7=-1.0) where {U<:AbstractPhase,W8,W6,W7,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
+@inline function getkfkrev(rxn::ElementaryReaction,ph::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W8;coverages=nothing,kf::W6=-1.0,f::W7=-1.0) where {U<:AbstractPhase,W8,W6,W7,W5,W4,W1,W2,W3<:Real,Q1,Q2,Q3<:AbstractArray}
     if signbit(kf) 
         if signbit(f)
-            kf = getkf(rxn,ph,T,P,C,ns,V,phi)
+            kf = getkf(rxn,ph,T,P,C,ns,V,phi;coverages=coverages)
         else
-            kf = getkf(rxn,ph,T,P,C,ns,V,phi)*f
+            kf = getkf(rxn,ph,T,P,C,ns,V,phi;coverages=coverages)*f
         end
     end
     Kc = getKc(rxn,ph,T,Gs,phi)
@@ -223,9 +223,9 @@ Maintains diffusion limitations if the phase has diffusionlimited=true
 end
 export getkfkrev
 
-@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7;kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2,Q3<:AbstractArray}
+@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7;coverages=nothing,kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2,Q3<:AbstractArray}
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V,phi)
+        kfs = getkfs(phase,T,P,C,ns,V,phi;coverages=coverages)
         if phi == 0.0
             krev = @fastmath kfs./getKcs(phase,T,Gs)
         else 
@@ -241,14 +241,14 @@ export getkfkrev
         len = length(phase.reactions)
         krev = zeros(typeof(N),len)
         @simd for i = 1:len
-           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;kf=kfs[i])
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;coverages=coverages,kf=kfs[i])
         end
     else
         len = length(phase.reactions)
         kfs = zeros(typeof(N),len)
         krev = zeros(typeof(N),len)
         @simd for i = 1:len
-           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi)
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;coverages=coverages)
         end
     end
     kfs .*= phase.forwardability
@@ -256,9 +256,9 @@ export getkfkrev
     return kfs,krev
 end
 
-@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7;kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q3<:AbstractArray} #autodiff p
+@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Q2,diffs::Q3,V::W5,phi::W7;coverages=nothing,kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q3<:AbstractArray} #autodiff p
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V,phi)
+        kfs = getkfs(phase,T,P,C,ns,V,phi;coverages=coverages)
         if phi == 0.0
             krev = @fastmath kfs./getKcs(phase,T,Gs)
         else 
@@ -275,7 +275,7 @@ end
         krev = similar(kfs)
         kfsdiff = similar(kfs)
         @simd for i = 1:len
-           @fastmath @inbounds kfsdiff[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;kf=kfs[i])
+           @fastmath @inbounds kfsdiff[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;coverages=coverages,kf=kfs[i])
         end
         return kfsdiff, krev
     else
@@ -283,15 +283,15 @@ end
         kfs = zeros(typeof(Gs[1]),len)
         krev = zeros(typeof(Gs[1]),len)
         @simd for i = 1:len
-           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi)
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;coverages=coverages)
         end
     end
     return kfs,krev
 end
 
-@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Array{Q2,1},diffs::Q3,V::W5,phi::W7;kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2<:ForwardDiff.Dual,Q3<:AbstractArray} #autodiff p
+@inline function getkfkrevs(phase::U,T::W1,P::W2,C::W3,N::W4,ns::Q1,Gs::Array{Q2,1},diffs::Q3,V::W5,phi::W7;coverages=nothing,kfs::W6=nothing) where {U,W7,W6,W5<:Real,W1<:Real,W2<:Real,W3,W4,Q1<:AbstractArray,Q2<:ForwardDiff.Dual,Q3<:AbstractArray} #autodiff p
     if !phase.diffusionlimited && kfs === nothing
-        kfs = getkfs(phase,T,P,C,ns,V,phi)
+        kfs = getkfs(phase,T,P,C,ns,V,phi;coverages=coverages)
         if phi == 0.0
             krev = @fastmath kfs./getKcs(phase,T,Gs)
         else 
@@ -307,14 +307,14 @@ end
         len = length(phase.reactions)
         krev = similar(kfs)
         @simd for i = 1:len
-           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;kf=kfs[i])
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;coverages=coverages,kf=kfs[i])
         end
     else
         len = length(phase.reactions)
         kfs = zeros(typeof(Gs[1]),len)
         krev = zeros(typeof(Gs[1]),len)
         @simd for i = 1:len
-           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi)
+           @fastmath @inbounds kfs[i],krev[i] = getkfkrev(phase.reactions[i],phase,T,P,C,N,ns,Gs,diffs,V,phi;coverages=coverages)
         end
     end
     kfs .*= phase.forwardability

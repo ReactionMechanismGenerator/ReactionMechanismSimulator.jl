@@ -55,7 +55,7 @@ function Simulation(sol::Q, domain::W, reducedmodelmappings::ReducedModelMapping
         end
         @inbounds @views yunlumped[end-length(domain.thermovariabledict)+1:end] .= y[end-length(domain.thermovariabledict)+1:end]
 
-        ns, cs, T, P, V, C, N, mu, kfs, krevs, Hs, Us, Gs, diffs, Cvave, cpdivR, phi = calcthermo(domain, yunlumped, t, p)
+        ns, cs, T, P, V, C, N, mu, kfs, krevs, Hs, Us, Gs, diffs, Cvave, cpdivR, phi, coverages = calcthermo(domain, yunlumped, t, p)
 
         reducedmodelmappings.qssc!(qssc, cs, kfs, krevs)
         @inbounds yunlumped[reducedmodelmappings.qssindexes] .= qssc .* V
@@ -274,10 +274,12 @@ function rops(ssys::SystemSimulation, t)
     vdiffs = Array{Any,1}(undef, length(domains))
     vCvave = Array{Any,1}(undef, length(domains))
     vphi = Array{Any,1}(undef, length(domains))
+    vcpdivR = Array{Any,1}(undef, length(domains))
+    vcoverages = Array{Any,1}(undef, length(domains))
     ropmat = spzeros(Nrxns, Nspcs)
     start = 0
     for (k, sim) in enumerate(ssys.sims)
-        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vphi[k] = calcthermo(sim.domain, ssys.sol(t), t)
+        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vcpdivR[k], vphi[k], vcoverages[k] = calcthermo(sim.domain, ssys.sol(t), t)
         cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
         rops!(ropmat, sim.domain.rxnarray, cstot, vkfs[k], vkrevs[k], vV[k], start)
         start += length(vkfs[k])
@@ -288,7 +290,7 @@ function rops(ssys::SystemSimulation, t)
             rops!(ropmat, nothing, inter.rxnarray, inter.fragmentbasedrxnarray, cstot, kfs, krevs, vV[inter.domaininds[1]], inter.Mws, inter.domainfilm.indexes[1]:inter.domainfilm.indexes[2], start)
             start += length(kfs)
         elseif hasproperty(inter, :reactions)
-            kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], cstot)
+            kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], vcoverages[inter.domaininds[1]], vcoverages[inter.domaininds[2]], cstot)
             rops!(ropmat, inter.rxnarray, cstot, kfs, krevs, inter.A, start)
             start += length(kfs)
         end
@@ -318,7 +320,9 @@ function massrops(ssys::SystemSimulation, t)
     vGs = Array{Any,1}(undef, length(domains))
     vdiffs = Array{Any,1}(undef, length(domains))
     vCvave = Array{Any,1}(undef, length(domains))
+    vcpdivR = Array{Any,1}(undef, length(domains))
     vphi = Array{Any,1}(undef, length(domains))
+    vcoverages = Array{Any,1}(undef, length(domains))
     if any([domain isa FragmentBasedConstantTrhoDomain for domain in domains])
         ropmat = spzeros(Nrxns, Nspcs + 1)
     else
@@ -328,7 +332,7 @@ function massrops(ssys::SystemSimulation, t)
     ropmat = spzeros(Nrxns, Nspcs)
     start = 0
     for (k, sim) in enumerate(ssys.sims)
-        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vphi[k] = calcthermo(sim.domain, ssys.sol(t), t)
+        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vcpdivR[k], vphi[k], vcoverages[k] = calcthermo(sim.domain, ssys.sol(t), t)
         cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
         rops!(ropmat, sim.domain.rxnarray, cstot, vkfs[k], vkrevs[k], vV[k], start)
         start += length(vkfs[k])
@@ -339,7 +343,7 @@ function massrops(ssys::SystemSimulation, t)
             rops!(ropmat, massropvec, inter.rxnarray, inter.fragmentbasedrxnarray, cstot, kfs, krevs, vV[inter.domaininds[1]], inter.Mws, inter.domainfilm.indexes[1]:inter.domainfilm.indexes[2], start)
             start += length(kfs)
         elseif hasproperty(inter, :reactions)
-            kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], cstot)
+            kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], vcoverages[inter.domaininds[1]], vcoverages[inter.domaininds[2]], cstot)
             rops!(ropmat, inter.rxnarray, cstot, kfs, krevs, inter.A, start)
             start += length(kfs)
         end
@@ -394,17 +398,19 @@ function rops(ssys::SystemSimulation, name, t)
     vdiffs = Array{Any,1}(undef, length(domains))
     vCvave = Array{Any,1}(undef, length(domains))
     vphi = Array{Any,1}(undef, length(domains))
+    vcpdivR = Array{Any,1}(undef, length(domains))
+    vcoverages = Array{Any,1}(undef, length(domains))
     ropvec = spzeros(Nrxns)
     start = 0
     for (k, sim) in enumerate(ssys.sims)
-        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vphi[k] = calcthermo(sim.domain, ssys.sol(t), t)
+        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vcpdivR[k], vphi[k], vcoverages[k] = calcthermo(sim.domain, ssys.sol(t), t)
         cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
         rops!(ropvec, sim.domain.rxnarray, cstot, vkfs[k], vkrevs[k], vV[k], start, ind)
         start += length(vkfs[k])
     end
     for inter in ssys.interfaces
         if hasproperty(inter, :reactions)
-            kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], cstot)
+            kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], vcoverages[inter.domaininds[1]], vcoverages[inter.domaininds[2]], cstot)
             rops!(ropvec, inter.rxnarray, cstot, kfs, krevs, inter.A, start, ind)
             start += length(kfs)
         end
@@ -802,9 +808,11 @@ function rates(ssys::Q, t::X) where {Q<:SystemSimulation,X<:Real}
     vdiffs = Array{Any,1}(undef, length(domains))
     vCvave = Array{Any,1}(undef, length(domains))
     vphi = Array{Any,1}(undef, length(domains))
+    vcpdivR = Array{Any,1}(undef, length(domains))
+    vcoverages = Array{Any,1}(undef, length(domains))
     index = 1
     for (k, sim) in enumerate(ssys.sims)
-        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vphi[k] = calcthermo(sim.domain, ssys.sol(t), t)
+        vns[k], vcs[k], vT[k], vP[k], vV[k], vC[k], vN[k], vmu[k], vkfs[k], vkrevs[k], vHs[k], vUs[k], vGs[k], vdiffs[k], vCvave[k], vcpdivR[k], vphi[k], vcoverages[k] = calcthermo(sim.domain, ssys.sol(t), t)
         cstot[sim.domain.indexes[1]:sim.domain.indexes[2]] = vcs[k]
         rts[index:index+length(vkfs[k])-1] .= getrates(sim.domain.rxnarray, cstot, vkfs[k], vkrevs[k]) .* getdomainsize(sim, t)
         index += length(vkfs[k])
@@ -815,7 +823,7 @@ function rates(ssys::Q, t::X) where {Q<:SystemSimulation,X<:Real}
             @views rts[index:index+length(kfs)-1] = getrates(inter.rxnarray, cstot, kfs, krevs) .* vV[inter.domaininds[1]]
             index += length(kfs)
         elseif hasproperty(inter, :reactions)
-            kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], cstot)
+            kfs, krevs = getkfskrevs(inter, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], vcoverages[inter.domaininds[1]], vcoverages[inter.domaininds[2]], cstot)
             rts[index:index+length(kfs)-1] = getrates(inter.rxnarray, cstot, kfs, krevs) .* inter.A
             index += length(kfs)
         end
