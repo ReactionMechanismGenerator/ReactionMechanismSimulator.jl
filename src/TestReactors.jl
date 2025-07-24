@@ -77,7 +77,7 @@ using SciMLSensitivity
         interfaces = [kLAkHCondensationEvaporationWithReservoir(domain, conds)]
         react = Reactor(domain, y0, (0.0, 140000.01), interfaces; p=p)
 
-        sol1 = solve(react.ode, react.recommendedsolver, abstol=1e-18, reltol=1e-6)
+        sol1 = solve(react.ode, react.recommendedsolver, abstol=1e-16, reltol=1e-6)
 
         phaseDict = readinput("../src/testing/TdependentkLAkH.rms")
         spcs = phaseDict["phase"]["Species"]
@@ -91,7 +91,7 @@ using SciMLSensitivity
         interfaces = [kLAkHCondensationEvaporationWithReservoir(domain, conds)]
         react = Reactor(domain, y0, (0.0, 140000.01), interfaces; p=p) #Create the reactor object
 
-        sol2 = solve(react.ode, react.recommendedsolver, abstol=1e-18, reltol=1e-6)
+        sol2 = solve(react.ode, react.recommendedsolver, abstol=1e-16, reltol=1e-6)
 
         spcnames = getfield.(liq.species, :name)
         octaneind = findfirst(isequal("octane"), spcnames)
@@ -137,7 +137,7 @@ using SciMLSensitivity
         domains = (domainliq, domaingas)
         interfaces = [vl, inletgas, outletgas]
         react, y0, p = Reactor(domains, (y0liq, y0gas), (0.0, tf), interfaces, (pliq, pgas, pinter))
-        sol = solve(react.ode, react.recommendedsolver, abstol=1e-18, reltol=1e-6)
+        sol = solve(react.ode, react.recommendedsolver, abstol=1e-16, reltol=1e-6)
 
         name = "oxygen"
         ind = findfirst(x -> x == name, liqspcnames)
@@ -540,15 +540,15 @@ using SciMLSensitivity
         interfacerxns = phaseDict[Set(["gas", "surface"])]["Reactions"]
 
         ig = IdealGas(gasspcs, gasrxns; name="gas")
-        cat = IdealSurface(surfacespcs, surfacerxns, 2.486e-5; name="surface")
+        catalyst = IdealSurface(surfacespcs, surfacerxns, 2.486e-5; name="surface")
 
         initialconds = Dict(["T" => 800.0, "P" => 1.0e5, "O2" => 0.2, "N2" => 0.7, "CH4" => 0.1])
         domaingas, y0gas, pgas = ConstantTPDomain(phase=ig, initialconds=initialconds,)
 
         V = 8.314 * 800.0 / 1.0e5
         A = 1.0e5 * V
-        initialconds = Dict(["T" => 800.0, "A" => A, "vacantX" => cat.sitedensity * A])
-        domaincat, y0cat, pcat = ConstantTAPhiDomain(phase=cat, initialconds=initialconds,)
+        initialconds = Dict(["T" => 800.0, "A" => A, "vacantX" => catalyst.sitedensity * A])
+        domaincat, y0cat, pcat = ConstantTAPhiDomain(phase=catalyst, initialconds=initialconds,)
 
         inter, pinter = ReactiveInternalInterfaceConstantTPhi(domaingas, domaincat, interfacerxns, 800.0, A)
 
@@ -571,21 +571,21 @@ using SciMLSensitivity
         interfacerxns = phaseDict[Set(["gas", "surface"])]["Reactions"]
 
         ig = IdealGas(gasspcs, gasrxns; name="gas")
-        cat = IdealSurface(surfacespcs, surfacerxns, 2.486e-5; name="surface")
+        catalyst = IdealSurface(surfacespcs, surfacerxns, 2.486e-5; name="surface")
 
         initialconds = Dict(["T" => 800.0, "P" => 1.0e5, "O2" => 0.2, "N2" => 0.7, "CH4" => 0.1])
         domaingas, y0gas, pgas = ConstantVDomain(phase=ig, initialconds=initialconds,)
 
         V = 8.314 * 800.0 / 1.0e5
         A = 1.0e5 * V
-        initialconds = Dict(["T" => 800.0, "A" => A, "vacantX" => cat.sitedensity * A])
-        domaincat, y0cat, pcat = ConstantTAPhiDomain(phase=cat, initialconds=initialconds,)
+        initialconds = Dict(["T" => 800.0, "A" => A, "vacantX" => catalyst.sitedensity * A])
+        domaincat, y0cat, pcat = ConstantTAPhiDomain(phase=catalyst, initialconds=initialconds,)
 
         inter, pinter = ReactiveInternalInterface(domaingas, domaincat, interfacerxns, A)
 
         react, y0, p = Reactor((domaingas, domaincat), (y0gas, y0cat), (0.0, 0.1), (inter,), (pgas, pcat, pinter))
 
-        sol = solve(react.ode, CVODE_BDF(), abstol=1e-20, reltol=1e-6)
+        sol = solve(react.ode, CVODE_BDF(), abstol=1e-16, reltol=1e-6)
 
         ssys = SystemSimulation(sol, (domaingas, domaincat,), (inter,), p)
 
