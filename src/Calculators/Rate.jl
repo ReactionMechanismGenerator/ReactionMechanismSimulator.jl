@@ -37,12 +37,14 @@ export StickingCoefficient
 end
 @inline (arr::Arrheniusq)(;T::Q, P::N=0.0, C::S=0.0, phi=0.0, dGrxn=0.0, d=0.0) where {Q<:Real, N<:Real, S<:Real} = begin
     barrier = arr.Ea+arr.q*F*(phi-arr.V0)
-    corrected_barrier = max(0, dGrxn, barrier)
+    # corrected_barrier = max(0, dGrxn, barrier)
+    corrected_barrier = barrier
     @fastmath arr.A*T^arr.n*exp(-corrected_barrier/(R*T))
 end
 @inline (arr::Arrheniusq)(T::Q; P::N=0.0, C::S=0.0, phi=0.0, dGrxn=0.0, d=0.0) where {Q<:Real, N<:Real, S<:Real} = begin
     barrier = arr.Ea+arr.q*F*(phi-arr.V0)
-    corrected_barrier = max(0, dGrxn, barrier)
+    # corrected_barrier = max(0, dGrxn, barrier)
+    corrected_barrier = barrier
     @fastmath arr.A*T^arr.n*exp(-corrected_barrier/(R*T))
 end
 export Arrheniusq
