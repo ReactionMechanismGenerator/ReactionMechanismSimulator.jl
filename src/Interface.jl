@@ -389,11 +389,65 @@ function VaporLiquidMassTransferInternalInterfaceConstantT(domaingas, domainliq,
     @assert isa(domaingas.phase, IdealGas)
     @assert isa(domainliq.phase, IdealDiluteSolution)
     @assert getfield.(domaingas.phase.species, :name) == getfield.(domainliq.phase.species, :name)
+
     T = domainliq.T
     phase = domainliq.phase
     ignoremasstransferspcinds = getinterfaceignoremasstransferspcinds(domaingas, domainliq, ignoremasstransferspcnames)
     kLAs = [kLA(T=T) for kLA in getfield.(phase.species, :liquidvolumetricmasstransfercoefficient)]
     kHs = [kH(T=T) for kH in getfield.(phase.species, :henrylawconstant)]
+
+    non_empty_indexes_kH = findall(x -> typeof(x)!=EmptyHenryLawConstant,[y.henrylawconstant for y in phase.species])
+    Tmax_kH = [x.henrylawconstant.kH.smspl.Xorig[end] for x in phase.species[non_empty_indexes_kH]]
+    Tmin_kH = [x.henrylawconstant.kH.smspl.Xorig[1] for x in phase.species[non_empty_indexes_kH]]
+    largeTs_kH = non_empty_indexes_kH[findall(x->x<T, Tmax_kH)]
+    smallTs_kH = non_empty_indexes_kH[findall(x->x>T, Tmin_kH)]
+    
+    if !isempty(largeTs_kH)
+        species_names = getfield.(phase.species[largeTs_kH], :name)
+        @warn "The current temperature ($(T) K) is above the given range. kH(T) will be extrapolated for the following species:\n$(join(species_names, "\n"))"
+        negative_kH_indexes = findall(x->x<0, kHs)
+        if !isempty(negative_kH_indexes)
+            @warn "The extrapolated kH(T) is negative for the following species. The highest temperature in the given range will be used to calculate kH instead. \n$(join(species_names, "\n"))"
+            kHs[negative_kH_indexes].=[x.henrylawconstant.kH(x.henrylawconstant.kH.smspl.Xorig[end]) for x in phase.species[negative_kH_indexes]]
+        end
+    end
+    
+    if !isempty(smallTs_kH)
+        species_names = getfield.(phase.species[smallTs_kH], :name)
+        @warn "The current temperature ($(T) K) is below the given range. kH(T) will be extrapolated for the following species:\n$(join(species_names, "\n"))"
+        negative_kH_indexes = findall(x->x<0, kHs)
+        if !isempty(negative_kH_indexes)
+            @warn "The extrapolated kH(T) is negative for the following species. The lowest temperature in the given range will be used to calculate kH instead. \n$(join(species_names, "\n"))"
+            kHs[negative_kH_indexes].=[x.henrylawconstant.kH(x.henrylawconstant.kH.smspl.Xorig[1]) for x in phase.species[negative_kH_indexes]]
+        end
+    end
+
+    non_empty_indexes_kLA = findall(x -> typeof(x)!=EmptyLiquidVolumetricMassTransferCoefficient,[y.liquidvolumetricmasstransfercoefficient for y in phase.species])
+    Tmax_kLA = [x.liquidvolumetricmasstransfercoefficient.kLA.smspl.Xorig[end] for x in phase.species[non_empty_indexes_kLA]]
+    Tmin_kLA = [x.liquidvolumetricmasstransfercoefficient.kLA.smspl.Xorig[1] for x in phase.species[non_empty_indexes_kLA]]
+    largeTs_kLA = non_empty_indexes_kLA[findall(x->x<T, Tmax_kLA)]
+    smallTs_kLA = non_empty_indexes_kLA[findall(x->x>T, Tmin_kLA)]
+
+    if !isempty(largeTs_kLA)
+        species_names = getfield.(phase.species[largeTs_kLA], :name)
+        @warn "The current temperature ($(T) K) is above the given range. kLA(T) will be extrapolated for the following species:\n$(join(species_names, "\n"))"
+        negative_kLA_indexes = findall(x->x<0, kLAs)
+        if !isempty(negative_kLA_indexes)
+            @warn "The extrapolated kLA(T) is negative for the following species. The highest temperature in the given range will be used to calculate kLA instead. \n$(join(species_names, "\n"))"
+            kLAs[negative_kLA_indexes].=[x.liquidvolumetricmasstransfercoefficient.kLA(x.liquidvolumetricmasstransfercoefficient.kLA.smspl.Xorig[end]) for x in phase.species[negative_kLA_indexes]]
+        end
+    end
+
+    if !isempty(smallTs_kLA)
+        species_names = getfield.(phase.species[smallTs_kLA], :name)
+        @warn "The current temperature ($(T) K) is below the given range. kLA(T) will be extrapolated for the following species:\n$(join(species_names, "\n"))"
+        negative_kLA_indexes = findall(x->x<0, kLAs)
+        if !isempty(negative_kLA_indexes)
+            @warn "The extrapolated kLA(T) is negative for the following species. The lowest temperature in the given range will be used to calculate kLA instead. \n$(join(species_names, "\n"))"
+            kLAs[negative_kLA_indexes].=[x.liquidvolumetricmasstransfercoefficient.kLA(x.liquidvolumetricmasstransfercoefficient.kLA.smspl.Xorig[1]) for x in phase.species[negative_LA_indexes]]
+        end
+    end
+
     return VaporLiquidMassTransferInternalInterfaceConstantT(domaingas, domainliq, ignoremasstransferspcnames, ignoremasstransferspcinds, kLAs, kHs, [1, length(domainliq.phase.species)], [0, 0], ones(length(domainliq.phase.species))), ones(length(domainliq.phase.species))
 end
 export VaporLiquidMassTransferInternalInterfaceConstantT
@@ -403,15 +457,15 @@ function getkLAkHs(vl::VaporLiquidMassTransferInternalInterfaceConstantT, Tgas, 
 end
 
 function evaluate(vl::VaporLiquidMassTransferInternalInterfaceConstantT, dydt, Vgas, Vliq, Tgas, Tliq, N1, N2, P1, P2, Cvave1, Cvave2, ns1, ns2, Us1, Us2, cstot, p)
-    kLAs, kHs = getkLAkHs(vl, Tgas, Tliq)
-    @views @inbounds @fastmath evap = kLAs * Vliq .* cstot[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]] #evap_i = kLA_i * Vliq * cliq_i
-    @views @inbounds @fastmath cond = kLAs * Vliq .* cstot[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]] * R * Tgas ./ kHs #cond_i = kLA_i * Vliq * Pgas_i / kH_i, Pgas_i = cgas_i * R * Tgas
-    netevap = (evap .- cond)
+    kLAs, kHs = getkLAkHs(vl, vl.domaingas.T, vl.domainliq.T)
+    @views @inbounds @fastmath evap = kLAs * vl.domainliq.V .* cstot[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]] #evap_i = kLA_i * Vliq * cliq_i
+    @views @inbounds @fastmath cond = kLAs * vl.domainliq.V .*cstot[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]] * R * vl.domaingas.T ./ kHs #cond_i = kLA_i * Vliq * Pgas_i / kH_i, Pgas_i = cgas_i * R * Tgas
+    net_evap = (evap .- cond)
     @simd for ind in vl.ignoremasstransferspcinds
-        @inbounds netevap[ind] = 0.0
+        net_evap[ind] = 0.0
     end
-    @views @inbounds @fastmath dydt[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]] .+= netevap
-    @views @inbounds @fastmath dydt[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]] .-= netevap
+    @views @inbounds @fastmath dydt[vl.domaingas.indexes[1]:vl.domaingas.indexes[2]] .+= net_evap
+    @views @inbounds @fastmath dydt[vl.domainliq.indexes[1]:vl.domainliq.indexes[2]] .-= net_evap
 end
 export evaluate
 
