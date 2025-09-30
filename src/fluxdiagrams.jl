@@ -140,15 +140,15 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
     maximumnodecount=50, maximumedgecount=50, concentrationtol=1e-6, speciesratetolerance=1e-6,
     maximumnodepenwidth=10.0,maximumedgepenwidth=10.0,radius=1,centralreactioncount=-1,outputdirectory="fluxdiagrams",
     colorscheme="viridis",removeunconnectednodes=false)
-    
+
     if hasproperty(bsol,:domain)
         specieslist = getphasespecies(bsol.domain.phase)
         reactionlist = bsol.domain.phase.reactions
-    else 
+    else
         specieslist = bsol.species
         reactionlist = bsol.reactions
     end
-    
+
     speciesnamelist = getfield.(specieslist,:name)
     numspecies = length(specieslist)
 
@@ -156,7 +156,8 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         mkdir(outputdirectory)
     end
 
-    concs = reduce(vcat,[concentrations(bsol,t) for t in ts])
+    concs = [concentrations(bsol,t) for t in ts]
+    concs = hcat(concs...)
 
     reactionrates = reduce(vcat,[rates(bsol,t) for t in ts])
 
@@ -274,9 +275,9 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
             end
         end
     end
-    
-    
-    
+
+
+
     if removeunconnectednodes
         if length(ts) > 1
             error("cannot use removeunconnectednodes for length(ts)>1")
@@ -302,7 +303,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
         end
         filter!(x->(x in connectedinds),nodes)
     end
-    
+
     graph = pydot.Dot("flux_diagram",graph_type="digraph",overlap="false")
     graph.set_rankdir("LR")
     graph.set_fontname("sans")
@@ -380,7 +381,7 @@ function makefluxdiagrams(bsol,ts;centralspecieslist=Array{String,1}(),superimpo
             end
         end
         minspeciesrate = max(minspeciesrate,maxspcrate*speciesratetolerance)
-        
+
         for index in 1:length(edges)
             reactantindex,productindex = edges[index]
             if reactantindex in nodes && productindex in nodes
