@@ -196,6 +196,12 @@ function Reactor(domains::T, y0s::W1, tspan::W2, interfaces::Z=Tuple(), ps::X=Sc
             inter.parameterindexes[2] = length(p) + length(ps[i+length(domains)])
             inter.ignoremasstransferspcinds .= getinterfaceignoremasstransferspcinds(inter.domaingas, inter.domainliq, inter.ignoremasstransferspcnames)
             p = vcat(p, ps[i+length(domains)])
+        elseif isa(inter, FickDiffusionInternalInterface)
+            inter.domaininds[1] = findfirst(isequal(inter.domain1), domains)
+            inter.domaininds[2] = findfirst(isequal(inter.domain2), domains)
+            inter.parameterindexes[1] = length(p) + 1
+            inter.parameterindexes[2] = length(p) + length(ps[i+length(domains)])
+            p = vcat(p, ps[i+length(domains)])
         end
     end
 
@@ -390,7 +396,7 @@ end
     u: the current ODE state
     p: the ODE parameters
     t: the current ODE time
-    newW: a Bool which specifies whether the W matrix has been updated since the last call to precs. 
+    newW: a Bool which specifies whether the W matrix has been updated since the last call to precs.
           It is recommended that this is checked to only update the preconditioner when newW == true.
     Plprev: the previous Pl.
     Prprev: the previous Pr.
@@ -716,6 +722,8 @@ end
             evaluate(inter, dydt, domains, vT[inter.domaininds[1]], vT[inter.domaininds[2]], vphi[inter.domaininds[1]], vphi[inter.domaininds[2]], vGs[inter.domaininds[1]], vGs[inter.domaininds[2]], cstot, p)
         elseif isa(inter, VaporLiquidMassTransferInternalInterfaceConstantT)
             evaluate(inter, dydt, vV[inter.domaininds[1]], vV[inter.domaininds[2]], vT[inter.domaininds[1]], vT[inter.domaininds[2]], vN[inter.domaininds[1]], vN[inter.domaininds[2]], vP[inter.domaininds[1]], vP[inter.domaininds[2]], vCvave[inter.domaininds[1]], vCvave[inter.domaininds[2]], vns[inter.domaininds[1]], vns[inter.domaininds[2]], vUs[inter.domaininds[1]], vUs[inter.domaininds[2]], cstot, p)
+        elseif isa(inter, FickDiffusionInternalInterface)
+            evaluate(inter, dydt, cstot, p)
         end
     end
     for (i, domain) in enumerate(domains)
@@ -1482,11 +1490,11 @@ end
 #     Nrxns = length(rxns)
 #     RTinv = 1.0/(R*T)
 #     ratederiv .= 0.0
-# 
+#
 #     for (j,rxn) in enumerate(rxns)
 #         Nreact = length(rxn.reactantinds)
 #         Nprod = length(rxn.productinds)
-# 
+#
 #         if Nreact == 1
 #             rind1 = rxn.reactantinds[1]
 #             fderiv = cs[rind1]
@@ -1497,7 +1505,7 @@ end
 #             rind1,rind2,rind3 = rxn.reactantinds
 #             fderiv = cs[rind1]*cs[rind2]*cs[rind3]
 #         end
-# 
+#
 #         if Nprod == 1
 #             pind1 = rxn.productinds[1]
 #             rderiv = krevs[j]/kfs[j]*cs[pind1]
@@ -1508,12 +1516,12 @@ end
 #             pind1,pind2,pind3 = rxn.productinds
 #             rderiv = krevs[j]/kfs[j]*cs[pind1]*cs[pind2]*cs[pind3]
 #         end
-# 
+#
 #         flux = fderiv-rderiv
 #         gderiv = rderiv*kfs[j]*RTinv
-# 
+#
 #         deriv = zeros(Nspcs)
-# 
+#
 #         deriv[rind1] += gderiv
 #         if Nreact > 1
 #             deriv[rind2] += gderiv
@@ -1521,7 +1529,7 @@ end
 #                 deriv[rind3] == gderiv
 #             end
 #         end
-# 
+#
 #         deriv[pind1] -= gderiv
 #         if Nprod > 1
 #             deriv[pind2] -= gderiv
@@ -1529,7 +1537,7 @@ end
 #                 deriv[pind3] -= gderiv
 #             end
 #         end
-# 
+#
 #         ratederiv[rind1,j] -= flux
 #         ratederiv[rind1,Nrxns+1:Nrxns+Nspcs] .-= deriv
 #         if Nreact > 1
@@ -1540,7 +1548,7 @@ end
 #                 ratederiv[rind3,Nrxns+1:Nrxns+Nspcs] .-= deriv
 #             end
 #         end
-# 
+#
 #         ratederiv[pind1,j] += flux
 #         ratederiv[pind1,Nrxns+1:Nrxns+Nspcs] .+= deriv
 #         if Nprod > 1
@@ -1554,18 +1562,18 @@ end
 #     end
 #     return V*ratederiv
 # end
-# 
+#
 # function jacobianp!(d::W; cs::Q,V::Y,T::Y2,Us::Z3,Cvave::Y3,N::Y2,kfs::Z,krevs::X,wV::Q2,ratederiv::Q3) where {W<:Union{ConstantVDomain,ParametrizedVDomain},Q3,Z3<:AbstractArray,Q<:AbstractArray,Q2<:AbstractArray,Y3<:Real,Y2<:Real,Y<:Real,Z<:AbstractArray,X<:AbstractArray}
 #     Nspcs = length(cs)
 #     rxns = d.phase.reactions
 #     Nrxns = length(rxns)
 #     RTinv = 1.0/(R*T)
 #     ratederiv .= 0.0
-# 
+#
 #     for (j,rxn) in enumerate(rxns)
 #         Nreact = length(rxn.reactantinds)
 #         Nprod = length(rxn.productinds)
-# 
+#
 #         if Nreact == 1
 #             rind1 = rxn.reactantinds[1]
 #             fderiv = cs[rind1]
@@ -1576,7 +1584,7 @@ end
 #             rind1,rind2,rind3 = rxn.reactantinds
 #             fderiv = cs[rind1]*cs[rind2]*cs[rind3]
 #         end
-# 
+#
 #         if Nprod == 1
 #             pind1 = rxn.productinds[1]
 #             rderiv = krevs[j]/kfs[j]*cs[pind1]
@@ -1587,12 +1595,12 @@ end
 #             pind1,pind2,pind3 = rxn.productinds
 #             rderiv = krevs[j]/kfs[j]*cs[pind1]*cs[pind2]*cs[pind3]
 #         end
-# 
+#
 #         flux = fderiv-rderiv
 #         gderiv = rderiv*kfs[j]*RTinv
-# 
+#
 #         deriv = zeros(Nspcs)
-# 
+#
 #         deriv[rind1] += gderiv
 #         if Nreact > 1
 #             deriv[rind2] += gderiv
@@ -1600,7 +1608,7 @@ end
 #                 deriv[rind3] == gderiv
 #             end
 #         end
-# 
+#
 #         deriv[pind1] -= gderiv
 #         if Nprod > 1
 #             deriv[pind2] -= gderiv
@@ -1608,7 +1616,7 @@ end
 #                 deriv[pind3] -= gderiv
 #             end
 #         end
-# 
+#
 #         ratederiv[rind1,j] -= flux
 #         ratederiv[rind1,Nrxns+1:Nrxns+Nspcs] .-= deriv
 #         if Nreact > 1
@@ -1619,7 +1627,7 @@ end
 #                 ratederiv[rind3,Nrxns+1:Nrxns+Nspcs] .-= deriv
 #             end
 #         end
-# 
+#
 #         ratederiv[pind1,j] += flux
 #         ratederiv[pind1,Nrxns+1:Nrxns+Nspcs] .+= deriv
 #         if Nprod > 1
@@ -1651,7 +1659,7 @@ end
 #         jac[inds[3],ind] += deriv
 #     end
 # end
-# 
+#
 # @inline function spreadpartials!(jac::S,deriv::T,inds::V,ind::Q,N::Q) where {S<:AbstractArray, T<:Real, V<:AbstractArray, Q<:Integer}
 #     if N == 1
 #         jac[inds[1],ind] += deriv
@@ -1664,7 +1672,7 @@ end
 #         jac[inds[3],ind] += deriv
 #     end
 # end
-# 
+#
 # function jacobiany!(y::Array{T,1},t::T,domain::ConstantTPDomain,kfs::Array{T,1},krevs::Array{T,1},jac::P;zero::Bool=true) where {P<:AbstractArray,T<:Real,J<:Integer}
 #     if zero
 #         jac .= 0
@@ -1681,7 +1689,7 @@ end
 #         krev = krevs[i]
 #         if rxnarray[2,i] == 0
 #             jac[rxnarray[1,i],rxnarray[1,i]] -= kf
-#             if rxnarray[5,i] == 0 
+#             if rxnarray[5,i] == 0
 #                 jac[rxnarray[4,i],rxnarray[1,i]] += kf
 #             elseif rxnarray[6,i] == 0
 #                 jac[rxnarray[4,i],rxnarray[1,i]] += kf
@@ -1697,101 +1705,101 @@ end
 #                 deriv = 2*kf*cs[rxnarray[1,i]]
 #                 jac[rxnarray[1,i],rxnarray[1,i]] -= 2.0*deriv
 #                 for j in 1:Nspcs
-#                     jac[rxnarray[1,i],j] -= 2.0*corr 
+#                     jac[rxnarray[1,i],j] -= 2.0*corr
 #                 end
 #                 jac[rxnarray[4,i],rxnarray[1,i]] += deriv
-#                 for j in 1:Nspcs 
-#                     jac[rxnarray[4,i],j] += corr 
-#                 end 
+#                 for j in 1:Nspcs
+#                     jac[rxnarray[4,i],j] += corr
+#                 end
 #                 if rxnarray[5,i] != 0
-#                     jac[rxnarray[5,i],rxnarray[1,i]] += deriv 
-#                     for j = 1:Nspcs 
-#                         jac[rxnarray[5,i],j] += corr 
-#                     end 
-#                     if rxnarray[6,i] != 0 
-#                         jac[rxnarray[6,i],rxnarray[1,i]] += deriv 
-#                         for j = 1:Nspcs 
-#                             jac[rxnarray[6,i],j] += corr 
-#                         end 
-#                     end 
-#                 end 
-#             else 
+#                     jac[rxnarray[5,i],rxnarray[1,i]] += deriv
+#                     for j = 1:Nspcs
+#                         jac[rxnarray[5,i],j] += corr
+#                     end
+#                     if rxnarray[6,i] != 0
+#                         jac[rxnarray[6,i],rxnarray[1,i]] += deriv
+#                         for j = 1:Nspcs
+#                             jac[rxnarray[6,i],j] += corr
+#                         end
+#                     end
+#                 end
+#             else
 #                 #derivative with respect to reactant 1
 #                 deriv = kf*cs[rxnarray[2,i]]
 #                 jac[rxnarray[1,i],rxnarray[1,i]] -= deriv
 #                 jac[rxnarray[2,i],rxnarray[1,i]] -= deriv
-# 
-#                 jac[rxnarray[4,i],rxnarray[1,i]] += deriv 
-#                 if rxnarray[5,i] != 0 
+#
+#                 jac[rxnarray[4,i],rxnarray[1,i]] += deriv
+#                 if rxnarray[5,i] != 0
 #                     jac[rxnarray[5,i],rxnarray[1,i]] += deriv
-#                     if rxnarray[6,i] != 0 
-#                         jac[rxnarray[6,i],rxnarray[1,i]] += deriv 
-#                     end 
-#                 end 
-# 
+#                     if rxnarray[6,i] != 0
+#                         jac[rxnarray[6,i],rxnarray[1,i]] += deriv
+#                     end
+#                 end
+#
 #                 #derivative with respect to reactant 2
 #                 deriv = kf*cs[rxnarray[1,i]]
-#                 jac[rxnarray[1,i],rxnarray[2,i]] -= deriv 
-#                 jac[rxnarray[2,i],rxnarray[2,i]] -= deriv 
-#                 for j = 1:Nspcs 
-#                     jac[rxnarray[1,i],j] -= corr 
-#                     jac[rxnarray[2,i],j] -= corr 
+#                 jac[rxnarray[1,i],rxnarray[2,i]] -= deriv
+#                 jac[rxnarray[2,i],rxnarray[2,i]] -= deriv
+#                 for j = 1:Nspcs
+#                     jac[rxnarray[1,i],j] -= corr
+#                     jac[rxnarray[2,i],j] -= corr
 #                 end
-#                 jac[rxnarray[4,i],rxnarray[2,j]] += deriv 
-#                 if rxnarray[5,i] != 0 
-#                     jac[rxnarray[5,i],rxnarray[2,i]] += deriv 
-#                     for j = 1:Nspcs 
-#                         jac[rxnarray[5,i],j] += corr 
-#                     end 
-#                     if rxnarray[6,i] != 0 
-#                         jac[rxnarray[6,i],rxnarray[2,i]] += deriv 
-#                         for j = 1:Nspcs 
-#                             jac[rxnarray[6,i],j] += corr 
-#                         end 
-#                     end 
-#                 end 
+#                 jac[rxnarray[4,i],rxnarray[2,j]] += deriv
+#                 if rxnarray[5,i] != 0
+#                     jac[rxnarray[5,i],rxnarray[2,i]] += deriv
+#                     for j = 1:Nspcs
+#                         jac[rxnarray[5,i],j] += corr
+#                     end
+#                     if rxnarray[6,i] != 0
+#                         jac[rxnarray[6,i],rxnarray[2,i]] += deriv
+#                         for j = 1:Nspcs
+#                             jac[rxnarray[6,i],j] += corr
+#                         end
+#                     end
+#                 end
 #             end
 #         else
 #             corr = -2.0*kf*cs[rxnarray[1,i]]*cs[rxnarray[2,i]]*cs[rxnarray[3,i]]/C
 #             if (rxnarray[1,i] == rxnarray[2,i] && rxnarray[1,i] == rxnarray[3,i])
 #                 deriv = 3.0*kf*cs[rxnarray[1,i]]*cs[rxnarray[1,i]]
-#                 jac[rxnarray[1,i],rxnarray[1,i]] -= 3.0*deriv 
-#                 for j = 1:Nspcs 
-#                     jac[rxnarray[1,i],j] -= 3.0*corr 
-#                 end 
-#                 jac[rxnarray[4,i],rxnarray[1,i]] += deriv 
-#                 for j = 1:Nspcs 
-#                     jac[rxnarray[4,i],j] += corr 
-#                 end 
-#                 if rxnarray[5,i] != 0 
-#                     jac[rxnarray[5,i],rxnarray[1,i]] += deriv 
-#                     for j = 1:Nspcs 
-#                         jac[rxnarray[5,i],j] += corr 
-#                     end 
-#                     if rxnarray[6,i] != 0 
-#                         jac[rxnarray[6,i],rxnarray[1,i]] += deriv 
-#                         for j = 1:Nspcs 
-#                             jac[rxnarray[6,i],j] += corr 
-#                         end 
-#                     end 
-#                 end 
+#                 jac[rxnarray[1,i],rxnarray[1,i]] -= 3.0*deriv
+#                 for j = 1:Nspcs
+#                     jac[rxnarray[1,i],j] -= 3.0*corr
+#                 end
+#                 jac[rxnarray[4,i],rxnarray[1,i]] += deriv
+#                 for j = 1:Nspcs
+#                     jac[rxnarray[4,i],j] += corr
+#                 end
+#                 if rxnarray[5,i] != 0
+#                     jac[rxnarray[5,i],rxnarray[1,i]] += deriv
+#                     for j = 1:Nspcs
+#                         jac[rxnarray[5,i],j] += corr
+#                     end
+#                     if rxnarray[6,i] != 0
+#                         jac[rxnarray[6,i],rxnarray[1,i]] += deriv
+#                         for j = 1:Nspcs
+#                             jac[rxnarray[6,i],j] += corr
+#                         end
+#                     end
+#                 end
 #             elseif rxnarray[1,i] == rxnarray[2,i]
-#                 #derivative with respect to reactant 1 
+#                 #derivative with respect to reactant 1
 #                 deriv = 2.0*kf*cs[rxnarray[1,i]]*cs[rxnarray[3,i]]
-#                 jac[rxnarray[1,i],rxnarray[1,i]] -= 2.0*deriv 
+#                 jac[rxnarray[1,i],rxnarray[1,i]] -= 2.0*deriv
 #                 jac[rxnarray[3,i],rxnarray[1,i]] -= deriv
-# 
-#                 jac[rxnarray[4,i],rxnarray[1,i]] += deriv 
-#                 if rxnarray[5,i] != 0 
-#                     jac[rxnarray[5,i],rxnarray[1,i]] += deriv 
-#                     if rxnarray[6,i] != 0 
-#                         jac[rxnarray[6,i],rxnarray[1,i]] += deriv 
-#                     end 
-#                 end 
-# 
+#
+#                 jac[rxnarray[4,i],rxnarray[1,i]] += deriv
+#                 if rxnarray[5,i] != 0
+#                     jac[rxnarray[5,i],rxnarray[1,i]] += deriv
+#                     if rxnarray[6,i] != 0
+#                         jac[rxnarray[6,i],rxnarray[1,i]] += deriv
+#                     end
+#                 end
+#
 #                 #derivative with respect to reactant 3
 #                 deriv = kf*cs[rxnarray]
-# 
+#
 #             ind1,ind2,ind3 = rxn.reactantinds
 #             corr = -2.0*kf*cs[ind1]*cs[ind2]*cs[ind3]/C
 #             deriv = kf*cs[ind1]*cs[ind2]
@@ -1877,7 +1885,7 @@ end
 #     end
 #     return jac
 # end
-# 
+#
 # function jacobiany!(y::Array{T,1},t::T,domain::ConstantTPDomain,kfs::Array{T,1},krevs::Array{T,1},jac::P;zero::Bool=true) where {P<:AbstractArray,T<:Real,J<:Integer}
 #     if zero
 #         jac .= 0
