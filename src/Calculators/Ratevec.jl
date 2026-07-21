@@ -21,7 +21,7 @@ function Arrheniusvec(arrs::T) where {T<:AbstractArray}
     end
     return Arrheniusvec(A=A,n=n,Ea=Ea)
 end
-@inline (arr::Arrheniusvec)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath @inbounds arr.A.*exp.(arr.n.*log(T).-arr.Ea.*(1.0/(R*T)))
+@inline (arr::Arrheniusvec)(;T::Q,P::N=0.0,C::S=0.0,phi=0.0,dGrxns=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath @inbounds arr.A.*exp.(arr.n.*log(T).-arr.Ea.*(1.0/(R*T)))
 @inline (arr::Arrheniusvec)(T::Q;P::N=0.0,C::S=0.0,phi=0.0) where {Q<:Real,N<:Real,S<:Real} = @fastmath @inbounds arr.A.*exp.(arr.n.*log(T).-arr.Ea.*(1.0/(R*T)))
 export Arrheniusvec
 
@@ -86,7 +86,7 @@ export getredtemp
 end
 export getredpress
 
-@inline function (ch::Chebyshevvec)(;T::N,P::Q=0.0,C::B=0.0,phi=0.0) where {N<:Real,B<:Real,Q<:Real}
+@inline function (ch::Chebyshevvec)(;T::N,P::Q=0.0,C::B=0.0,phi=0.0,dGrxns=0.0) where {N<:Real,B<:Real,Q<:Real}
     k = zeros(N,size(ch.coefs)[1])
     Tred = getredtemp(ch,T)
     Pred = getredpress(ch,P)
@@ -170,7 +170,7 @@ function Troevec(troes::T) where {T<:AbstractArray}
 end
 export Troevec
     
-@inline function (tr::Troevec)(;T::Q=nothing,P::R=0.0,C::S=nothing,phi=0.0) where {Q<:Real,R<:Real,S<:Real}
+@inline function (tr::Troevec)(;T::Q=nothing,P::R=0.0,C::S=nothing,phi=0.0,dGrxns=0.0) where {Q<:Real,R<:Real,S<:Real}
     k0 = tr.arrlow(T=T)
     kinf = tr.arrhigh(T=T)
     @fastmath Pr = k0.*C./kinf
@@ -201,7 +201,7 @@ function PdepArrheniusvec(pdeparrs::T) where {T<:AbstractArray}
 end
 export PdepArrheniusvec
 
-@inline function (parr::PdepArrheniusvec)(;T::Q=nothing,P::V=nothing,C::S=0.0,phi=0.0) where {Q<:Real,V<:Real,S<:Real}
+@inline function (parr::PdepArrheniusvec)(;T::Q=nothing,P::V=nothing,C::S=0.0,phi=0.0,dGrxns=0.0) where {Q<:Real,V<:Real,S<:Real}
     inds = getBoundingIndsSorted(P,parr.Ps)::Tuple{Int64,Int64}
     if inds[2] == -1
         return @inbounds parr.arrvecs[inds[1]](T=T)
