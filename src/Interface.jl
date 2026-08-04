@@ -89,7 +89,7 @@ struct ReactiveInternalInterfaceConstantTPhi{J,N,B,B2,B3,C,C2,Q<:AbstractReactio
     forwardability::Array{Bool,1}
 end
 function ReactiveInternalInterfaceConstantTPhi(domain1,domain2,reactions,T,A,phi=0.0)
-    @assert domain1.T == domain2.T 
+    @assert domain1.T == domain2.T
     reactions = upgradekinetics(reactions,domain1,domain2)
     rxnarray = getinterfacereactioninds(domain1,domain2,reactions)
     M,Nrp1,Nrp2 = getstoichmatrix(domain1,domain2,reactions)
@@ -301,7 +301,7 @@ export ConstantReservoirDiffusion
 kLAkHCondensationEvaporationWithReservoir adds evaporation and condensation to
 (1) a liquid phase domain with a constant composition vapor resevoir, where number of moles, P, and T need to be specified, or
 (2) a gas phase domain with a constant composition liquid resevoir, where number of moles, V, and T need to be specified.
-kLA and kH are used to model cond/evap. 
+kLA and kH are used to model cond/evap.
 kLA is liquid volumetric mass transfer coefficient with unit 1/s , and kH is Henry's law constant defined as gas phase partial pressure of solute over liquid phase concentration of solute.
 """
 
@@ -389,7 +389,7 @@ end
 export VolumetricFlowRateInlet
 
 """
-VolumeMaintainingOutlet is designed for gas phase domain such that the flow rate of this outlet will adjust to maintain the volume of the 
+VolumeMaintainingOutlet is designed for gas phase domain such that the flow rate of this outlet will adjust to maintain the volume of the
     domain to be constant. This is particularly useful to simulate any vapor-liquid phase system where the gas phase outlet
     is determined by the amount of evaporation.
 """
@@ -449,6 +449,58 @@ function getinterfaceignoremasstransferspcinds(domaingas, domainliq, ignoremasst
         indices[i] = domainliq.indexes[1] - 1 + indliq
     end
     return indices
+end
+
+"""
+FickDiffusionInternalInterface models Fickian diffusive mass transfer across a stagnant
+film of finite thickness between two finite volume domains. Unlike
+ConstantReservoirDiffusion, both sides carry their own state, so species
+accumulate/deplete over time and mass is conserved across the interface.
+
+The molar flux into domain1 (and equal-and-opposite out of domain2) for species i is
+    J_i = A * D_i * (c2_i - c1_i) / layer_thickness   [mol/s]
+where c1, c2 are the per-species concentrations of domain1, domain2, A is the
+interfacial area, layer_thickness is the film spacing, and D_i is the per-species
+diffusivity across the film.
+"""
+struct FickDiffusionInternalInterface{D1,D2} <: AbstractInternalInterface
+    domain1::D1
+    domain2::D2
+    A::Float64
+    layer_thickness::Float64
+    diffusivity::Array{Float64,1}
+    parameterindexes::Array{Int64,1}
+    domaininds::Array{Int64,1}
+    p::Array{Float64,1}
+end
+
+function FickDiffusionInternalInterface(domain1, domain2, A, layer_thickness;
+        diffusivity=nothing)
+    @assert getfield.(domain1.phase.species, :name) == getfield.(domain2.phase.species, :name) "FickDiffusionInternalInterface requires both domains to share the same ordered species list"
+    nspc = length(domain1.phase.species)
+    D = diffusivity === nothing ? convert(Array{Float64,1}, domain1.diffusivity) : convert(Array{Float64,1}, diffusivity)
+    @assert length(D) == nspc "diffusivity must have one entry per species ($nspc); got $(length(D)). If domain1.diffusivity is empty, pass diffusivity explicitly."
+    return FickDiffusionInternalInterface(domain1, domain2, Float64(A), Float64(layer_thickness),
+        D, [1, nspc], [0, 0], ones(nspc)), ones(nspc)
+end
+export FickDiffusionInternalInterface
+
+@inline function fickdiffusionflux(fd::FickDiffusionInternalInterface, cstot)
+    @views @inbounds c1 = cstot[fd.domain1.indexes[1]:fd.domain1.indexes[2]]
+    @views @inbounds c2 = cstot[fd.domain2.indexes[1]:fd.domain2.indexes[2]]
+    @fastmath return fd.A .* fd.diffusivity .* (c2 .- c1) ./ fd.layer_thickness
+end
+
+function evaluate(fd::FickDiffusionInternalInterface, dydt, cstot, p::W) where {W<:SciMLBase.NullParameters}
+    flux = fickdiffusionflux(fd, cstot)
+    @views @inbounds @fastmath dydt[fd.domain1.indexes[1]:fd.domain1.indexes[2]] .+= flux
+    @views @inbounds @fastmath dydt[fd.domain2.indexes[1]:fd.domain2.indexes[2]] .-= flux
+end
+
+function evaluate(fd::FickDiffusionInternalInterface, dydt, cstot, p)
+    flux = fickdiffusionflux(fd, cstot) .* p[fd.parameterindexes[1]:fd.parameterindexes[2]]
+    @views @inbounds @fastmath dydt[fd.domain1.indexes[1]:fd.domain1.indexes[2]] .+= flux
+    @views @inbounds @fastmath dydt[fd.domain2.indexes[1]:fd.domain2.indexes[2]] .-= flux
 end
 
 struct FragmentBasedReactiveFilmGrowthInterfaceConstantT{D1,D2,Q<:AbstractReaction,M1} <: AbstractReactiveInternalInterface

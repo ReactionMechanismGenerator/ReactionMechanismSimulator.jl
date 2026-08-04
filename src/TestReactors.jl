@@ -141,8 +141,69 @@ using SciMLSensitivity
 
         name = "oxygen"
         ind = findfirst(x -> x == name, liqspcnames)
-        @test sol(sol.t[end])[ind] ≈ 0.11758959354431776 rtol = 1e-4 #test there are oxygen dissolved into the liquid 
+        @test sol(sol.t[end])[ind] ≈ 0.11758959354431776 rtol = 1e-4 #test there are oxygen dissolved into the liquid
 
+    end
+
+    @testset "Test cross-domain diffusion problem with FickDiffusionInternalInterface" begin
+        # Unit test of the Fickian diffusion interface: an inert, dilute O2 tracer
+        # diffusing between two liquid n-octane volumes at 298 K.
+        # Two well-mixed volumes connected by conductance g = A*D/delta obey the
+        # following governing equation:
+        #   d(c1-c2)/dt = -k*(c1-c2), where k = g*(1/V1 + 1/V2)
+        # => (c1-c2)(t) = (c1-c2)(0)*exp(-k*t), equilibrating to c_eq = n_tot/(V1+V2).
+        phaseDict = readinput("../src/testing/liquid_phase.rms")
+        spcs = phaseDict["phase"]["Species"]
+        solv = phaseDict["Solvents"][1]
+        liq = IdealDiluteSolution(spcs, [], solv; name="phase", diffusionlimited=true)
+
+        spcnames = getfield.(liq.species, :name)
+        oxygenind = findfirst(isequal("oxygen"), spcnames)
+
+        T = 298.15          # K
+        V1 = 1.0e-3         # m^3 (1 L)
+        V2 = 3.0e-3         # m^3 (3 L)
+        A = 1.0e-2          # m^2, interfacial area
+        delta = 1.0e-4      # m, layer thickness (0.1 mm)
+
+        c_octane = 6.154e3  # mol/m^3, liquid n-octane molar density
+        c_O2 = 5.0          # mol/m^3, dilute dissolved O2
+        n_O2 = c_O2 * V1    # total O2 moles
+
+        initialconds1 = Dict(["T" => T, "V" => V1, "octane" => c_octane * V1, "oxygen" => n_O2])
+        domain1, y01, p1 = ConstantTVDomain(phase=liq, initialconds=initialconds1)
+        initialconds2 = Dict(["T" => T, "V" => V2, "octane" => c_octane * V2, "oxygen" => 0.0])
+        domain2, y02, p2 = ConstantTVDomain(phase=liq, initialconds=initialconds2)
+
+        fick, pfick = FickDiffusionInternalInterface(domain1, domain2, A, delta)
+
+        D_O2 = domain1.diffusivity[oxygenind]
+        g = A * D_O2 / delta                     # effective mass transfer coefficient
+        k = g * (1.0 / V1 + 1.0 / V2)            # time constant for exponential relaxation of the concentration difference across the boundary
+        c_eq = n_O2 / (V1 + V2)                  # equilibrium concentration of O2 in both domains
+        delta0 = n_O2 / V1                       # initial concentration difference across the boundary
+        tf = 10.0 / k                            # arbitrary long time to reach equilibrium (10 times the time constant 1/k)
+
+        domains = (domain1, domain2)
+        interfaces = [fick]
+        react, y0, p = Reactor(domains, (y01, y02), (0.0, tf), interfaces, (p1, p2, pfick))
+        sol = solve(react.ode, react.recommendedsolver, abstol=1e-16, reltol=1e-10)
+
+        i1 = domain1.indexes[1] - 1 + oxygenind
+        i2 = domain2.indexes[1] - 1 + oxygenind
+
+        # mass conservation
+        y_end = sol.u[end]
+        @test y_end[i1] + y_end[i2] ≈ n_O2 rtol = 1e-6
+
+        # concentration difference at t = 1/k
+        y_tau = sol(1.0 / k)
+        delta_tau = y_tau[i1] / V1 - y_tau[i2] / V2
+        @test delta_tau ≈ delta0 * exp(-1.0) rtol = 1e-3
+
+        # test whether equilibrium is reached at tf
+        @test y_end[i1] / V1 ≈ c_eq rtol = 1e-2
+        @test y_end[i2] / V2 ≈ c_eq rtol = 1e-2
     end
 
     @testset "Test liquid phase Parametrized T Constant V reactor jacobian" begin
@@ -212,10 +273,10 @@ using SciMLSensitivity
         @test y[o2ind] / N ≈ 0.200419093 rtol = 1e-4
         @test y[h2oind] / N ≈ 0.386618602 rtol = 1e-4
 
-        #plotting  
+        #plotting
         plotrops(sim, "H2", 20.4402454, N=10)
         getfluxdiagram(sim, 20.4402454)
-        
+
         #analytic jacobian vs. ForwardDiff jacobian
         t = 20.44002454
         y = sol(t)
