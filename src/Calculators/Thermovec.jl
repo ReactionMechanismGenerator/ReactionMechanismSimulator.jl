@@ -3,8 +3,6 @@ using Parameters
 abstract type AbstractThermovec end
 export AbstractThermovec
 
-include("Thermo.jl")
-
 @with_kw struct NASApolynomialvec <: AbstractThermo
     coefs::Array{Float64,2}
     Tmin::Float64
