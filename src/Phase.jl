@@ -15,10 +15,6 @@ export EmptyPhase
 abstract type FragmentBasedIdealPhase <: IdealPhase end
 export FragmentBasedIdealPhase
 
-include("Calculators/Ratevec.jl")
-include("Calculators/Thermovec.jl")
-include("Reaction.jl")
-
 @with_kw struct IdealGas{W<:Tuple,W2,W3} <: IdealPhase
     name::String = ""
     species::Array{Species,1}

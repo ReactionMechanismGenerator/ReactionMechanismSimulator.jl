@@ -941,7 +941,12 @@ end
 
 export ConstantTLiqFilmDomain
 
-@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W3=SciMLBase.NullParameters()) where {W3<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q} #no parameter input
+# Calling calcthermo without parameters uses SciMLBase.NullParameters(). This is defined once here,
+# rather than as a default value of `p` on every method below: each such default generates the same
+# 3-argument method, and redefining a method is not allowed during precompilation (Julia >= 1.10).
+@inline calcthermo(d::AbstractDomain, y, t) = calcthermo(d, y, t, SciMLBase.NullParameters())
+
+@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W3) where {W3<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q} #no parameter input
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P * V / (R * d.T)
@@ -953,7 +958,7 @@ export ConstantTLiqFilmDomain
     return ns, cs, d.T, d.P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
 end
 
-@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q<:Float64} #uses parameter input
+@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:Array{Float64,1},Q<:Float64} #uses parameter input
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P * V / (R * d.T)
@@ -993,7 +998,7 @@ end
     end
 end
 
-@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::Array{W3,1}, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,W3<:ForwardDiff.Dual,Q} #Autodiff y
+@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::Array{W3,1}, t::Q, p::W2) where {W2,W<:IdealGas,Y<:Integer,W3<:ForwardDiff.Dual,Q} #Autodiff y
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P * V / (R * d.T)
@@ -1013,7 +1018,7 @@ end
     return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
 end
 
-@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J,Q} #Autodiff p
+@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2) where {W2,W<:IdealGas,Y<:Integer,J,Q} #Autodiff p
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P * V / (R * d.T)
@@ -1033,7 +1038,7 @@ end
     return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
 end
 
-@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Autodiff p
+@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2) where {W2,W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Autodiff p
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P * V / (R * d.T)
@@ -1055,7 +1060,7 @@ end
     return ns, cs, d.T, d.P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
 end
 
-@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J,Q} #Tracker/reversediff
+@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J,Q} #Tracker/reversediff
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P * V / (R * d.T)
@@ -1072,7 +1077,7 @@ end
     return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
 end
 
-@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Tracker/reversediff
+@inline function calcthermo(d::ConstantTPDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},W<:IdealGas,Y<:Integer,J<:Union{ReverseDiff.TrackedArray,Tracker.TrackedArray},Q} #Tracker/reversediff
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = d.P * V / (R * d.T)
@@ -1089,7 +1094,7 @@ end
     return ns,cs,d.T,d.P,V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
 end
 
-@inline function calcthermo(d::ConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ConstantVDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     P = y[d.indexes[4]]
@@ -1114,7 +1119,7 @@ end
     return ns,cs,T,P,d.V,C,N,0.0,kfs,krevs,Array{Float64,1}(),Us,Gs,diffs,Cvave,cpdivR,0.0
 end
 
-@inline function calcthermo(d::ConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ConstantVDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     P = y[d.indexes[4]]
@@ -1140,7 +1145,7 @@ end
     return @views @fastmath ns,cs,T,P,d.V,C,N,0.0,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Array{Float64,1}(),Us,Gs,diffs,Cvave,cpdivR,0.0
 end
 
-@inline function calcthermo(d::ConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ConstantVDomain{W,Y}, y::J, t::Q, p::W2) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     P = y[d.indexes[4]]
@@ -1166,7 +1171,7 @@ end
     return @views @fastmath ns,cs,T,P,d.V,C,N,0.0,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Array{Float64,1}(),Us,Gs,diffs,Cvave,cpdivR,0.0
 end
 
-@inline function calcthermo(d::ConstantPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ConstantPDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     V = y[d.indexes[4]]
@@ -1190,7 +1195,7 @@ end
     return ns,cs,T,d.P,V,C,N,0.0,kfs,krevs,Hs,Array{Float64,1}(),Gs,diffs,Cvave,cpdivR,0.0
 end
 
-@inline function calcthermo(d::ConstantPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ConstantPDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     V = y[d.indexes[4]]
@@ -1219,7 +1224,7 @@ end
     end
 end
 
-@inline function calcthermo(d::ConstantPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ConstantPDomain{W,Y}, y::J, t::Q, p::W2) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
     V = y[d.indexes[4]]
@@ -1244,7 +1249,7 @@ end
     return @views @fastmath ns,cs,T,d.P,V,C,N,0.0,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Hs,Array{Float64,1}(),Gs,diffs,Cvave,cpdivR,0.0
 end
 
-@inline function calcthermo(d::ParametrizedVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedVDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     V = d.V(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1269,7 +1274,7 @@ end
     return ns,cs,T,P,V,C,N,0.0,kfs,krevs,Array{Float64,1}(),Us,Gs,diffs,Cvave,cpdivR,0.0
 end
 
-@inline function calcthermo(d::ParametrizedVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedVDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     V = d.V(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1295,7 +1300,7 @@ end
     return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Array{Float64,1}(),Us,Gs,diffs,Cvave,cpdivR,0.0
 end
 
-@inline function calcthermo(d::ParametrizedVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedVDomain{W,Y}, y::J, t::Q, p::W2) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     V = d.V(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1321,7 +1326,7 @@ end
     return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Array{Float64,1}(),Us,Gs,diffs,Cvave,cpdivR,0.0
 end
 
-@inline function calcthermo(d::ParametrizedPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedPDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1346,7 +1351,7 @@ end
     return ns,cs,T,P,V,C,N,0.0,kfs,krevs,Hs,Array{Float64,1}(),Gs,diffs,Cvave,cpdivR,0.0
 end
 
-@inline function calcthermo(d::ParametrizedPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedPDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1371,7 +1376,7 @@ end
     kfs,krevs = getkfkrevs(d.phase,T,P,C,N,ns,Gs,diffs,V,0.0,0.0)
     return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Hs,Array{Float64,1}(),Gs,diffs,Cvave,cpdivR,0.0
 end
-@inline function calcthermo(d::ParametrizedPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedPDomain{W,Y}, y::J, t::Q, p::W2) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     P = d.P(t)
     ns = y[d.indexes[1]:d.indexes[2]]
     T = y[d.indexes[3]]
@@ -1397,7 +1402,7 @@ end
     return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Hs,Array{Float64,1}(),Gs,diffs,Cvave,cpdivR,0.0
 end
 
-@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:SciMLBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
     V = d.V
     T = d.T(t)
     ns = y[d.indexes[1]:d.indexes[2]]
@@ -1418,7 +1423,7 @@ end
     return ns,cs,T,P,V,C,N,mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0,Array{Float64,1}(),0.0
 end
 
-@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
     V = d.V
     T = d.T(t)
     ns = y[d.indexes[1]:d.indexes[2]]
@@ -1440,7 +1445,7 @@ end
     return @views @fastmath ns,cs,T,P,V,C,N,mu,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0,Array{Float64,1}(),d.phi
 end
 
-@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedTConstantVDomain{W,Y}, y::J, t::Q, p::W2) where {W2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
     V = d.V
     T = d.T(t)
     ns = y[d.indexes[1]:d.indexes[2]]
@@ -1462,7 +1467,7 @@ end
     return @views @fastmath ns,cs,T,P,V,C,N,mu,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0,Array{Float64,1}(),d.phi
 end
 
-@inline function calcthermo(d::ParametrizedTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedTPDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:SciMLBase.NullParameters,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     T = d.T(t)
     @assert T < 10000.0
     P = d.P(t)
@@ -1487,7 +1492,7 @@ end
     return ns,cs,T,P,V,C,N,0.0,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0,Array{Float64,1}(),0.0
 end
 
-@inline function calcthermo(d::ParametrizedTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedTPDomain{W,Y}, y::J, t::Q, p::W2) where {W2<:Array{Float64,1},W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     T = d.T(t)
     @assert T < 10000.0
     P = d.P(t)
@@ -1513,7 +1518,7 @@ end
     return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0,Array{Float64,1}(),0.0
 end
 
-@inline function calcthermo(d::ParametrizedTPDomain{W,Y}, y::J, t::Q, p::W2=SciMLBase.NullParameters()) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ParametrizedTPDomain{W,Y}, y::J, t::Q, p::W2) where {W2,W<:IdealGas,Y<:Integer,J<:AbstractArray,Q}
     T = d.T(t)
     @assert T < 10000.0
     P = d.P(t)
@@ -1539,7 +1544,7 @@ end
     return @views @fastmath ns,cs,T,P,V,C,N,0.0,kfs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],krevs.*p[d.parameterindexes[1]-1+length(d.phase.species)+1:d.parameterindexes[1]-1+length(d.phase.species)+length(kfs)],Array{Float64,1}(),Array{Float64,1}(),Gs,diffs,0.0,Array{Float64,1}(),0.0
 end
 
-@inline function calcthermo(d::ConstantTVDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:SciMLBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ConstantTVDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2<:SciMLBase.NullParameters,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns ./ d.V
@@ -1548,7 +1553,7 @@ end
     return ns, cs, d.T, P, d.V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
 end
 
-@inline function calcthermo(d::ConstantTVDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:Array{Float64,1},Q}
+@inline function calcthermo(d::ConstantTVDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:Array{Float64,1},Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns ./ d.V
@@ -1588,7 +1593,7 @@ end
 
 end
 
-@inline function calcthermo(d::ConstantTVDomain{W,Y}, y::Array{W2,1}, t::Q, p::Q2=SciMLBase.NullParameters()) where {W2<:ForwardDiff.Dual,Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff y
+@inline function calcthermo(d::ConstantTVDomain{W,Y}, y::Array{W2,1}, t::Q, p::Q2) where {W2<:ForwardDiff.Dual,Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff y
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns ./ d.V
@@ -1605,7 +1610,7 @@ end
     return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),d.phi
 end
 
-@inline function calcthermo(d::ConstantTVDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff p
+@inline function calcthermo(d::ConstantTVDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff p
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns ./ d.V
@@ -1622,7 +1627,7 @@ end
     return ns,cs,d.T,P,d.V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),d.phi
 end
 
-@inline function calcthermo(d::ConstantTAPhiDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:SciMLBase.NullParameters,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q}
+@inline function calcthermo(d::ConstantTAPhiDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2<:SciMLBase.NullParameters,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns ./ d.A
@@ -1631,7 +1636,7 @@ end
     return ns, cs, d.T, P, d.A, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), d.Gs, Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
 end
 
-@inline function calcthermo(d::ConstantTAPhiDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:Array{Float64,1},W<:IdealSurface,Y<:Integer,J<:Array{Float64,1},Q}
+@inline function calcthermo(d::ConstantTAPhiDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2<:Array{Float64,1},W<:IdealSurface,Y<:Integer,J<:Array{Float64,1},Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns ./ d.A
@@ -1660,7 +1665,7 @@ end
     end
 end
 
-@inline function calcthermo(d::ConstantTAPhiDomain{W,Y}, y::Array{W2,1}, t::Q, p::Q2=SciMLBase.NullParameters()) where {W2<:ForwardDiff.Dual,Q2,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q} #autodiff y
+@inline function calcthermo(d::ConstantTAPhiDomain{W,Y}, y::Array{W2,1}, t::Q, p::Q2) where {W2<:ForwardDiff.Dual,Q2,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q} #autodiff y
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns ./ d.A
@@ -1677,7 +1682,7 @@ end
     return ns,cs,d.T,P,d.A,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Gs,Array{Float64,1}(),0.0,Array{Float64,1}(),d.phi
 end
 
-@inline function calcthermo(d::ConstantTAPhiDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q} #autodiff p
+@inline function calcthermo(d::ConstantTAPhiDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2,W<:IdealSurface,Y<:Integer,J<:AbstractArray,Q} #autodiff p
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     cs = ns ./ d.A
@@ -1694,7 +1699,7 @@ end
     return ns,cs,d.T,P,d.A,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Gs,Array{Float64,1}(),0.0,Array{Float64,1}(),d.phi
 end
 
-function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:SciMLBase.NullParameters,W<:FragmentBasedIdealFilm,Y<:Integer,J<:AbstractArray,Q}
+function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2<:SciMLBase.NullParameters,W<:FragmentBasedIdealFilm,Y<:Integer,J<:AbstractArray,Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     mass = y[d.indexes[3]]
@@ -1705,7 +1710,7 @@ function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=S
     return ns, cs, d.T, P, V, C, N, d.mu, d.kfs, d.krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
 end
 
-function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:Array{Float64,1},W<:FragmentBasedIdealFilm,Y<:Integer,J<:Array{Float64,1},Q}
+function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2<:Array{Float64,1},W<:FragmentBasedIdealFilm,Y<:Integer,J<:Array{Float64,1},Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     mass = y[d.indexes[3]]
@@ -1747,7 +1752,7 @@ function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=S
 
 end
 
-function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::Array{W2,1}, t::Q, p::Q2=SciMLBase.NullParameters()) where {W2<:ForwardDiff.Dual,Q2,W<:FragmentBasedIdealFilm,Y<:Integer,J<:AbstractArray,Q} #autodiff y
+function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::Array{W2,1}, t::Q, p::Q2) where {W2<:ForwardDiff.Dual,Q2,W<:FragmentBasedIdealFilm,Y<:Integer,J<:AbstractArray,Q} #autodiff y
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     mass = y[d.indexes[3]]
@@ -1766,7 +1771,7 @@ function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::Array{W2,1}, t::
     return ns,cs,d.T,P,V,C,N,d.mu,kfs,krevs,Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),Array{Float64,1}(),0.0,Array{Float64,1}(),0.0
 end
 
-function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2,W<:FragmentBasedIdealFilm,Y<:Integer,J<:AbstractArray,Q} #autodiff p
+function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2,W<:FragmentBasedIdealFilm,Y<:Integer,J<:AbstractArray,Q} #autodiff p
     ns = y[d.indexes[1]:d.indexes[2]]
     N = sum(ns)
     mass = y[d.indexes[3]]
@@ -1785,7 +1790,7 @@ function calcthermo(d::FragmentBasedConstantTrhoDomain{W,Y}, y::J, t::Q, p::Q2=S
     return ns, cs, d.T, P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), 0.0
 end
 
-@inline function calcthermo(d::ConstantTLiqFilmDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:Array{Float64,1},Q}
+@inline function calcthermo(d::ConstantTLiqFilmDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2<:Array{Float64,1},W<:IdealDiluteSolution,Y<:Integer,J<:Array{Float64,1},Q}
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = sum(ns)
@@ -1826,7 +1831,7 @@ end
 
 end
 
-@inline function calcthermo(d::ConstantTLiqFilmDomain{W,Y}, y::Array{W2,1}, t::Q, p::Q2=SciMLBase.NullParameters()) where {W2<:ForwardDiff.Dual,Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff y
+@inline function calcthermo(d::ConstantTLiqFilmDomain{W,Y}, y::Array{W2,1}, t::Q, p::Q2) where {W2<:ForwardDiff.Dual,Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff y
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = sum(ns)
@@ -1844,7 +1849,7 @@ end
     return ns, cs, d.T, P, V, C, N, d.mu, kfs, krevs, Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), Array{Float64,1}(), 0.0, Array{Float64,1}(), d.phi
 end
 
-@inline function calcthermo(d::ConstantTLiqFilmDomain{W,Y}, y::J, t::Q, p::Q2=SciMLBase.NullParameters()) where {Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff p
+@inline function calcthermo(d::ConstantTLiqFilmDomain{W,Y}, y::J, t::Q, p::Q2) where {Q2,W<:IdealDiluteSolution,Y<:Integer,J<:AbstractArray,Q} #autodiff p
     ns = y[d.indexes[1]:d.indexes[2]]
     V = y[d.indexes[3]]
     N = sum(ns)
