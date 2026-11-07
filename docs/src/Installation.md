@@ -44,3 +44,13 @@ Pkg.build("CondaPkg")
 Pkg.add("PythonCall")                                    
 Pkg.build("PythonCall")
 ```
+
+## Intel Macs: Julia killed while loading RMS
+<!-- Workaround for conda/micromamba not re-signing osx-64 binaries. Delete once Intel Macs no longer matter. -->
+On Intel Macs, conda and micromamba can leave some Python extension modules with invalid code signatures, and Julia is then killed (`Killed: 9`) while loading RMS. To re-sign them, run this in a terminal, replacing `/path/to/env` with the Python environment RMS uses (your conda environment, or `.CondaPkg/env` in your Julia project):
+
+```
+find /path/to/env \( -name '*.so' -o -name '*.dylib' \) -exec sh -c 'codesign --verify "$1" 2>&1 | grep -q "invalid signature" && codesign --force --sign - "$1"' _ {} \;
+```
+
+Repeat this after installing or updating Python packages in that environment. See [RMG-Py#3037](https://github.com/ReactionMechanismGenerator/RMG-Py/issues/3037) for details.
